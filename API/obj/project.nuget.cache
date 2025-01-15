@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "H8/Kp/pufb0=",
+  "dgSpecHash": "f53c2XqXcgw=",
   "success": true,
-  "projectFilePath": "D:\\project_0\\SchengenTime\\API\\API.csproj",
+  "projectFilePath": "D:\\project_0\\SchengenTime\\api\\API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Viktar\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Viktar\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",

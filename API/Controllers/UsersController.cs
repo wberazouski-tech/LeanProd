@@ -13,7 +13,7 @@ namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] // /api/users
-public class UserController(DataContext context) : ControllerBase
+public class UsersController(DataContext context) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
