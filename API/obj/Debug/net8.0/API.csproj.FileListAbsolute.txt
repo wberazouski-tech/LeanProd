@@ -127,3 +127,11 @@ D:\project_0\SchengenTime\API\bin\Debug\net8.0\tr\Microsoft.CodeAnalysis.Workspa
 D:\project_0\SchengenTime\API\bin\Debug\net8.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
 D:\project_0\SchengenTime\API\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
 D:\project_0\SchengenTime\api\obj\Debug\net8.0\API.sourcelink.json
+D:\project_0\SchengenTime\Api\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+D:\project_0\SchengenTime\Api\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\project_0\SchengenTime\Api\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+D:\project_0\SchengenTime\Api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+D:\project_0\SchengenTime\Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
