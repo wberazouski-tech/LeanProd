@@ -7,6 +7,7 @@ using API.Data;
 using API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 namespace API.Controllers;
 
 public class AccountController(DataContext context, ITokenService tokenService ): BaseApiController

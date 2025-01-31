@@ -1,0 +1,23 @@
+<div class="container mt-5">
+    <div stile="text-aling: center;">
+        @if (!registerMode) {
+
+        <h1>Find your match</h1>
+        <p class="lead">Come on in to viev your matches..</p>
+        <div class="text-center">
+            <button (click)="registerToggle()" class="btn btn-primary btn-lg me2">Register</button>
+            <button class="btn btn-info btn-lg me2">Lean more</button>
+        </div>
+        } @else {
+        <div class="conteiner">
+            <div class="row justify-content-center">
+                <div class="col-4">
+                    <app-register 
+                        (cancelRegister)="canselRegisterMode($event)"
+                    ></app-register>   
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>

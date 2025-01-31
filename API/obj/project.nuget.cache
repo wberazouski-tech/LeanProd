@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "joCGKD090tk=",
+  "dgSpecHash": "rsN/pJQfHs0=",
   "success": true,
-  "projectFilePath": "D:\\project_0\\SchengenTime\\api\\API.csproj",
+  "projectFilePath": "D:\\project_0\\SchengenTime\\API\\API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Viktar\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Viktar\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.12\\microsoft.aspnetcore.authentication.jwtbearer.8.0.12.nupkg.sha512",
