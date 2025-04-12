@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\project_0\\SchengenTime\\API\\API.csproj": {}
+    "D:\\Project_0\\SchengenTime\\API\\API.csproj": {}
   },
   "projects": {
-    "D:\\project_0\\SchengenTime\\API\\API.csproj": {
+    "D:\\Project_0\\SchengenTime\\API\\API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\project_0\\SchengenTime\\API\\API.csproj",
+        "projectUniqueName": "D:\\Project_0\\SchengenTime\\API\\API.csproj",
         "projectName": "API",
-        "projectPath": "D:\\project_0\\SchengenTime\\API\\API.csproj",
+        "projectPath": "D:\\Project_0\\SchengenTime\\API\\API.csproj",
         "packagesPath": "C:\\Users\\Viktar\\.nuget\\packages\\",
-        "outputPath": "D:\\project_0\\SchengenTime\\API\\obj\\",
+        "outputPath": "D:\\Project_0\\SchengenTime\\API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Viktar\\AppData\\Roaming\\NuGet\\NuGet.Config"
