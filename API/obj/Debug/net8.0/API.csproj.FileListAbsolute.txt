@@ -135,3 +135,5 @@ D:\project_0\SchengenTime\Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.d
 D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
 D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\Project_0\SchengenTime\api\bin\Debug\net8.0\Data\UserSeedData.json
+D:\Project_0\SchengenTime\api\bin\Debug\net8.0\AutoMapper.dll

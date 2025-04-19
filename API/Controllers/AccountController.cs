@@ -10,19 +10,21 @@ using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 namespace API.Controllers;
 
-public class AccountController(DataContext context, ITokenService tokenService ): BaseApiController
+public class AccountController(DataContext context, ITokenService tokenService) : BaseApiController
 {
     [HttpPost("register")] // account/register
     public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
     {
-        if (await UserExists(registerDto.Username)) return BadRequest("Username is already in use.") ;
-        
+        if (await UserExists(registerDto.Username)) return BadRequest("Username is already in use.");
+
+        return Ok();
+        /*
         using var hmac = new HMACSHA256();
         var user = new AppUser
         {
             UserName = registerDto.Username.ToLower(),
             PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
-            PaswordSalt = hmac.Key
+            PasswordSalt = hmac.Key
 
         };
         context.Users.Add(user);
@@ -32,16 +34,17 @@ public class AccountController(DataContext context, ITokenService tokenService )
             Username = user.UserName,
             Token = tokenService.CreateToken(user)
         };
+        */
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
     {
-        var user = await context.Users.FirstOrDefaultAsync(x => 
+        var user = await context.Users.FirstOrDefaultAsync(x =>
             x.UserName == loginDto.Username.ToLower());
         if (user == null) return Unauthorized("Invalid username");
 
-        using var hmac = new HMACSHA256(user.PaswordSalt);
+        using var hmac = new HMACSHA256(user.PasswordSalt);
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
 
         for (int i = 0; i < computedHash.Length; i++)
@@ -57,7 +60,7 @@ public class AccountController(DataContext context, ITokenService tokenService )
 
     private async Task<bool> UserExists(string username)
     {
-        return await context.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());   
+        return await context.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());
     }
 
 

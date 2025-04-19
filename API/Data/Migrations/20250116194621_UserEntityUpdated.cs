@@ -18,7 +18,7 @@ namespace API.Data.Migrations
                 defaultValue: new byte[0]);
 
             migrationBuilder.AddColumn<byte[]>(
-                name: "PaswordSalt",
+                name: "PasswordSalt",
                 table: "Users",
                 type: "BLOB",
                 nullable: false,
@@ -33,7 +33,7 @@ namespace API.Data.Migrations
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "PaswordSalt",
+                name: "PasswordSalt",
                 table: "Users");
         }
     }
