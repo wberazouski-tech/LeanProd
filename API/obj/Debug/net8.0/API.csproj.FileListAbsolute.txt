@@ -137,3 +137,6 @@ D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols
 D:\project_0\SchengenTime\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 D:\Project_0\SchengenTime\api\bin\Debug\net8.0\Data\UserSeedData.json
 D:\Project_0\SchengenTime\api\bin\Debug\net8.0\AutoMapper.dll
+D:\Project_0\SchengenTime\api\bin\Debug\net8.0\API.staticwebassets.endpoints.json
+D:\Project_0\SchengenTime\api\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+D:\Project_0\SchengenTime\api\obj\Debug\net8.0\staticwebassets\msbuild.API.Microsoft.AspNetCore.StaticWebAssetEndpoints.props

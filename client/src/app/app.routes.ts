@@ -17,7 +17,7 @@ export const routes: Routes = [
         canActivate: [authGuard],
         children: [
             { path: 'members', component: MemderListComponent },
-            { path: 'members/:id', component: MemderDetailComponent },
+            { path: 'members/:username', component: MemderDetailComponent },
             { path: 'lists', component: ListsComponent },
             { path: 'messages', component: MessagesComponent },
         ]
