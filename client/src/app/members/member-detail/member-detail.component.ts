@@ -9,10 +9,10 @@ import { GalleryItem, GalleryModule, ImageItem } from 'ng-gallery';
   selector: 'app-memder-detail',
   standalone: true,
   imports: [TabsModule, GalleryModule],
-  templateUrl: './memder-detail.component.html',
-  styleUrl: './memder-detail.component.css'
+  templateUrl: './member-detail.component.html',
+  styleUrl: './member-detail.component.css'
 })
-export class MemderDetailComponent implements OnInit{
+export class MemberDetailComponent implements OnInit{
   
   private memberService =  inject(MembersService);
   private route = inject(ActivatedRoute);

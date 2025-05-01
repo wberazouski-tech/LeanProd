@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
@@ -24,7 +25,7 @@ namespace API.Data
             .Include(p => p.Photos) 
             .SingleOrDefaultAsync(x => x.UserName == username.ToLower());
         }
-        
+       
         public void Update(AppUser user)
         {
             context.Entry(user).State = EntityState.Modified;
@@ -56,5 +57,7 @@ namespace API.Data
                 .ProjectTo<MemberDto>(mapper.ConfigurationProvider)
                 .SingleOrDefaultAsync();
         }
+
+        
     }
 }
