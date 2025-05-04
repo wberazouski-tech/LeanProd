@@ -140,3 +140,5 @@ D:\Project_0\SchengenTime\api\bin\Debug\net8.0\AutoMapper.dll
 D:\Project_0\SchengenTime\api\bin\Debug\net8.0\API.staticwebassets.endpoints.json
 D:\Project_0\SchengenTime\api\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\Project_0\SchengenTime\api\obj\Debug\net8.0\staticwebassets\msbuild.API.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
+D:\Project_0\SchengenTime\api\bin\Debug\net8.0\CloudinaryDotNet.dll
+D:\Project_0\SchengenTime\api\bin\Debug\net8.0\Newtonsoft.Json.dll
