@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "alexcvzz.vscode-sqlite"
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mssql"
     ]
 }

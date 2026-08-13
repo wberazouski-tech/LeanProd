@@ -1,0 +1,9 @@
+@LeanProd_HostAddress = https://localhost:5001
+
+GET {{LeanProd_HostAddress}}/api/platform/info
+Accept: application/json
+
+###
+
+GET {{LeanProd_HostAddress}}/health
+Accept: application/json

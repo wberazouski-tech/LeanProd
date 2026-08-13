@@ -290,6 +290,15 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
+dist/
+
+# Local application state and development credentials
+*.db
+*.db-shm
+*.db-wal
+*.pem
+*.key
+appsettings.Local.json
 
 # Visual Studio 6 build log
 *.plg
@@ -482,3 +491,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# LeanProd local build and generated deployment artifacts
+.build-check/
+artifacts/
+*.log
