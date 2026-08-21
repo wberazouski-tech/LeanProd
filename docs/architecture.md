@@ -20,18 +20,19 @@ This specification was originally written for 1C. The web application preserves 
 
 ## Modules
 
-1. **Identity and Access** — users, roles, department assignments and resource policies.
-2. **Master Data** — departments, units, print types, equipment, products, downtime reasons and effective performance standards.
-3. **Shift Accounting** — shift-report aggregate containing production and linked downtime entries.
-4. **Quality** — rejected-product reports and their product rows.
-5. **Period Closing** — closed periods and centralized mutation guard.
-6. **Reporting** — read-only projections for performance, downtime, waste, rejects and equipment KPIs.
+1. **Identity and Access** — users, roles, personal defaults and permission policies.
+2. **Organizations** — the singleton organization profile and shared addresses owned by the organization, departments or storage locations.
+3. **Master Data** — departments, storage locations, units of measure, equipment, products, downtime reasons and effective performance standards.
+4. **Shift Accounting** — shift-report aggregate containing production and linked downtime entries.
+5. **Quality** — rejected-product reports and their product rows.
+6. **Period Closing** — closed periods and centralized mutation guard.
+7. **Reporting** — read-only projections for performance, downtime, waste, rejects and equipment KPIs.
 
 ## Architectural boundaries
 
 The first release is a modular monolith. Each module owns its write model and exposes application commands/queries. Controllers must not contain formulas or direct EF Core queries. Cross-module changes run in a single database transaction. Reporting uses separate projections and must not mutate operational data.
 
-Angular is organized by features (`core`, `shared`, `features/auth`, `features/master-data`, `features/shift-reports`, `features/quality`, `features/reports`, `features/admin`). Routes are lazy-loaded. API contracts are typed; components do not construct URLs or store server state directly.
+Angular is organized by features (`core`, `features/identity`, `features/organization`, `features/master-data`, and future operational modules). API contracts are typed, and HTTP access is encapsulated in feature services.
 
 ## Non-negotiable business invariants
 
@@ -47,8 +48,8 @@ Angular is organized by features (`core`, `shared`, `features/auth`, `features/m
 ## Security baseline
 
 - Secrets are supplied through environment variables or .NET user-secrets.
-- Password verification uses PBKDF2 with a random salt and constant-time comparison. Migration to ASP.NET Core Identity is planned before production user management is enabled.
-- Short-lived JWT access tokens are validated for signature and lifetime. Production requires issuer/audience validation and refresh-token rotation.
+- Passwords and accounts are managed by ASP.NET Core Identity using its configured password hasher and lockout policy.
+- Short-lived JWT access tokens validate signature, issuer, audience and lifetime; opaque refresh tokens use rotation and reuse detection.
 - CORS uses an explicit allow-list, HTTPS/HSTS is enabled, requests are rate-limited, and `/health` checks the database.
 - Authorization is enforced in the API. Angular guards are user experience only.
 - Uploaded files must use a private, validated storage adapter; the old Cloudinary demo is not part of the target domain.

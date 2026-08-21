@@ -50,6 +50,19 @@ Generated idempotent deployment SQL is written to `artifacts/migrations/LeanProd
 6. Destructive operations (drop/rename/type narrowing) require an explicit backup and rollback plan.
 7. Deploy migrations once per environment, before starting the new API version.
 
+## Organization and address migration
+
+Migration `20260820142343_AddOrganizationAndAddresses`:
+
+- creates the singleton `Organization` table with an `Id = 1` check constraint;
+- creates shared `Addresses` with exactly-one-owner, foreign-key and unique filtered GLN constraints;
+- inserts the initial editable organization profile;
+- copies populated legacy `StorageLocations.Address` values to primary `Delivery` addresses;
+- drops the legacy column only after the data copy;
+- restores primary storage addresses in `Down` before dropping the new tables.
+
+This is a reviewed data-preserving migration. New installations receive the same schema and initial singleton organization record.
+
 ## Mapping conventions
 
 New production entities must explicitly define required fields, maximum string lengths, decimal precision, indexes, delete behavior, and optimistic concurrency where concurrent updates are possible. Store timestamps as UTC. Feature-specific tables should use a stable schema once the module's first tables are introduced; changing schemas later requires a migration and deployment review.

@@ -18,4 +18,7 @@
     <ProjectReference Include="..\LeanProd.Application\LeanProd.Application.csproj" />
     <ProjectReference Include="..\LeanProd.Domain\LeanProd.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Features\MasterData\Resources\international-units.catalog.json" />
+  </ItemGroup>
 </Project>

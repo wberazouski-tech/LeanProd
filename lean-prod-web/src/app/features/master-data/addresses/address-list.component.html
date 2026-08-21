@@ -1,0 +1,112 @@
+<section class="editor">
+  @if (!compact) { <h2>{{ "addresses.title" | transloco }}</h2> }
+  @if (canManage && !compact) {
+    <button type="button" (click)="add()" class="address-add-button">
+      {{ "addresses.add" | transloco }}
+    </button>
+  }
+  @if (compact) {
+    <div class="compact-addresses">
+      @for (item of items; track item.id) {
+        <div class="compact-address" [class.inactive-address]="!item.isActive"><span><strong>{{ 'addressTypes.' + item.addressType | transloco }}{{ item.isPrimary ? ' ★' : '' }}</strong> · {{ addressText(item) }} @if (item.gln) { · GLN {{ item.gln }} }</span>@if (canManage) { <button type="button" class="icon-button" (click)="edit(item)" [title]="'addresses.edit' | transloco" [attr.aria-label]="'addresses.edit' | transloco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" /></svg></button> }</div>
+      }
+    </div>
+    @if (canManage) { <button type="button" (click)="add()" class="address-add-button">{{ "addresses.add" | transloco }}</button> }
+  } @else {
+  <table>
+    <thead>
+      <tr>
+        <th>{{ "addresses.type" | transloco }}</th>
+        <th>{{ "addresses.country" | transloco }}</th>
+        <th>{{ "addresses.locality" | transloco }}</th>
+        <th>{{ "addresses.postalCode" | transloco }}</th>
+        <th>{{ "addresses.line" | transloco }}</th>
+        <th>GLN</th>
+        <th>{{ "admin.status" | transloco }}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of items; track item.id) {
+        <tr>
+          <td>
+            {{ "addressTypes." + item.addressType | transloco }}
+            @if (item.isPrimary) {
+              ★
+            }
+          </td>
+          <td>{{ item.countryCode }}</td>
+          <td>{{ item.locality ?? "—" }}</td>
+          <td>{{ item.postalCode ?? "—" }}</td>
+          <td>{{ item.addressLine }}</td>
+          <td>{{ item.gln ?? "—" }}</td>
+          <td>
+            {{
+              (item.isActive ? "admin.active" : "admin.inactive") | transloco
+            }}
+          </td>
+          <td>
+            @if (canManage) {
+              <button (click)="edit(item)">
+                {{ "admin.edit" | transloco }}
+              </button>
+              @if (!item.isPrimary && item.isActive) {
+                <button (click)="primary(item)">
+                  {{ "addresses.makePrimary" | transloco }}
+                </button>
+              }
+              <button (click)="active(item, !item.isActive)">
+                {{
+                  (item.isActive ? "admin.deactivate" : "admin.activate")
+                    | transloco
+                }}
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  }
+  @if (showEditor) {
+    <div class="modal-layer" (click)="showEditor = false">
+    <dialog open class="address-dialog" (click)="$event.stopPropagation()">
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <h3>
+          {{ (editing ? "addresses.edit" : "addresses.add") | transloco }}
+        </h3>
+        <label
+          >{{ "addresses.type" | transloco
+          }}<select formControlName="addressType">
+            @for (type of types; track type) {
+              <option [value]="type">
+                {{ "addressTypes." + type | transloco }}
+              </option>
+            }
+          </select></label
+        ><label
+          >{{ "addresses.country" | transloco
+          }}<input formControlName="countryCode" maxlength="2" /></label
+        ><label
+          >{{ "addresses.locality" | transloco
+          }}<input formControlName="locality" /></label
+        ><label
+          >{{ "addresses.postalCode" | transloco
+          }}<input formControlName="postalCode" /></label
+        ><label
+          >{{ "addresses.line" | transloco
+          }}<textarea formControlName="addressLine"></textarea></label
+        ><label>GLN<input formControlName="gln" maxlength="13" /></label
+        ><label
+          ><input type="checkbox" formControlName="isPrimary" />
+          {{ "addresses.primary" | transloco }}</label
+        ><button [disabled]="form.invalid">
+          {{ "common.save" | transloco }}</button
+        ><button type="button" (click)="showEditor = false">
+          {{ "common.close" | transloco }}
+        </button>
+      </form>
+    </dialog>
+    </div>
+  }
+</section>

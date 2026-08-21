@@ -1,2 +1,8 @@
+<div class="language-picker">
+  <label for="language">{{ 'common.language' | transloco }}</label>
+  <select id="language" [value]="language.current()" (change)="changeLanguage($any($event.target).value)">
+    <option value="be">Беларуская</option><option value="en">English</option>
+  </select>
+</div>
 <app-error-banner />
 <router-outlet />

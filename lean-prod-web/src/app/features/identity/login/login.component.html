@@ -1,12 +1,12 @@
-<h1>Уваход у LeanProd</h1>
+<main class="auth-page"><section class="auth-card"><div class="auth-brand"><div class="auth-mark">LP</div><div><strong>LeanProd</strong><span>{{ 'shell.subtitle' | transloco }}</span></div></div><h1>{{ 'auth.loginTitle' | transloco }}</h1>
 <form [formGroup]="form" (ngSubmit)="submit()">
-  <label class="field">Email
+  <label class="field">{{ 'common.email' | transloco }}
     <input type="email" formControlName="email" autocomplete="username">
   </label>
-  <label class="field">Пароль
-    <input type="password" formControlName="password" autocomplete="current-password">
+  <label class="field">{{ 'common.password' | transloco }}
+    <span class="password-input"><input [type]="passwordVisible() ? 'text' : 'password'" formControlName="password" autocomplete="current-password"><button type="button" (click)="passwordVisible.set(!passwordVisible())" [attr.aria-label]="(passwordVisible() ? 'common.hidePassword' : 'common.showPassword') | transloco">{{ (passwordVisible() ? 'common.hide' : 'common.show') | transloco }}</button></span>
   </label>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-  <button type="submit" [disabled]="form.invalid || submitting()">Увайсці</button>
-  <p><a routerLink="/register">Стварыць уліковы запіс</a></p>
-</form>
+  <button type="submit" [disabled]="form.invalid || submitting()">{{ 'auth.login' | transloco }}</button>
+  <p class="auth-link"><a routerLink="/register">{{ 'auth.createAccount' | transloco }}</a></p>
+</form></section></main>

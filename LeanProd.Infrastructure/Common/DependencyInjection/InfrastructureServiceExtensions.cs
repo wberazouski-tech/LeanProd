@@ -1,9 +1,14 @@
 using LeanProd.Application.Common.Abstractions;
+using LeanProd.Application.Features.Identity;
+using LeanProd.Application.Features.MasterData;
+using LeanProd.Infrastructure.Features.MasterData;
 using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using LeanProd.Infrastructure.Features.Identity;
+using LeanProd.Application.Features.Organizations;
+using LeanProd.Infrastructure.Features.Organizations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
@@ -36,6 +41,13 @@ public static class InfrastructureServiceExtensions
         });
 
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<LeanProdDbContext>());
+        services.AddScoped<IUserAdministrationService, UserAdministrationService>();
+        services.AddScoped<IMasterDataService, MasterDataService>();
+        services.AddSingleton<IInternationalUnitCatalog, InternationalUnitCatalog>();
+        services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
+        services.AddScoped<IEquipmentService, EquipmentService>();
+        services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IAddressService, AddressService>();
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(options => options.SigningKey.Length >= 64, "JWT signing key must be at least 64 characters.")

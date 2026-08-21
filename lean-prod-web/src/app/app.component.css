@@ -1,1 +1,5 @@
 :host { display: block; min-height: 100vh; }
+.language-picker { align-items: center; color: #667085; display: flex; font-size: .82rem; gap: .45rem; height: 62px; justify-content: flex-end; padding: 0 1.25rem; position: absolute; right: 0; top: 0; z-index: 10; }
+.language-picker label { white-space: nowrap; }
+.language-picker select { background: #fff; min-height: 34px; padding: .3rem .55rem; }
+@media (max-width: 760px) { .language-picker { background: #fff; border-bottom: 1px solid #d9e1ec; height: auto; padding: .45rem .75rem; position: relative; } }

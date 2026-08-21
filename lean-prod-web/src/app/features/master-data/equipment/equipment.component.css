@@ -1,0 +1,7 @@
+dialog { width: min(900px, 92vw); max-height: 88vh; border: 1px solid #888; padding: 1rem; }
+dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.dialog-close { float: right; }
+.dialog-form { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
+.dialog-form label { display: flex; flex-direction: column; gap: .25rem; }
+.actions { display: flex; gap: .5rem; margin-bottom: 1rem; }
+tr.planned { background: #fff8dc; }

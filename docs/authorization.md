@@ -4,6 +4,14 @@ LeanProd uses ASP.NET Core Identity roles mapped to application permissions. End
 
 Permission constants and the role matrix are owned by `LeanProd.Application/Features/Identity`. API policy infrastructure is in `LeanProd.Api/Common/Authorization`.
 
+## Organization permissions
+
+- `Organization.View` permits reading the singleton organization profile and its addresses. It is included in every standard operational role.
+- `Organization.Manage` permits changing the profile and adding organization addresses. It is assigned to `SystemAdministrator` and `MasterDataAdministrator`.
+- `MasterData.Manage` controls department/storage address maintenance and generic address update, activation and make-primary actions.
+
+The Angular route `/administration/organization` requires `Organization.View`; edit controls additionally require `Organization.Manage`. The API remains the authoritative enforcement point.
+
 Use a permission on an endpoint:
 
 ```csharp
@@ -24,3 +32,5 @@ Angular receives effective permissions from `login`, `register`, and `me`, expos
 - Angular retries one failed authorized request after a coordinated refresh. A page reload restores the session through the refresh cookie.
 
 Local bootstrap administrator credentials are configured through .NET User Secrets and must not be committed. The seeded account receives the `SystemAdministrator` role.
+Логін: admin@leanprod.local
+Пароль: LeanProd@Local123!

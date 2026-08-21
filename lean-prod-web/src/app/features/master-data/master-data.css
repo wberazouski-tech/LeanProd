@@ -1,0 +1,24 @@
+.filters { align-items: end; background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; display: flex; flex-wrap: wrap; gap: .65rem; margin-bottom: 1rem; padding: .8rem; }
+.editor { background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; box-shadow: 0 5px 18px rgba(29,52,84,.05); margin-top: 1.25rem; padding: 1rem; }
+.editor form { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .5rem; }
+.editor label { display: flex; flex-direction: column; gap: .35rem; }
+.editor textarea { min-width: 18rem; }
+fieldset label { display: inline-block; font-weight: 400; margin-right: 1rem; }
+tbody tr { cursor: pointer; }
+.department-dialog { width: min(820px, calc(100vw - 2rem)); }
+.address-dialog { width: min(660px, calc(100vw - 2rem)); }
+.storage-dialog { width: min(940px, calc(100vw - 2rem)); }
+.storage-dialog .editor { border: 0; box-shadow: none; margin: 0; padding: 0; }
+.storage-dialog fieldset { grid-column: 1 / -1; }
+.storage-dialog fieldset label { align-items: center; display: inline-flex; flex-direction: row; gap: .4rem; margin: .25rem 1rem .25rem 0; width: auto; }
+.storage-dialog fieldset input[type="checkbox"] { flex: 0 0 auto; height: 16px; margin: 0; min-height: 0; padding: 0; width: 16px; }
+.modal-layer { align-items: center; background: rgba(15,23,42,.45); display: flex; inset: 0; justify-content: center; padding: 1rem; position: fixed; z-index: 50; }
+.modal-layer dialog[open] { margin: 0; position: static; }
+.department-dialog .editor { border: 0; box-shadow: none; margin: 0; padding: 0; }
+.department-dialog .editor form { align-items: end; display: grid; grid-template-columns: 130px minmax(180px,1fr) minmax(180px,1fr); }
+.department-dialog .editor label:last-of-type { grid-column: 2 / -1; }
+.department-dialog .editor textarea { min-width: 0; width: 100%; }
+p { color: #667085; }
+dialog form { align-items: stretch !important; display: grid !important; grid-template-columns: repeat(2,minmax(180px,1fr)); }
+dialog h3 { grid-column: 1/-1; } dialog textarea { min-width: 0 !important; } dialog button { align-self: end; }
+@media (max-width: 760px) { .filters > * { flex: 1 1 100%; }.editor form > label { width: 100%; }.editor input,.editor select,.editor textarea { width: 100%; }dialog form { grid-template-columns: 1fr; } }

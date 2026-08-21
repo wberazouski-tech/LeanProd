@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace LeanProd.Api.Features.Identity;
 
@@ -20,7 +21,8 @@ public sealed class IdentityController(
     SignInManager<AppUser> signInManager,
     UserManager<AppUser> userManager,
     LeanProdDbContext dbContext,
-    TokenService tokenService) : BaseApiController
+    TokenService tokenService,
+    IConfiguration configuration) : BaseApiController
 {
     private const string RefreshCookieName = "__Host-LeanProd.Refresh";
 
@@ -28,6 +30,14 @@ public sealed class IdentityController(
     [HttpPost("register")]
     public async Task<ActionResult<CurrentUserResponse>> Register(RegisterRequest request)
     {
+        if (!configuration.GetValue("Identity:AllowPublicRegistration", false))
+            return Problem(statusCode: 403, title: "Registration disabled",
+                detail: "Public registration is disabled. Ask an administrator to create the account.");
+        var preferredLanguage = request.PreferredLanguage ?? SupportedLanguages.Belarusian;
+        if (!SupportedLanguages.IsSupported(preferredLanguage))
+            return Problem(statusCode: 400, title: "Invalid language",
+                detail: "Preferred language must be 'be' or 'en'.");
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var email = request.Email.Trim().ToLowerInvariant();
         if (await userManager.FindByEmailAsync(email) is not null)
@@ -38,6 +48,7 @@ public sealed class IdentityController(
             UserName = email,
             Email = email,
             DisplayName = request.DisplayName.Trim(),
+            PreferredLanguage = preferredLanguage.ToLowerInvariant(),
             IsActive = true
         };
         var result = await userManager.CreateAsync(user, request.Password);
@@ -70,6 +81,7 @@ public sealed class IdentityController(
         if (user is null || !user.IsActive) return Unauthorized();
         var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
         if (!result.Succeeded) return Unauthorized();
+        user.LastLoginAtUtc = DateTime.UtcNow;
         return Ok(await IssueTokenPair(user));
     }
 
@@ -141,9 +153,29 @@ public sealed class IdentityController(
             user.Id,
             user.Email,
             user.DisplayName,
+            user.PreferredLanguage,
+            user.DefaultDepartmentId,
+            user.DefaultStorageLocationId,
             roles,
             permissions = RolePermissionMatrix.GetPermissions(roles)
         });
+    }
+
+    [Authorize]
+    [HttpPut("preferences")]
+    public async Task<IActionResult> UpdatePreferences(UpdatePreferencesRequest request)
+    {
+        if (!SupportedLanguages.IsSupported(request.PreferredLanguage))
+            return Problem(statusCode: 400, title: "Invalid language",
+                detail: "Preferred language must be 'be' or 'en'.");
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await userManager.FindByIdAsync(userId!);
+        if (user is null || !user.IsActive) return Unauthorized();
+        user.PreferredLanguage = request.PreferredLanguage.ToLowerInvariant();
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        user.UpdatedByUserId = user.Id;
+        var result = await userManager.UpdateAsync(user);
+        return result.Succeeded ? NoContent() : Problem("Could not save interface language.");
     }
 
     private async Task<CurrentUserResponse> IssueTokenPair(AppUser user)
@@ -157,7 +189,8 @@ public sealed class IdentityController(
     private async Task<CurrentUserResponse> ToResponse(AppUser user, TokenPair pair)
     {
         var roles = (await userManager.GetRolesAsync(user)).ToArray();
-        return new(user.Id, user.Email!, user.DisplayName, roles,
+        return new(user.Id, user.Email!, user.DisplayName, user.PreferredLanguage,
+            user.DefaultDepartmentId, user.DefaultStorageLocationId, roles,
             [.. RolePermissionMatrix.GetPermissions(roles)], pair.AccessToken, pair.AccessTokenExpiresAtUtc);
     }
 

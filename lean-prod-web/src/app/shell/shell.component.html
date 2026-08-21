@@ -1,2 +1,47 @@
-<header class="topbar"><strong>LeanProd</strong><span>Вытворчы ўлік</span>@if (auth.currentUser(); as user) { <span class="user">{{ user.displayName }} · {{ user.roles.join(', ') }}</span><button type="button" (click)="logout()">Выйсці</button> }</header>
-<div class="shell"><nav aria-label="Асноўная навігацыя"><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Агляд</a><a routerLink="/sample-form" routerLinkActive="active">Новы запіс</a>@if (auth.hasPermission(permissions.usersManage)) { <a routerLink="/administration" routerLinkActive="active">Адміністраванне</a> }</nav><main><router-outlet /></main></div>
+<header class="topbar">
+  <strong>LeanProd</strong><span>{{ "shell.subtitle" | transloco }}</span>
+  @if (auth.currentUser(); as user) {
+    <span class="user">{{ user.displayName }} · {{ roleList(user.roles) }}</span
+    ><button type="button" (click)="logout()">
+      {{ "shell.logout" | transloco }}
+    </button>
+  }
+</header>
+<div class="shell">
+  <nav [attr.aria-label]="'shell.navigation' | transloco">
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >{{ "shell.overview" | transloco }}</a
+  >
+  @if (auth.hasPermission(permissions.organizationView)) {
+    <a routerLink="/administration/organization" routerLinkActive="active">{{ "organization.title" | transloco }}</a>
+  }
+    @if (auth.hasPermission(permissions.masterDataView)) {
+      <a routerLink="/master-data/departments" routerLinkActive="active">{{
+        "masterData.departments" | transloco
+      }}</a
+      ><a
+        routerLink="/master-data/storage-locations"
+        routerLinkActive="active"
+        >{{ "masterData.storageLocations" | transloco }}</a
+      ><a
+        routerLink="/master-data/units-of-measure"
+        routerLinkActive="active"
+        >{{ "units.title" | transloco }}</a
+      ><a routerLink="/master-data/equipment" routerLinkActive="active">{{
+        "equipment.title" | transloco
+      }}</a>
+    }
+    <a routerLink="/sample-form" routerLinkActive="active">{{
+      "shell.newRecord" | transloco
+    }}</a>
+    @if (auth.hasPermission(permissions.usersManage)) {
+      <a routerLink="/administration" routerLinkActive="active">{{
+        "shell.administration" | transloco
+      }}</a>
+    }
+  </nav>
+  <main><router-outlet /></main>
+</div>

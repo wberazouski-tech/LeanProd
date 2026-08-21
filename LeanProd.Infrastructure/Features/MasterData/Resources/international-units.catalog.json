@@ -1,0 +1,1500 @@
+{
+  "catalog": "international-units",
+  "version": "2021",
+  "units": [
+    {
+      "code": "003",
+      "name": "millimetre",
+      "symbol": "mm",
+      "letterCode": "MMT"
+    },
+    {
+      "code": "004",
+      "name": "centimetre",
+      "symbol": "cm",
+      "letterCode": "CMT"
+    },
+    {
+      "code": "005",
+      "name": "decimetre",
+      "symbol": "dm",
+      "letterCode": "DMT"
+    },
+    {
+      "code": "006",
+      "name": "metre",
+      "symbol": "m",
+      "letterCode": "MTR"
+    },
+    {
+      "code": "008",
+      "name": "kilometre",
+      "symbol": "km",
+      "letterCode": "KMT"
+    },
+    {
+      "code": "009",
+      "name": "megametre",
+      "symbol": "Mm",
+      "letterCode": "MAM"
+    },
+    {
+      "code": "039",
+      "name": "inch",
+      "symbol": "in",
+      "letterCode": "INH"
+    },
+    {
+      "code": "041",
+      "name": "foot",
+      "symbol": "ft",
+      "letterCode": "FOT"
+    },
+    {
+      "code": "043",
+      "name": "yard",
+      "symbol": "yd",
+      "letterCode": "YRD"
+    },
+    {
+      "code": "047",
+      "name": "nautical mile",
+      "symbol": "n mile",
+      "letterCode": "NMI"
+    },
+    {
+      "code": "050",
+      "name": "square millimetre",
+      "symbol": "mm2",
+      "letterCode": "MMK"
+    },
+    {
+      "code": "051",
+      "name": "square centimetre",
+      "symbol": "cm2",
+      "letterCode": "CMK"
+    },
+    {
+      "code": "053",
+      "name": "square decimetre",
+      "symbol": "dm2",
+      "letterCode": "DMK"
+    },
+    {
+      "code": "055",
+      "name": "square metre",
+      "symbol": "m2",
+      "letterCode": "MTK"
+    },
+    {
+      "code": "058",
+      "name": "decare",
+      "symbol": "daa",
+      "letterCode": "DAA"
+    },
+    {
+      "code": "059",
+      "name": "hectare",
+      "symbol": "ha",
+      "letterCode": "HAR"
+    },
+    {
+      "code": "061",
+      "name": "square kilometre",
+      "symbol": "km2",
+      "letterCode": "KMK"
+    },
+    {
+      "code": "071",
+      "name": "square inch",
+      "symbol": "in2",
+      "letterCode": "INK"
+    },
+    {
+      "code": "073",
+      "name": "square foot",
+      "symbol": "ft2",
+      "letterCode": "FTK"
+    },
+    {
+      "code": "075",
+      "name": "square yard",
+      "symbol": "yd2",
+      "letterCode": "YDK"
+    },
+    {
+      "code": "109",
+      "name": "are",
+      "symbol": "a",
+      "letterCode": "ARE"
+    },
+    {
+      "code": "110",
+      "name": "cubic millimetre",
+      "symbol": "mm3",
+      "letterCode": "MMQ"
+    },
+    {
+      "code": "111",
+      "name": "cubic centimetre",
+      "symbol": "cm3\nml",
+      "letterCode": "CMQ"
+    },
+    {
+      "code": "112",
+      "name": "litre",
+      "symbol": "l\nL\ndm3",
+      "letterCode": "LTR"
+    },
+    {
+      "code": "113",
+      "name": "cubic metre",
+      "symbol": "m3",
+      "letterCode": "MTQ"
+    },
+    {
+      "code": "118",
+      "name": "decilitre",
+      "symbol": "dl",
+      "letterCode": "DLT"
+    },
+    {
+      "code": "122",
+      "name": "hectolitre",
+      "symbol": "hl",
+      "letterCode": "HLT"
+    },
+    {
+      "code": "126",
+      "name": "megalitre",
+      "symbol": "Ml",
+      "letterCode": "MAL"
+    },
+    {
+      "code": "131",
+      "name": "cubic inch",
+      "symbol": "in3",
+      "letterCode": "INQ"
+    },
+    {
+      "code": "132",
+      "name": "cubic foot",
+      "symbol": "ft3",
+      "letterCode": "FTQ"
+    },
+    {
+      "code": "133",
+      "name": "cubic yard",
+      "symbol": "yd3",
+      "letterCode": "YDQ"
+    },
+    {
+      "code": "159",
+      "name": "million cubic metre",
+      "symbol": "10^6 m3",
+      "letterCode": "HMQ"
+    },
+    {
+      "code": "160",
+      "name": "hectogram",
+      "symbol": "hg",
+      "letterCode": "HGM"
+    },
+    {
+      "code": "161",
+      "name": "milligram",
+      "symbol": "mg",
+      "letterCode": "MGM"
+    },
+    {
+      "code": "162",
+      "name": "metric carat",
+      "symbol": "МС",
+      "letterCode": "CTM"
+    },
+    {
+      "code": "163",
+      "name": "gram",
+      "symbol": "g",
+      "letterCode": "GRM"
+    },
+    {
+      "code": "166",
+      "name": "kilogram",
+      "symbol": "kg",
+      "letterCode": "KGM"
+    },
+    {
+      "code": "168",
+      "name": "tonne (metric ton)",
+      "symbol": "t",
+      "letterCode": "TNE"
+    },
+    {
+      "code": "170",
+      "name": "kilotonne",
+      "symbol": "kt",
+      "letterCode": "KTN"
+    },
+    {
+      "code": "173",
+      "name": "centigram",
+      "symbol": "cg",
+      "letterCode": "CGM"
+    },
+    {
+      "code": "181",
+      "name": "gross register ton",
+      "symbol": null,
+      "letterCode": "GRT"
+    },
+    {
+      "code": "185",
+      "name": "carrying capacity in metric ton",
+      "symbol": null,
+      "letterCode": "CCT"
+    },
+    {
+      "code": "206",
+      "name": "decitonne",
+      "symbol": "q\n100  kg",
+      "letterCode": "DTN"
+    },
+    {
+      "code": "212",
+      "name": "watt",
+      "symbol": "W",
+      "letterCode": "WTT"
+    },
+    {
+      "code": "214",
+      "name": "kilowatt",
+      "symbol": "kW",
+      "letterCode": "KWT"
+    },
+    {
+      "code": "215",
+      "name": "megawatt",
+      "symbol": "MW",
+      "letterCode": "MAW"
+    },
+    {
+      "code": "222",
+      "name": "volt",
+      "symbol": "V",
+      "letterCode": "VLT"
+    },
+    {
+      "code": "223",
+      "name": "kilovolt",
+      "symbol": "kV",
+      "letterCode": "KVT"
+    },
+    {
+      "code": "227",
+      "name": "kilovolt - ampere",
+      "symbol": "kV.A",
+      "letterCode": "KVA"
+    },
+    {
+      "code": "228",
+      "name": "megavolt - ampere",
+      "symbol": "MV.A",
+      "letterCode": "MVA"
+    },
+    {
+      "code": "230",
+      "name": "kilovar",
+      "symbol": "kVAR",
+      "letterCode": "KVR"
+    },
+    {
+      "code": "243",
+      "name": "watt hour",
+      "symbol": "W.h",
+      "letterCode": "WHR"
+    },
+    {
+      "code": "245",
+      "name": "kilowatt hour",
+      "symbol": "kW.h",
+      "letterCode": "KWH"
+    },
+    {
+      "code": "246",
+      "name": "megawatt hour (1000 kW.h)",
+      "symbol": "МW.h",
+      "letterCode": "MWH"
+    },
+    {
+      "code": "247",
+      "name": "gigawatt hour",
+      "symbol": "GW.h",
+      "letterCode": "GWH"
+    },
+    {
+      "code": "260",
+      "name": "ampere",
+      "symbol": "A",
+      "letterCode": "AMP"
+    },
+    {
+      "code": "263",
+      "name": "ampere hour",
+      "symbol": "A.h",
+      "letterCode": "AMH"
+    },
+    {
+      "code": "264",
+      "name": "kiloampere hour (thousand ampere hour)",
+      "symbol": "1000  A.h",
+      "letterCode": "TAH"
+    },
+    {
+      "code": "270",
+      "name": "coulomb",
+      "symbol": "C",
+      "letterCode": "COU"
+    },
+    {
+      "code": "271",
+      "name": "joule",
+      "symbol": "J",
+      "letterCode": "JOU"
+    },
+    {
+      "code": "273",
+      "name": "kilojoule",
+      "symbol": "kJ",
+      "letterCode": "KJO"
+    },
+    {
+      "code": "274",
+      "name": "ohm",
+      "symbol": "Омега",
+      "letterCode": "OHM"
+    },
+    {
+      "code": "280",
+      "name": "degree Celsius",
+      "symbol": "°С",
+      "letterCode": "CEL"
+    },
+    {
+      "code": "281",
+      "name": "degree Fahrenheit",
+      "symbol": "°F",
+      "letterCode": "FAH"
+    },
+    {
+      "code": "282",
+      "name": "candela",
+      "symbol": "cd",
+      "letterCode": "CDL"
+    },
+    {
+      "code": "283",
+      "name": "lux",
+      "symbol": "lx",
+      "letterCode": "LUX"
+    },
+    {
+      "code": "284",
+      "name": "lumen",
+      "symbol": "lm",
+      "letterCode": "LUM"
+    },
+    {
+      "code": "288",
+      "name": "kelvin",
+      "symbol": "K",
+      "letterCode": "KEL"
+    },
+    {
+      "code": "289",
+      "name": "newton",
+      "symbol": "N",
+      "letterCode": "NEW"
+    },
+    {
+      "code": "290",
+      "name": "hertz",
+      "symbol": "Hz",
+      "letterCode": "HTZ"
+    },
+    {
+      "code": "291",
+      "name": "kilohertz",
+      "symbol": "kHz",
+      "letterCode": "KHZ"
+    },
+    {
+      "code": "292",
+      "name": "megahertz",
+      "symbol": "MHz",
+      "letterCode": "MHZ"
+    },
+    {
+      "code": "294",
+      "name": "pascal",
+      "symbol": "Pa",
+      "letterCode": "PAL"
+    },
+    {
+      "code": "296",
+      "name": "siemens",
+      "symbol": "S",
+      "letterCode": "SIE"
+    },
+    {
+      "code": "297",
+      "name": "kilopascal",
+      "symbol": "kPa",
+      "letterCode": "KPA"
+    },
+    {
+      "code": "298",
+      "name": "megapascal",
+      "symbol": "MPa",
+      "letterCode": "MPA"
+    },
+    {
+      "code": "300",
+      "name": "standard atmosphere",
+      "symbol": "atm",
+      "letterCode": "ATM"
+    },
+    {
+      "code": "301",
+      "name": "technical atmosphere",
+      "symbol": "at",
+      "letterCode": "ATT"
+    },
+    {
+      "code": "302",
+      "name": "gigabecquerel",
+      "symbol": "GBq",
+      "letterCode": "GBQ"
+    },
+    {
+      "code": "304",
+      "name": "millicurie",
+      "symbol": "mCi",
+      "letterCode": "MCU"
+    },
+    {
+      "code": "305",
+      "name": "curie",
+      "symbol": "Ci",
+      "letterCode": "CUR"
+    },
+    {
+      "code": "306",
+      "name": "gram of fissile isotope",
+      "symbol": "g fissile isotopes",
+      "letterCode": "GFI"
+    },
+    {
+      "code": "308",
+      "name": "millibar",
+      "symbol": "mbar",
+      "letterCode": "MBR"
+    },
+    {
+      "code": "309",
+      "name": "bar [unit of pressure]",
+      "symbol": "bar",
+      "letterCode": "BAR"
+    },
+    {
+      "code": "310",
+      "name": "hectobar",
+      "symbol": "hbar",
+      "letterCode": "HBA"
+    },
+    {
+      "code": "312",
+      "name": "kilobar",
+      "symbol": "kbar",
+      "letterCode": "KBA"
+    },
+    {
+      "code": "314",
+      "name": "farad",
+      "symbol": "F",
+      "letterCode": "FAR"
+    },
+    {
+      "code": "316",
+      "name": "kilogram per cubic metre",
+      "symbol": "kg/m3",
+      "letterCode": "KMQ"
+    },
+    {
+      "code": "323",
+      "name": "becquerel",
+      "symbol": "Bq",
+      "letterCode": "BQL"
+    },
+    {
+      "code": "324",
+      "name": "weber",
+      "symbol": "Wb",
+      "letterCode": "WEB"
+    },
+    {
+      "code": "327",
+      "name": "knot",
+      "symbol": "kn",
+      "letterCode": "KNT"
+    },
+    {
+      "code": "328",
+      "name": "metre per second",
+      "symbol": "m/s",
+      "letterCode": "MTS"
+    },
+    {
+      "code": "330",
+      "name": "revolutions per second",
+      "symbol": "r/s",
+      "letterCode": "RPS"
+    },
+    {
+      "code": "331",
+      "name": "revolutions per minute",
+      "symbol": "r/min",
+      "letterCode": "RPM"
+    },
+    {
+      "code": "333",
+      "name": "kilometre per hour",
+      "symbol": "km/h",
+      "letterCode": "KMH"
+    },
+    {
+      "code": "335",
+      "name": "metre per second squared",
+      "symbol": "m/s2",
+      "letterCode": "MSK"
+    },
+    {
+      "code": "349",
+      "name": "coulomb per kilogram",
+      "symbol": "C/kg",
+      "letterCode": "CKG"
+    },
+    {
+      "code": "354",
+      "name": "second [unit of time]",
+      "symbol": "s",
+      "letterCode": "SEC"
+    },
+    {
+      "code": "355",
+      "name": "minute [unit of time]",
+      "symbol": "min",
+      "letterCode": "MIN"
+    },
+    {
+      "code": "356",
+      "name": "hour",
+      "symbol": "h",
+      "letterCode": "HUR"
+    },
+    {
+      "code": "359",
+      "name": "day",
+      "symbol": "d",
+      "letterCode": "DAY"
+    },
+    {
+      "code": "360",
+      "name": "week",
+      "symbol": null,
+      "letterCode": "WEE"
+    },
+    {
+      "code": "361",
+      "name": "ten day",
+      "symbol": null,
+      "letterCode": "DAD"
+    },
+    {
+      "code": "362",
+      "name": "month",
+      "symbol": null,
+      "letterCode": "MON"
+    },
+    {
+      "code": "364",
+      "name": "quarter (of a year)",
+      "symbol": null,
+      "letterCode": "QAN"
+    },
+    {
+      "code": "365",
+      "name": "half year (6 months)",
+      "symbol": null,
+      "letterCode": "SAN"
+    },
+    {
+      "code": "366",
+      "name": "year",
+      "symbol": "a",
+      "letterCode": "ANN"
+    },
+    {
+      "code": "368",
+      "name": "decade",
+      "symbol": null,
+      "letterCode": "DEC"
+    },
+    {
+      "code": "499",
+      "name": "kilogram per second",
+      "symbol": null,
+      "letterCode": "KGS"
+    },
+    {
+      "code": "533",
+      "name": "ton of steam per hour",
+      "symbol": null,
+      "letterCode": "TSH"
+    },
+    {
+      "code": "596",
+      "name": "cubic metre per second",
+      "symbol": "m3/s",
+      "letterCode": "MQS"
+    },
+    {
+      "code": "598",
+      "name": "cubic metre per hour",
+      "symbol": "m3/h",
+      "letterCode": "MQH"
+    },
+    {
+      "code": "599",
+      "name": "thousand cubic metre per day",
+      "symbol": null,
+      "letterCode": "TQD"
+    },
+    {
+      "code": "616",
+      "name": "bobbin",
+      "symbol": null,
+      "letterCode": "XBB"
+    },
+    {
+      "code": "625",
+      "name": "leaf",
+      "symbol": null,
+      "letterCode": "LEF"
+    },
+    {
+      "code": "626",
+      "name": "hundred leave",
+      "symbol": null,
+      "letterCode": "CLF"
+    },
+    {
+      "code": "630",
+      "name": "thousand standard brick equivalent",
+      "symbol": null,
+      "letterCode": "MBE"
+    },
+    {
+      "code": "641",
+      "name": "dozen",
+      "symbol": "Doz\n12",
+      "letterCode": "DZN"
+    },
+    {
+      "code": "657",
+      "name": "number of articles",
+      "symbol": null,
+      "letterCode": "NAR"
+    },
+    {
+      "code": "683",
+      "name": "hundred boxes",
+      "symbol": "Hbx",
+      "letterCode": "HBX"
+    },
+    {
+      "code": "704",
+      "name": "set",
+      "symbol": null,
+      "letterCode": "SET"
+    },
+    {
+      "code": "715",
+      "name": "pair",
+      "symbol": "pr\n2",
+      "letterCode": "PR"
+    },
+    {
+      "code": "730",
+      "name": "score",
+      "symbol": "20",
+      "letterCode": "SCO"
+    },
+    {
+      "code": "732",
+      "name": "ten pair",
+      "symbol": null,
+      "letterCode": "TPR"
+    },
+    {
+      "code": "733",
+      "name": "dozen pair",
+      "symbol": null,
+      "letterCode": "DPR"
+    },
+    {
+      "code": "734",
+      "name": "number of parcels",
+      "symbol": null,
+      "letterCode": "NPL"
+    },
+    {
+      "code": "735",
+      "name": "number of parts",
+      "symbol": null,
+      "letterCode": "NPT"
+    },
+    {
+      "code": "736",
+      "name": "number of rolls",
+      "symbol": null,
+      "letterCode": "NRL"
+    },
+    {
+      "code": "737",
+      "name": "dozen roll",
+      "symbol": null,
+      "letterCode": "DRL"
+    },
+    {
+      "code": "740",
+      "name": "dozen piece",
+      "symbol": null,
+      "letterCode": "DPC"
+    },
+    {
+      "code": "745",
+      "name": "number of cells",
+      "symbol": "CI",
+      "letterCode": "NCL"
+    },
+    {
+      "code": "778",
+      "name": "number of packs",
+      "symbol": null,
+      "letterCode": "NMP"
+    },
+    {
+      "code": "780",
+      "name": "dozen pack",
+      "symbol": null,
+      "letterCode": "DZP"
+    },
+    {
+      "code": "781",
+      "name": "hundred pack",
+      "symbol": null,
+      "letterCode": "CNP"
+    },
+    {
+      "code": "796",
+      "name": "piece",
+      "symbol": "pc\n1",
+      "letterCode": "H87"
+    },
+    {
+      "code": "797",
+      "name": "hundred",
+      "symbol": "100",
+      "letterCode": "CEN"
+    },
+    {
+      "code": "798",
+      "name": "thousand",
+      "symbol": "1000",
+      "letterCode": "MIL"
+    },
+    {
+      "code": "799",
+      "name": "million",
+      "symbol": "10^6",
+      "letterCode": "MIO"
+    },
+    {
+      "code": "800",
+      "name": "milliard",
+      "symbol": "10^9",
+      "letterCode": "MLD"
+    },
+    {
+      "code": "801",
+      "name": "billion (EUR)",
+      "symbol": "10^12",
+      "letterCode": "BIL"
+    },
+    {
+      "code": "802",
+      "name": "trillion (EUR)",
+      "symbol": "10^18",
+      "letterCode": "TRL"
+    },
+    {
+      "code": "820",
+      "name": "alcoholic strength by mass",
+      "symbol": "% mds",
+      "letterCode": "ASM"
+    },
+    {
+      "code": "821",
+      "name": "alcoholic strength by volume",
+      "symbol": "% vol",
+      "letterCode": "ASU"
+    },
+    {
+      "code": "831",
+      "name": "litre of pure alcohol",
+      "symbol": null,
+      "letterCode": "LPA"
+    },
+    {
+      "code": "833",
+      "name": "hectolitre of pure alcohol",
+      "symbol": null,
+      "letterCode": "HPA"
+    },
+    {
+      "code": "841",
+      "name": "kilogram of hydrogen peroxide",
+      "symbol": null,
+      "letterCode": "KHY"
+    },
+    {
+      "code": "845",
+      "name": "kilogram of substance 90 % dry",
+      "symbol": null,
+      "letterCode": "KSD"
+    },
+    {
+      "code": "847",
+      "name": "tonne of substance 90 % dry",
+      "symbol": null,
+      "letterCode": "TSD"
+    },
+    {
+      "code": "852",
+      "name": "kilogram of potassium oxide",
+      "symbol": null,
+      "letterCode": "KPO"
+    },
+    {
+      "code": "859",
+      "name": "kilogram of potassium hydroxide (caustic potash)",
+      "symbol": null,
+      "letterCode": "KPH"
+    },
+    {
+      "code": "861",
+      "name": "kilogram of nitrogen",
+      "symbol": null,
+      "letterCode": "KNI"
+    },
+    {
+      "code": "863",
+      "name": "kilogram of sodium hydroxide (caustic soda)",
+      "symbol": null,
+      "letterCode": "KSH"
+    },
+    {
+      "code": "865",
+      "name": "kilogram of phosphorus pentoxide (phosphoric anhydride)",
+      "symbol": null,
+      "letterCode": "KPP"
+    },
+    {
+      "code": "867",
+      "name": "kilogram of uranium",
+      "symbol": null,
+      "letterCode": "KUR"
+    },
+    {
+      "code": "018",
+      "name": "linear metre",
+      "symbol": null,
+      "letterCode": "LM"
+    },
+    {
+      "code": "019",
+      "name": "thousand linear metre",
+      "symbol": null,
+      "letterCode": "TT"
+    },
+    {
+      "code": "114",
+      "name": "thousand cubic metre",
+      "symbol": null,
+      "letterCode": "R9"
+    },
+    {
+      "code": "116",
+      "name": "decalitre",
+      "symbol": null,
+      "letterCode": "A44"
+    },
+    {
+      "code": "226",
+      "name": "volt - ampere",
+      "symbol": null,
+      "letterCode": "D46"
+    },
+    {
+      "code": "231",
+      "name": "millilitre",
+      "symbol": null,
+      "letterCode": "MLT"
+    },
+    {
+      "code": "232",
+      "name": "kilocalorie (mean)",
+      "symbol": null,
+      "letterCode": "K51"
+    },
+    {
+      "code": "237",
+      "name": "activity",
+      "symbol": null,
+      "letterCode": "ACT"
+    },
+    {
+      "code": "251",
+      "name": "Pferdestaerke",
+      "symbol": null,
+      "letterCode": "N12"
+    },
+    {
+      "code": "254",
+      "name": "bit",
+      "symbol": null,
+      "letterCode": "A99"
+    },
+    {
+      "code": "255",
+      "name": "byte",
+      "symbol": null,
+      "letterCode": "AD"
+    },
+    {
+      "code": "256",
+      "name": "kilobyte",
+      "symbol": null,
+      "letterCode": "2P"
+    },
+    {
+      "code": "257",
+      "name": "megabyte",
+      "symbol": null,
+      "letterCode": "4L"
+    },
+    {
+      "code": "258",
+      "name": "baud",
+      "symbol": null,
+      "letterCode": "J38"
+    },
+    {
+      "code": "287",
+      "name": "henry",
+      "symbol": null,
+      "letterCode": "81"
+    },
+    {
+      "code": "313",
+      "name": "tesla",
+      "symbol": null,
+      "letterCode": "D33"
+    },
+    {
+      "code": "337",
+      "name": "conventional millimetre of water",
+      "symbol": null,
+      "letterCode": "HP"
+    },
+    {
+      "code": "338",
+      "name": "conventional millimetre of mercury",
+      "symbol": null,
+      "letterCode": "HN"
+    },
+    {
+      "code": "339",
+      "name": "centimetre of water (4 ºC)",
+      "symbol": null,
+      "letterCode": "N14"
+    },
+    {
+      "code": "352",
+      "name": "microsecond",
+      "symbol": null,
+      "letterCode": "B98"
+    },
+    {
+      "code": "353",
+      "name": "millisecond",
+      "symbol": null,
+      "letterCode": "C26"
+    },
+    {
+      "code": "449",
+      "name": "tonne kilometre",
+      "symbol": null,
+      "letterCode": "TKM"
+    },
+    {
+      "code": "534",
+      "name": "tonne per hour",
+      "symbol": null,
+      "letterCode": "E18"
+    },
+    {
+      "code": "535",
+      "name": "tonne per day",
+      "symbol": null,
+      "letterCode": "L71"
+    },
+    {
+      "code": "539",
+      "name": "labour hour",
+      "symbol": null,
+      "letterCode": "LH"
+    },
+    {
+      "code": "639",
+      "name": "dose",
+      "symbol": null,
+      "letterCode": "E27"
+    },
+    {
+      "code": "642",
+      "name": "one",
+      "symbol": null,
+      "letterCode": "C62"
+    },
+    {
+      "code": "643",
+      "name": "thousand piece",
+      "symbol": null,
+      "letterCode": "T3"
+    },
+    {
+      "code": "644",
+      "name": "nanofarad",
+      "symbol": null,
+      "letterCode": "C41"
+    },
+    {
+      "code": "698",
+      "name": "zone",
+      "symbol": null,
+      "letterCode": "E57"
+    },
+    {
+      "code": "728",
+      "name": "ream",
+      "symbol": null,
+      "letterCode": "RM"
+    },
+    {
+      "code": "744",
+      "name": "percent",
+      "symbol": null,
+      "letterCode": "P1"
+    },
+    {
+      "code": "746",
+      "name": "part per thousand",
+      "symbol": null,
+      "letterCode": "NX"
+    },
+    {
+      "code": "792",
+      "name": "person",
+      "symbol": null,
+      "letterCode": "IE"
+    },
+    {
+      "code": "810",
+      "name": "cell",
+      "symbol": null,
+      "letterCode": "C6"
+    },
+    {
+      "code": "812",
+      "name": "barrel (US) per day",
+      "symbol": null,
+      "letterCode": "B1"
+    },
+    {
+      "code": "836",
+      "name": "head",
+      "symbol": null,
+      "letterCode": "HEA"
+    },
+    {
+      "code": "839",
+      "name": "kit",
+      "symbol": null,
+      "letterCode": "KT"
+    },
+    {
+      "code": "840",
+      "name": "section",
+      "symbol": null,
+      "letterCode": "SE"
+    },
+    {
+      "code": "868",
+      "name": "bottle",
+      "symbol": null,
+      "letterCode": "BO"
+    },
+    {
+      "code": "923",
+      "name": "number of words",
+      "symbol": null,
+      "letterCode": "D68"
+    },
+    {
+      "code": "925",
+      "name": "pitch",
+      "symbol": null,
+      "letterCode": "PI"
+    },
+    {
+      "code": "930",
+      "name": "thousand sheet",
+      "symbol": null,
+      "letterCode": "TW"
+    },
+    {
+      "code": "017",
+      "name": "hectometre",
+      "symbol": "hm",
+      "letterCode": "HMT"
+    },
+    {
+      "code": "045",
+      "name": "mile (statute mile)",
+      "symbol": "mile",
+      "letterCode": "SMI"
+    },
+    {
+      "code": "077",
+      "name": "acre",
+      "symbol": "acre",
+      "letterCode": "ACR"
+    },
+    {
+      "code": "079",
+      "name": "square mile (statute mile)",
+      "symbol": "mile2",
+      "letterCode": "MIK"
+    },
+    {
+      "code": "135",
+      "name": "fluid ounce (UK)",
+      "symbol": "fl oz (UK)",
+      "letterCode": "OZI"
+    },
+    {
+      "code": "136",
+      "name": "gill (UK)",
+      "symbol": "gill (UK)",
+      "letterCode": "GII"
+    },
+    {
+      "code": "137",
+      "name": "pint (UK)",
+      "symbol": "pt (UK)",
+      "letterCode": "PTI"
+    },
+    {
+      "code": "138",
+      "name": "quart (UK)",
+      "symbol": "qt (UK)",
+      "letterCode": "QTI"
+    },
+    {
+      "code": "139",
+      "name": "gallon (UK)",
+      "symbol": "gal (UK)",
+      "letterCode": "GLI"
+    },
+    {
+      "code": "140",
+      "name": "bushel (UK)",
+      "symbol": "bu (UK)",
+      "letterCode": "BUI"
+    },
+    {
+      "code": "141",
+      "name": "fluid ounce (US)",
+      "symbol": "fl oz (US)",
+      "letterCode": "OZA"
+    },
+    {
+      "code": "142",
+      "name": "gill (US)",
+      "symbol": "gill  (US)",
+      "letterCode": "GIA"
+    },
+    {
+      "code": "143",
+      "name": "liquid pint (US)",
+      "symbol": "liq pt (US)",
+      "letterCode": "PTL"
+    },
+    {
+      "code": "144",
+      "name": "liquid quart (US)",
+      "symbol": "liq qt (US)",
+      "letterCode": "QTL"
+    },
+    {
+      "code": "145",
+      "name": "gallon (US)",
+      "symbol": "gal (US)",
+      "letterCode": "GLL"
+    },
+    {
+      "code": "146",
+      "name": "barrel (US)",
+      "symbol": "barrel (US)",
+      "letterCode": "BLL"
+    },
+    {
+      "code": "147",
+      "name": "dry pint (US)",
+      "symbol": "dry pt (US)",
+      "letterCode": "PTD"
+    },
+    {
+      "code": "148",
+      "name": "dry quart (US)",
+      "symbol": "dry qt (US)",
+      "letterCode": "QTD"
+    },
+    {
+      "code": "149",
+      "name": "dry gallon (US)",
+      "symbol": "dry gal (US)",
+      "letterCode": "GLD"
+    },
+    {
+      "code": "150",
+      "name": "bushel (US)",
+      "symbol": "bu (US)",
+      "letterCode": "BUA"
+    },
+    {
+      "code": "151",
+      "name": "dry barrel (US)",
+      "symbol": "bbl (US)",
+      "letterCode": "BLD"
+    },
+    {
+      "code": "152",
+      "name": "standard",
+      "symbol": null,
+      "letterCode": "WSD"
+    },
+    {
+      "code": "153",
+      "name": "cord",
+      "symbol": null,
+      "letterCode": "WCD"
+    },
+    {
+      "code": "154",
+      "name": "thousand board foot",
+      "symbol": null,
+      "letterCode": "MBF"
+    },
+    {
+      "code": "182",
+      "name": "net register ton",
+      "symbol": null,
+      "letterCode": "NTT"
+    },
+    {
+      "code": "183",
+      "name": "shipping ton",
+      "symbol": null,
+      "letterCode": "SHT"
+    },
+    {
+      "code": "184",
+      "name": "displacement tonnage",
+      "symbol": null,
+      "letterCode": "DPT"
+    },
+    {
+      "code": "186",
+      "name": "pound",
+      "symbol": "lb",
+      "letterCode": "LBR"
+    },
+    {
+      "code": "187",
+      "name": "ounce (avoirdupois)",
+      "symbol": "oz",
+      "letterCode": "ONZ"
+    },
+    {
+      "code": "188",
+      "name": "dram (UK)",
+      "symbol": "dr",
+      "letterCode": "DRI"
+    },
+    {
+      "code": "189",
+      "name": "grain",
+      "symbol": "gn",
+      "letterCode": "GRN"
+    },
+    {
+      "code": "190",
+      "name": "stone (UK)",
+      "symbol": "st",
+      "letterCode": "STI"
+    },
+    {
+      "code": "191",
+      "name": "quarter (UK)",
+      "symbol": "qtr",
+      "letterCode": "QTR"
+    },
+    {
+      "code": "192",
+      "name": "cental (UK)",
+      "symbol": null,
+      "letterCode": "CNT"
+    },
+    {
+      "code": "193",
+      "name": "hundred pound (cwt) / hundred weight (US)",
+      "symbol": "cwt",
+      "letterCode": "CWA"
+    },
+    {
+      "code": "194",
+      "name": "hundred weight (UK)",
+      "symbol": "cwt (UK)",
+      "letterCode": "CWI"
+    },
+    {
+      "code": "195",
+      "name": "ton (US) or short ton (UK/US)",
+      "symbol": "sht",
+      "letterCode": "STN"
+    },
+    {
+      "code": "196",
+      "name": "ton (UK) or long ton (US)",
+      "symbol": "lt",
+      "letterCode": "LTN"
+    },
+    {
+      "code": "197",
+      "name": "scruple",
+      "symbol": "scr",
+      "letterCode": "SCR"
+    },
+    {
+      "code": "198",
+      "name": "pennyweight",
+      "symbol": "dwt",
+      "letterCode": "DWT"
+    },
+    {
+      "code": "199",
+      "name": "drachm (UK)",
+      "symbol": "drm",
+      "letterCode": "DRM"
+    },
+    {
+      "code": "200",
+      "name": "dram (US)",
+      "symbol": null,
+      "letterCode": "DRA"
+    },
+    {
+      "code": "201",
+      "name": "troy ounce or apothecary ounce",
+      "symbol": "apoz",
+      "letterCode": "APZ"
+    },
+    {
+      "code": "202",
+      "name": "troy pound (US)",
+      "symbol": null,
+      "letterCode": "LBT"
+    },
+    {
+      "code": "213",
+      "name": "brake horse power",
+      "symbol": "B.h.p.",
+      "letterCode": "BHP"
+    },
+    {
+      "code": "275",
+      "name": "British thermal unit (international table)",
+      "symbol": "Btu",
+      "letterCode": "BTU"
+    },
+    {
+      "code": "638",
+      "name": "gross",
+      "symbol": "gr\n144",
+      "letterCode": "GRO"
+    },
+    {
+      "code": "731",
+      "name": "great gross",
+      "symbol": "1728",
+      "letterCode": "GGR"
+    },
+    {
+      "code": "738",
+      "name": "short standard (7200 matches)",
+      "symbol": null,
+      "letterCode": "SST"
+    },
+    {
+      "code": "835",
+      "name": "proof gallon",
+      "symbol": null,
+      "letterCode": "PGL"
+    },
+    {
+      "code": "851",
+      "name": "number of international units",
+      "symbol": null,
+      "letterCode": "NIU"
+    },
+    {
+      "code": "853",
+      "name": "hundred international unit",
+      "symbol": null,
+      "letterCode": "HIU"
+    }
+  ]
+}

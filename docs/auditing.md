@@ -23,4 +23,6 @@ Creation fields are protected from later modification. All timestamps come from 
 
 This metadata records the creator and latest editor only. It is not a full immutable audit history. Critical business transitions such as report submission and period closing will also need append-only audit events.
 
+`Organization` and `Address` inherit `AuditableEntity`. The organization profile intentionally keeps only its current values and does not create historical profile versions. Address changes likewise use audit metadata and optimistic concurrency; activation is used instead of physical deletion.
+
 Identity users and refresh tokens deliberately do not inherit `AuditableEntity`: authentication lifecycle data has separate security semantics.

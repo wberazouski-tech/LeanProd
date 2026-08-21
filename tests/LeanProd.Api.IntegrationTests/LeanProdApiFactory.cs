@@ -34,6 +34,7 @@ public sealed class LeanProdApiFactory : WebApplicationFactory<Program>, IAsyncL
                 ["Jwt:RefreshTokenDays"] = "1",
                 ["BootstrapAdmin:Email"] = AdminEmail,
                 ["BootstrapAdmin:Password"] = AdminPassword,
+                ["Identity:AllowPublicRegistration"] = "true",
                 ["Https:UseRedirection"] = "false"
             }));
     }

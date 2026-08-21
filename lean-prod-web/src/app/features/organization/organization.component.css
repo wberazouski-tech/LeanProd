@@ -1,0 +1,9 @@
+.organization-form { align-items: stretch; display: grid; gap: .75rem; grid-template-columns: minmax(0, 760px); max-width: 1040px; }
+.organization-form .wide-field { display: grid; gap: .35rem; width: 100%; }
+.organization-form .compact-field { align-items: center; display: grid; gap: 1rem; grid-template-columns: 210px minmax(220px, 420px); }
+.organization-form .compact-field > span { line-height: 1.2; }
+.organization-form .compact-field input, .organization-form .compact-field select { width: 100%; }
+.organization-form .compact-field.long-value { grid-template-columns: 210px minmax(300px, 535px); }
+.organization-form .compact-field .code-input { max-width: 110px; text-transform: uppercase; }
+.organization-form .form-actions { align-items: center; display: flex; gap: .75rem; margin-top: .25rem; }
+@media (max-width: 760px) { .organization-form { display: grid; }.organization-form .compact-field { align-items: stretch; gap: .35rem; grid-template-columns: 1fr; }.organization-form .compact-field .code-input { max-width: none; } }

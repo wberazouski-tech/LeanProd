@@ -1,6 +1,8 @@
 using LeanProd.Application.Common.Abstractions;
 using LeanProd.Domain.Common;
 using LeanProd.Infrastructure.Features.Identity;
+using LeanProd.Domain.MasterData;
+using LeanProd.Domain.Organizations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,19 @@ public sealed class LeanProdDbContext(
     : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<SecurityAuditEvent> SecurityAuditEvents => Set<SecurityAuditEvent>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<StorageLocation> StorageLocations => Set<StorageLocation>();
+    public DbSet<StorageLocationKind> StorageLocationKinds => Set<StorageLocationKind>();
+    public DbSet<StorageLocationType> StorageLocationTypes => Set<StorageLocationType>();
+    public DbSet<UnitOfMeasure> UnitOfMeasures => Set<UnitOfMeasure>();
+    public DbSet<UnitOfMeasureTranslation> UnitOfMeasureTranslations => Set<UnitOfMeasureTranslation>();
+    public DbSet<UnitOfMeasureConversion> UnitOfMeasureConversions => Set<UnitOfMeasureConversion>();
+    public DbSet<Equipment> Equipment => Set<Equipment>();
+    public DbSet<EquipmentType> EquipmentTypes => Set<EquipmentType>();
+    public DbSet<EquipmentStateEvent> EquipmentStateEvents => Set<EquipmentStateEvent>();
+    public DbSet<Organization> Organizations => Set<Organization>();
+    public DbSet<Address> Addresses => Set<Address>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

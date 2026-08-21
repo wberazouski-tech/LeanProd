@@ -9,29 +9,30 @@ public static class RolePermissionMatrix
             [RoleNames.MasterDataAdministrator] =
             [
                 Permissions.MasterDataView, Permissions.MasterDataManage,
+                Permissions.OrganizationView, Permissions.OrganizationManage,
                 Permissions.ReportsView
             ],
             [RoleNames.EquipmentOperator] =
             [
-                Permissions.MasterDataView, Permissions.ShiftReportsView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.ShiftReportsView,
                 Permissions.ShiftReportsCreate, Permissions.ShiftReportsEditOwn,
                 Permissions.ShiftReportsSubmit, Permissions.ReportsView
             ],
             [RoleNames.ShiftReportEditor] =
             [
-                Permissions.MasterDataView, Permissions.ShiftReportsView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.ShiftReportsView,
                 Permissions.ShiftReportsCreate, Permissions.ShiftReportsEditOwn,
                 Permissions.ShiftReportsEditAny, Permissions.ShiftReportsSubmit,
                 Permissions.ReportsView
             ],
             [RoleNames.QualityRegistrar] =
             [
-                Permissions.MasterDataView, Permissions.QualityView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.QualityView,
                 Permissions.QualityManage, Permissions.ReportsView
             ],
             [RoleNames.Viewer] =
             [
-                Permissions.MasterDataView, Permissions.ShiftReportsView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.ShiftReportsView,
                 Permissions.QualityView, Permissions.ReportsView
             ]
         };

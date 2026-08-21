@@ -1,0 +1,19 @@
+<h1>{{ 'organization.title' | transloco }}</h1>
+<form class="editor organization-form" [formGroup]="form" (ngSubmit)="save()">
+  <label class="compact-field long-value"><span>{{ 'organization.legalName' | transloco }}</span><input formControlName="legalName"></label>
+  <label class="compact-field long-value"><span>{{ 'organization.tradingName' | transloco }}</span><input formControlName="tradingName"></label>
+  <label class="compact-field"><span>{{ 'organization.legalForm' | transloco }}</span><input formControlName="legalForm"></label>
+  <label class="compact-field"><span>{{ 'addresses.country' | transloco }}</span><input class="code-input" formControlName="countryCode" maxlength="2"></label>
+  <label class="compact-field"><span>{{ 'organization.taxNumber' | transloco }}</span><input formControlName="taxNumber"></label>
+  <label class="compact-field"><span>{{ 'organization.statisticalNumber' | transloco }}</span><input formControlName="statisticalNumber"></label>
+  <label class="compact-field"><span>{{ 'organization.registrationNumber' | transloco }}</span><input formControlName="companyRegistrationNumber"></label>
+  <label class="compact-field"><span>{{ 'organization.currency' | transloco }}</span><input class="code-input" formControlName="defaultCurrencyCode" maxlength="3"></label>
+  <label class="compact-field"><span>{{ 'organization.timeZone' | transloco }}</span><input formControlName="timeZoneId"></label>
+  <label class="compact-field"><span>{{ 'common.language' | transloco }}</span><select formControlName="defaultLanguageCode"><option value="be">Беларуская</option><option value="en">English</option></select></label>
+  <label class="compact-field"><span>Email</span><input formControlName="email"></label>
+  <label class="compact-field"><span>{{ 'organization.phone' | transloco }}</span><input formControlName="phone"></label>
+  <label class="compact-field long-value"><span>{{ 'organization.website' | transloco }}</span><input formControlName="website"></label>
+  <label class="wide-field">{{ 'organization.printFooter' | transloco }}<textarea formControlName="printFooter"></textarea></label>
+  <div class="form-actions">@if (canManage) { <button [disabled]="form.invalid">{{ 'common.save' | transloco }}</button> } <span>{{ message }}</span></div>
+</form>
+<app-address-list owner="organization" [canManage]="canManage" />
