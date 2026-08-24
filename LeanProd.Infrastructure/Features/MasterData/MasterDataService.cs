@@ -7,6 +7,67 @@ namespace LeanProd.Infrastructure.Features.MasterData;
 
 public sealed class MasterDataService(LeanProdDbContext db) : IMasterDataService
 {
+    public async Task<MasterDataPage<CatalogItemClassSummary>> GetCatalogItemClassesAsync(
+        CatalogItemType type, MasterDataQuery query, bool? isGroup, CancellationToken ct)
+    {
+        var source = db.CatalogItemClasses.AsNoTracking().Where(x => x.Type == type);
+        if (!string.IsNullOrWhiteSpace(query.Search)) { var s = query.Search.Trim(); source = source.Where(x => x.Code.Contains(s) || x.Name.Contains(s)); }
+        if (query.IsActive is not null) source = source.Where(x => x.IsActive == query.IsActive);
+        if (isGroup is not null) source = source.Where(x => x.IsGroup == isGroup);
+        var total = await source.CountAsync(ct);
+        var items = await source.OrderBy(x => x.Code).Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)
+            .Select(x => new CatalogItemClassSummary(x.Id, x.Type, x.Code, x.Name, x.IsGroup, x.ParentId, x.IsActive)).ToArrayAsync(ct);
+        return new(items, query.Page, query.PageSize, total);
+    }
+
+    public async Task<CatalogItemClassDetails?> GetCatalogItemClassAsync(Guid id, CancellationToken ct)
+    {
+        var entity = await db.CatalogItemClasses.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
+        return entity is null ? null : CatalogItemClassDetails(entity);
+    }
+
+    public async Task<IReadOnlyCollection<CatalogItemClassOption>> GetCatalogItemClassOptionsAsync(
+        CatalogItemType type, bool activeOnly, CancellationToken ct)
+    {
+        var source = db.CatalogItemClasses.AsNoTracking().Where(x => x.Type == type);
+        if (activeOnly) source = source.Where(x => x.IsActive);
+        return await source.OrderBy(x => x.Code)
+            .Select(x => new CatalogItemClassOption(x.Id, x.Type, x.Code, x.Name, x.IsGroup, x.ParentId))
+            .ToArrayAsync(ct);
+    }
+
+    public async Task<MasterDataResult<CatalogItemClassDetails>> CreateCatalogItemClassAsync(
+        SaveCatalogItemClassCommand command, CancellationToken ct)
+    {
+        var validation = await ValidateCatalogItemClass(command, null, null, ct); if (validation is not null) return validation;
+        var entity = new CatalogItemClass { Type = command.Type, Code = NormalizeFlexibleCode(command.Code), Name = command.Name.Trim(), IsGroup = command.IsGroup, ParentId = command.ParentId };
+        db.CatalogItemClasses.Add(entity);
+        try { await db.SaveChangesAsync(ct); return MasterDataResult<CatalogItemClassDetails>.Success(CatalogItemClassDetails(entity)); }
+        catch (DbUpdateException) { return Conflict<CatalogItemClassDetails>("An item class with this code already exists in this item type."); }
+    }
+
+    public async Task<MasterDataResult<CatalogItemClassDetails>> UpdateCatalogItemClassAsync(
+        Guid id, SaveCatalogItemClassCommand command, CancellationToken ct)
+    {
+        var entity = await db.CatalogItemClasses.SingleOrDefaultAsync(x => x.Id == id, ct); if (entity is null) return NotFound<CatalogItemClassDetails>();
+        var validation = await ValidateCatalogItemClass(command, id, entity, ct); if (validation is not null) return validation;
+        if (!SetVersion(entity, command.RowVersion)) return Validation<CatalogItemClassDetails>("Row version is required.");
+        entity.Type = command.Type; entity.Code = NormalizeFlexibleCode(command.Code); entity.Name = command.Name.Trim(); entity.IsGroup = command.IsGroup; entity.ParentId = command.ParentId;
+        try { await db.SaveChangesAsync(ct); return MasterDataResult<CatalogItemClassDetails>.Success(CatalogItemClassDetails(entity)); }
+        catch (DbUpdateConcurrencyException) { return Conflict<CatalogItemClassDetails>("The item class was changed by another request."); }
+        catch (DbUpdateException) { return Conflict<CatalogItemClassDetails>("An item class with this code already exists in this item type."); }
+    }
+
+    public async Task<MasterDataResult<bool>> SetCatalogItemClassActiveAsync(Guid id, bool active, CancellationToken ct)
+    {
+        var entity = await db.CatalogItemClasses.SingleOrDefaultAsync(x => x.Id == id, ct); if (entity is null) return NotFound<bool>();
+        if (!active && await db.CatalogItemClasses.AnyAsync(x => x.ParentId == id && x.IsActive, ct))
+            return MasterDataResult<bool>.Failure(MasterDataError.Dependency, "Deactivate child item classes first.");
+        if (!active && await db.CatalogItems.AnyAsync(x => x.CatalogItemClassId == id && x.IsActive, ct))
+            return MasterDataResult<bool>.Failure(MasterDataError.Dependency, "Deactivate catalog items in this class first.");
+        entity.IsActive = active; await db.SaveChangesAsync(ct); return MasterDataResult<bool>.Success(true);
+    }
+
     public async Task<MasterDataPage<DepartmentSummary>> GetDepartmentsAsync(MasterDataQuery query, CancellationToken ct)
     {
         var source = db.Departments.AsNoTracking();
@@ -81,10 +142,10 @@ public sealed class MasterDataService(LeanProdDbContext db) : IMasterDataService
     public async Task<IReadOnlyCollection<StorageLocationOption>> GetStorageLocationOptionsAsync(CancellationToken ct) =>
         await db.StorageLocations.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Name)
             .Select(x => new StorageLocationOption(x.Id, x.Code, x.Name, x.DepartmentId)).ToArrayAsync(ct);
-    public async Task<IReadOnlyCollection<CatalogItem>> GetStorageLocationKindsAsync(CancellationToken ct) =>
-        await db.StorageLocationKinds.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Code).Select(x => new CatalogItem(x.Id, x.Code)).ToArrayAsync(ct);
-    public async Task<IReadOnlyCollection<CatalogItem>> GetStorageLocationTypesAsync(CancellationToken ct) =>
-        await db.StorageLocationTypes.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Code).Select(x => new CatalogItem(x.Id, x.Code)).ToArrayAsync(ct);
+    public async Task<IReadOnlyCollection<LookupItem>> GetStorageLocationKindsAsync(CancellationToken ct) =>
+        await db.StorageLocationKinds.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Code).Select(x => new LookupItem(x.Id, x.Code)).ToArrayAsync(ct);
+    public async Task<IReadOnlyCollection<LookupItem>> GetStorageLocationTypesAsync(CancellationToken ct) =>
+        await db.StorageLocationTypes.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Code).Select(x => new LookupItem(x.Id, x.Code)).ToArrayAsync(ct);
 
     public async Task<MasterDataResult<StorageLocationDetails>> CreateStorageLocationAsync(SaveStorageLocationCommand command, CancellationToken ct)
     {
@@ -130,6 +191,38 @@ public sealed class MasterDataService(LeanProdDbContext db) : IMasterDataService
         return null;
     }
 
+    private async Task<MasterDataResult<CatalogItemClassDetails>?> ValidateCatalogItemClass(
+        SaveCatalogItemClassCommand c, Guid? id, CatalogItemClass? current, CancellationToken ct)
+    {
+        if (!Enum.IsDefined(c.Type)) return Validation<CatalogItemClassDetails>("Item type is invalid.");
+        if (string.IsNullOrWhiteSpace(c.Code) || string.IsNullOrWhiteSpace(c.Name)) return Validation<CatalogItemClassDetails>("Code and name are required.");
+        if (c.Code.Trim().Length > 50) return Validation<CatalogItemClassDetails>("Item class code cannot exceed 50 characters.");
+        if (c.Name.Trim().Length > 200) return Validation<CatalogItemClassDetails>("Item class name cannot exceed 200 characters.");
+        if (id is not null && c.ParentId == id) return Validation<CatalogItemClassDetails>("An item class cannot be its own parent.");
+        if (current is not null && current.IsGroup != c.IsGroup)
+        {
+            if (await db.CatalogItemClasses.AnyAsync(x => x.ParentId == current.Id, ct) || await db.CatalogItems.AnyAsync(x => x.CatalogItemClassId == current.Id, ct))
+                return Validation<CatalogItemClassDetails>("Item class group flag cannot be changed while it has children or items.");
+        }
+        if (c.ParentId is not null)
+        {
+            var parent = await db.CatalogItemClasses.AsNoTracking()
+                .Where(x => x.Id == c.ParentId)
+                .Select(x => new { x.Type, x.IsGroup, x.IsActive, x.ParentId })
+                .SingleOrDefaultAsync(ct);
+            if (parent is null || !parent.IsActive) return Validation<CatalogItemClassDetails>("The parent item class must be active.");
+            if (!parent.IsGroup) return Validation<CatalogItemClassDetails>("The parent item class must be a group.");
+            if (parent.Type != c.Type) return Validation<CatalogItemClassDetails>("The parent item class must have the same item type.");
+        }
+        var ancestorId = c.ParentId;
+        while (ancestorId is not null)
+        {
+            if (ancestorId == id) return Validation<CatalogItemClassDetails>("The item class hierarchy cannot contain a cycle.");
+            ancestorId = await db.CatalogItemClasses.Where(x => x.Id == ancestorId).Select(x => x.ParentId).SingleOrDefaultAsync(ct);
+        }
+        return null;
+    }
+
     private async Task<MasterDataResult<StorageLocationDetails>?> ValidateStorage(SaveStorageLocationCommand c, Guid? id, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(c.Code) || string.IsNullOrWhiteSpace(c.Name)) return Validation<StorageLocationDetails>("Code and name are required.");
@@ -152,7 +245,9 @@ public sealed class MasterDataService(LeanProdDbContext db) : IMasterDataService
     private bool SetVersion(LeanProd.Domain.Common.AuditableEntity entity, string? version) { try { if (string.IsNullOrWhiteSpace(version)) return false; db.Entry(entity).Property(x => x.RowVersion).OriginalValue = Convert.FromBase64String(version); return true; } catch (FormatException) { return false; } }
     private static DepartmentDetails DepartmentDetails(Department x) => new(x.Id, x.Code, x.Name, x.Description, x.ParentDepartmentId, x.IsActive, Convert.ToBase64String(x.RowVersion));
     private static StorageLocationDetails StorageDetails(StorageLocation x) => new(x.Id, x.Code, x.Name, x.Description, x.DepartmentId, x.KindId, x.ParentStorageLocationId, x.TypeAssignments.Select(a => a.StorageLocationTypeId).ToArray(), x.IsActive, Convert.ToBase64String(x.RowVersion));
+    private static CatalogItemClassDetails CatalogItemClassDetails(CatalogItemClass x) => new(x.Id, x.Type, x.Code, x.Name, x.IsGroup, x.ParentId, x.IsActive, Convert.ToBase64String(x.RowVersion));
     private static string NormalizeCode(string value) => value.Trim().ToUpperInvariant();
+    private static string NormalizeFlexibleCode(string value) => value.Trim().ToUpperInvariant();
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     private static MasterDataResult<T> NotFound<T>() => MasterDataResult<T>.Failure(MasterDataError.NotFound, "Record was not found.");
     private static MasterDataResult<T> Validation<T>(string message) => MasterDataResult<T>.Failure(MasterDataError.Validation, message);

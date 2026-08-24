@@ -22,6 +22,180 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArticleNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("BaseUnitOfMeasureId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CatalogItemClassId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WorkingName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaseUnitOfMeasureId");
+
+                    b.HasIndex("CatalogItemClassId");
+
+                    b.HasIndex("Type", "ArticleNumber")
+                        .IsUnique()
+                        .HasFilter("[ArticleNumber] IS NOT NULL");
+
+                    b.HasIndex("Type", "IsActive", "WorkingName");
+
+                    b.ToTable("CatalogItems", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsGroup")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("Type", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("Type", "ParentId", "IsActive", "Name");
+
+                    b.ToTable("CatalogItemClasses", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemCostHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CatalogItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogItemId", "EffectiveFromUtc");
+
+                    b.ToTable("CatalogItemCostHistory", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CatalogItemCostHistory_Amount_NonNegative", "[Amount] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1065,6 +1239,46 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItem", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.UnitOfMeasure", "BaseUnitOfMeasure")
+                        .WithMany()
+                        .HasForeignKey("BaseUnitOfMeasureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItemClass", "CatalogItemClass")
+                        .WithMany("Items")
+                        .HasForeignKey("CatalogItemClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BaseUnitOfMeasure");
+
+                    b.Navigation("CatalogItemClass");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItemClass", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemCostHistory", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItem", "CatalogItem")
+                        .WithMany("CostHistory")
+                        .HasForeignKey("CatalogItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CatalogItem");
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.Department", b =>
                 {
                     b.HasOne("LeanProd.Domain.MasterData.Department", "ParentDepartment")
@@ -1283,6 +1497,18 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItem", b =>
+                {
+                    b.Navigation("CostHistory");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.Department", b =>

@@ -1,5 +1,8 @@
 <header class="topbar">
-  <strong>LeanProd</strong><span>{{ "shell.subtitle" | transloco }}</span>
+  <button class="menu-toggle" type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">
+    <span aria-hidden="true">☰</span>{{ "shell.menu" | transloco }}
+  </button>
+  <strong>LeanProd</strong><span class="subtitle">{{ "shell.subtitle" | transloco }}</span>
   @if (auth.currentUser(); as user) {
     <span class="user">{{ user.displayName }} · {{ roleList(user.roles) }}</span
     ><button type="button" (click)="logout()">
@@ -8,39 +11,42 @@
   }
 </header>
 <div class="shell">
-  <nav [attr.aria-label]="'shell.navigation' | transloco">
+  <nav id="main-navigation" [class.open]="menuOpen" (click)="closeMenu()" [attr.aria-label]="'shell.navigation' | transloco">
+    <span class="nav-section">{{ "shell.overviewSection" | transloco }}</span>
     <a
       routerLink="/"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
     >{{ "shell.overview" | transloco }}</a
   >
-  @if (auth.hasPermission(permissions.organizationView)) {
-    <a routerLink="/administration/organization" routerLinkActive="active">{{ "organization.title" | transloco }}</a>
-  }
     @if (auth.hasPermission(permissions.masterDataView)) {
-      <a routerLink="/master-data/departments" routerLinkActive="active">{{
-        "masterData.departments" | transloco
-      }}</a
-      ><a
-        routerLink="/master-data/storage-locations"
-        routerLinkActive="active"
-        >{{ "masterData.storageLocations" | transloco }}</a
-      ><a
-        routerLink="/master-data/units-of-measure"
-        routerLinkActive="active"
-        >{{ "units.title" | transloco }}</a
-      ><a routerLink="/master-data/equipment" routerLinkActive="active">{{
+      <div class="nav-group">
+      <span class="nav-section">{{ "shell.masterDataSection" | transloco }}</span>
+      <a routerLink="/master-data/equipment" routerLinkActive="active">{{
         "equipment.title" | transloco
       }}</a>
+      <a routerLink="/catalog/products" routerLinkActive="active">{{ "catalogItems.section" | transloco }}</a>
+      </div>
     }
+    <span class="nav-section">{{ "shell.actionsSection" | transloco }}</span>
     <a routerLink="/sample-form" routerLinkActive="active">{{
       "shell.newRecord" | transloco
     }}</a>
-    @if (auth.hasPermission(permissions.usersManage)) {
-      <a routerLink="/administration" routerLinkActive="active">{{
-        "shell.administration" | transloco
-      }}</a>
+    @if (auth.hasPermission(permissions.organizationView) || auth.hasPermission(permissions.masterDataView) || auth.hasPermission(permissions.usersManage)) {
+      <div class="nav-group">
+        <span class="nav-section">{{ "shell.administration" | transloco }}</span>
+        @if (auth.hasPermission(permissions.organizationView)) {
+          <a routerLink="/administration/organization" routerLinkActive="active">{{ "organization.title" | transloco }}</a>
+        }
+        @if (auth.hasPermission(permissions.masterDataView)) {
+          <a routerLink="/master-data/departments" routerLinkActive="active">{{ "masterData.departments" | transloco }}</a>
+          <a routerLink="/master-data/storage-locations" routerLinkActive="active">{{ "masterData.storageLocations" | transloco }}</a>
+          <a routerLink="/master-data/units-of-measure" routerLinkActive="active">{{ "units.title" | transloco }}</a>
+        }
+        @if (auth.hasPermission(permissions.usersManage)) {
+          <a routerLink="/administration" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ "shell.users" | transloco }}</a>
+        }
+      </div>
     }
   </nav>
   <main><router-outlet /></main>

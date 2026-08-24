@@ -1,4 +1,5 @@
 <h1>{{ 'units.title' | transloco }}</h1>
+<app-page-state [state]="state" />
 <form class="filters" [formGroup]="filters" (ngSubmit)="load()">
   <input formControlName="search" [placeholder]="'units.search' | transloco">
   <select formControlName="isActive"><option value="">{{ 'admin.allStatuses' | transloco }}</option><option value="true">{{ 'admin.activePlural' | transloco }}</option><option value="false">{{ 'admin.inactivePlural' | transloco }}</option></select>

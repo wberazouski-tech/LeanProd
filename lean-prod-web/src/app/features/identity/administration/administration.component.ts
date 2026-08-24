@@ -7,8 +7,9 @@ import { UserAdministrationService } from './user-administration.service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MasterDataService } from '../../master-data/master-data.service';
 import { OptionItem, StorageOption } from '../../master-data/master-data.models';
+import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 
-@Component({ selector: 'app-administration', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe], templateUrl: './administration.component.html', styleUrl: './administration.component.css' })
+@Component({ selector: 'app-administration', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, PageStateComponent], templateUrl: './administration.component.html', styleUrl: './administration.component.css' })
 export class AdministrationComponent implements OnInit {
   private readonly api = inject(UserAdministrationService);
   private readonly fb = inject(FormBuilder);
@@ -16,13 +17,16 @@ export class AdministrationComponent implements OnInit {
   private readonly masterData = inject(MasterDataService);
   users: UserSummary[] = []; roles: { name: string }[] = []; selected?: UserDetails;
   departments: OptionItem[] = []; storageLocations: StorageOption[] = [];
-  page = 1; totalCount = 0; loading = false; message = '';
+  page = 1; totalCount = 0; loading = false; message = ''; state: PageState = 'loading';
+  sortKey: 'displayName' | 'email' | 'roles' | 'isActive' | 'preferredLanguage' | 'lastLoginAtUtc' = 'displayName'; sortDirection: 'asc' | 'desc' = 'asc';
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '', role: '' });
   readonly form = this.fb.nonNullable.group({ email: ['', [Validators.required, Validators.email]], displayName: ['', Validators.required], temporaryPassword: ['', Validators.minLength(12)], preferredLanguage: 'be', defaultDepartmentId: '', defaultStorageLocationId: '', roles: this.fb.nonNullable.control<string[]>([]) });
   readonly passwordForm = this.fb.nonNullable.group({ temporaryPassword: ['', [Validators.required, Validators.minLength(12)]] });
 
   ngOnInit(): void { forkJoin({ roles: this.api.roles(), users: this.api.list(1, '', '', ''), departments: this.masterData.departmentOptions(), storageLocations: this.masterData.storageOptions() }).subscribe(x => { this.roles = x.roles; this.departments = x.departments; this.storageLocations = x.storageLocations; this.applyPage(x.users); }); }
-  load(page = 1): void { this.loading = true; const v = this.filters.getRawValue(); this.api.list(page, v.search.trim(), v.isActive, v.role).subscribe({ next: x => { this.applyPage(x); this.loading = false; }, error: () => this.loading = false }); }
+  load(page = 1): void { this.loading = true; this.state = 'loading'; const v = this.filters.getRawValue(); this.api.list(page, v.search.trim(), v.isActive, v.role).subscribe({ next: x => { this.applyPage(x); this.loading = false; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => { this.loading = false; this.state = 'error'; } }); }
+  get sortedUsers(): UserSummary[] { return [...this.users].sort((a, b) => this.compareUsers(a, b)); }
+  sortBy(key: 'displayName' | 'email' | 'roles' | 'isActive' | 'preferredLanguage' | 'lastLoginAtUtc'): void { if (this.sortKey === key) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; else { this.sortKey = key; this.sortDirection = 'asc'; } }
   select(user: UserSummary): void { this.api.get(user.id).subscribe(x => { this.selected = x; this.form.reset({ email: x.email, displayName: x.displayName, temporaryPassword: '', preferredLanguage: x.preferredLanguage, defaultDepartmentId: x.defaultDepartmentId ?? '', defaultStorageLocationId: x.defaultStorageLocationId ?? '', roles: [...x.roles] }); }); }
   newUser(): void { this.selected = undefined; this.form.reset({ email: '', displayName: '', temporaryPassword: '', preferredLanguage: 'be', defaultDepartmentId: '', defaultStorageLocationId: '', roles: ['Viewer'] }); }
   toggleRole(role: string, checked: boolean): void { const roles = this.form.controls.roles.value.filter(x => x !== role); this.form.controls.roles.setValue(checked ? [...roles, role] : roles); }
@@ -37,6 +41,8 @@ export class AdministrationComponent implements OnInit {
   }
   setActive(active: boolean): void { if (!this.selected) return; this.api.setActive(this.selected.id, active).subscribe(() => { this.message = this.translate.translate(active ? 'admin.activated' : 'admin.deactivated'); this.load(this.page); this.select({ ...this.selected!, isActive: active }); }); }
   resetPassword(): void { if (!this.selected || this.passwordForm.invalid) return; this.api.resetPassword(this.selected.id, this.passwordForm.controls.temporaryPassword.value).subscribe(() => { this.passwordForm.reset(); this.message = this.translate.translate('admin.passwordReset'); }); }
+  private compareUsers(a: UserSummary, b: UserSummary): number { const left = this.sortValue(a); const right = this.sortValue(b); const result = typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right)); return (this.sortDirection === 'asc' ? result : -result) || a.displayName.localeCompare(b.displayName) || a.email.localeCompare(b.email); }
+  private sortValue(user: UserSummary): string | number { if (this.sortKey === 'roles') return this.roleList(user.roles).toLocaleLowerCase(); if (this.sortKey === 'isActive') return Number(user.isActive); if (this.sortKey === 'lastLoginAtUtc') return user.lastLoginAtUtc ? Date.parse(user.lastLoginAtUtc) : 0; return user[this.sortKey].toLocaleLowerCase(); }
   private saved(user: UserDetails): void { this.selected = user; this.message = this.translate.translate('admin.saved'); this.load(this.page); }
   private applyPage(result: { items: UserSummary[]; page: number; totalCount: number }): void { this.users = result.items; this.page = result.page; this.totalCount = result.totalCount; }
 }

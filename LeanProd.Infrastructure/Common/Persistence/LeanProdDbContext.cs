@@ -24,6 +24,9 @@ public sealed class LeanProdDbContext(
     public DbSet<UnitOfMeasure> UnitOfMeasures => Set<UnitOfMeasure>();
     public DbSet<UnitOfMeasureTranslation> UnitOfMeasureTranslations => Set<UnitOfMeasureTranslation>();
     public DbSet<UnitOfMeasureConversion> UnitOfMeasureConversions => Set<UnitOfMeasureConversion>();
+    public DbSet<CatalogItemClass> CatalogItemClasses => Set<CatalogItemClass>();
+    public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<CatalogItemCostHistory> CatalogItemCostHistory => Set<CatalogItemCostHistory>();
     public DbSet<Equipment> Equipment => Set<Equipment>();
     public DbSet<EquipmentType> EquipmentTypes => Set<EquipmentType>();
     public DbSet<EquipmentStateEvent> EquipmentStateEvents => Set<EquipmentStateEvent>();

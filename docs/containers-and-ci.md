@@ -10,6 +10,40 @@ Angular dev server -> ASP.NET Core API -> localhost\OPTIMA -> LeanProd
 
 Run the API and Angular directly with the .NET and Node.js tooling. Use EF Core migrations against the local SQL Server configuration stored in User Secrets. Dockerfiles and Compose are retained only as an optional, deployment-ready alternative and do not alter this workflow.
 
+## Current local run
+
+In the current Windows environment Docker is not available, so start the backend and frontend directly in separate terminals.
+
+From the repository root:
+
+```powershell
+dotnet run --project LeanProd.Api\LeanProd.Api.csproj
+```
+
+From the Angular project directory:
+
+```powershell
+cd lean-prod-web
+npm start
+```
+
+`npm start` runs `ng serve`. The Angular dev server is configured with local HTTPS certificates from `lean-prod-web/ssl`.
+
+Open:
+
+- Web UI: `https://localhost:4200`
+- API: `https://localhost:5001`
+- API readiness: `https://localhost:5001/health/ready`
+
+Quick checks:
+
+```powershell
+curl -k -I https://localhost:4200
+curl -k -I https://localhost:5001/health/ready
+```
+
+Both should return `200 OK`. The HTTP API endpoint `http://localhost:5000` may also listen locally and redirect to HTTPS.
+
 ## Optional Compose
 
 This section is not needed for current Windows development. Use it later for CI/deployment verification or when a reproducible container environment becomes necessary. Requirements are Docker Desktop with Linux containers and Compose v2.

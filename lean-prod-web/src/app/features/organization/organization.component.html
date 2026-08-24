@@ -1,4 +1,5 @@
 <h1>{{ 'organization.title' | transloco }}</h1>
+<app-page-state [state]="state" />
 <form class="editor organization-form" [formGroup]="form" (ngSubmit)="save()">
   <label class="compact-field long-value"><span>{{ 'organization.legalName' | transloco }}</span><input formControlName="legalName"></label>
   <label class="compact-field long-value"><span>{{ 'organization.tradingName' | transloco }}</span><input formControlName="tradingName"></label>

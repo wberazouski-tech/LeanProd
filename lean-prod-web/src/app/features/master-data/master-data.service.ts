@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { AddressDetails, CatalogItem, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
+import { AddressDetails, CatalogItem, CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
 
 @Injectable({ providedIn: 'root' })
 export class MasterDataService {
@@ -28,6 +28,11 @@ export class MasterDataService {
   unitConversions() { return this.http.get<UnitConversion[]>(`${this.api}unit-of-measures/conversions`); }
   createUnitConversion(value: object) { return this.http.post<UnitConversion>(`${this.api}unit-of-measures/conversions`, value); }
   deleteUnitConversion(id: string) { return this.http.delete<boolean>(`${this.api}unit-of-measures/conversions/${id}`); }
+  catalogItemClasses(type: CatalogItemType, search = '', isActive = '', isGroup = '') { let p = new HttpParams().set('type', type).set('page', 1).set('pageSize', 5000); if (search) p = p.set('search', search); if (isActive) p = p.set('isActive', isActive); if (isGroup) p = p.set('isGroup', isGroup); return this.http.get<Page<CatalogItemClassSummary>>(`${this.api}catalog-item-classes`, { params: p }); }
+  catalogItemClass(id: string) { return this.http.get<CatalogItemClassDetails>(`${this.api}catalog-item-classes/${id}`); }
+  catalogItemClassOptions(type: CatalogItemType, activeOnly = true) { return this.http.get<CatalogItemClassOption[]>(`${this.api}catalog-item-classes/options`, { params: { type, activeOnly } }); }
+  saveCatalogItemClass(id: string | undefined, value: object) { return id ? this.http.put<CatalogItemClassDetails>(`${this.api}catalog-item-classes/${id}`, value) : this.http.post<CatalogItemClassDetails>(`${this.api}catalog-item-classes`, value); }
+  setCatalogItemClassActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-item-classes/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
   equipment(page = 1, filters: { search?: string; isActive?: string; departmentId?: string; equipmentTypeId?: string; state?: string } = {}) { let p = new HttpParams().set('page', page).set('pageSize', 20); for (const [key, value] of Object.entries(filters)) if (value) p = p.set(key, value); return this.http.get<Page<EquipmentSummary>>(`${this.api}equipment`, { params: p }); }
   equipmentDetails(id: string) { return this.http.get<EquipmentDetails>(`${this.api}equipment/${id}`); }
   equipmentOptions() { return this.http.get<EquipmentOption[]>(`${this.api}equipment/options`); }
@@ -46,5 +51,10 @@ export class MasterDataService {
   updateAddress(id: string, value: object) { return this.http.put<AddressDetails>(`${this.api}addresses/${id}`, value); }
   setAddressActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}addresses/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
   makeAddressPrimary(id: string) { return this.http.post<boolean>(`${this.api}addresses/${id}/make-primary`, {}); }
+  catalogItems(type: CatalogItemType, search = '', isActive = '') { let p = new HttpParams().set('type', type).set('page', 1).set('pageSize', 5000); if (search) p = p.set('search', search); if (isActive) p = p.set('isActive', isActive); return this.http.get<Page<CatalogItemSummary>>(`${this.api}catalog-items`, { params: p }); }
+  catalogItem(id: string) { return this.http.get<CatalogItemDetails>(`${this.api}catalog-items/${id}`); }
+  saveCatalogItem(id: string | undefined, value: object) { return id ? this.http.put<CatalogItemDetails>(`${this.api}catalog-items/${id}`, value) : this.http.post<CatalogItemDetails>(`${this.api}catalog-items`, value); }
+  changeCatalogItemClass(id: string, catalogItemClassId: string) { return this.http.patch<CatalogItemDetails>(`${this.api}catalog-items/${id}/class`, { catalogItemClassId }); }
+  setCatalogItemActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-items/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
   private ownerAddressUrl(owner: 'organization' | 'department' | 'storage-location', id?: string): string { return owner === 'organization' ? `${this.api}organization/addresses` : `${this.api}${owner === 'department' ? 'departments' : 'storage-locations'}/${id}/addresses`; }
 }

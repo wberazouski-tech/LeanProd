@@ -45,6 +45,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IMasterDataService, MasterDataService>();
         services.AddSingleton<IInternationalUnitCatalog, InternationalUnitCatalog>();
         services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
+        services.AddScoped<ICatalogItemService, CatalogItemService>();
         services.AddScoped<IEquipmentService, EquipmentService>();
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IAddressService, AddressService>();

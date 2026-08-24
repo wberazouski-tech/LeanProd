@@ -15,10 +15,15 @@ button[type="button"] { background: #fff; border-color: #b9c5d6; color: #344054;
 table { background: var(--surface); border: 1px solid var(--border); border-collapse: separate; border-radius: 9px; border-spacing: 0; overflow: hidden; width: 100%; }
 th, td { border-bottom: 1px solid var(--border); padding: .68rem .75rem; text-align: left; vertical-align: middle; }
 th { background: #eef3f9; color: #344054; font-size: .82rem; letter-spacing: .025em; text-transform: uppercase; } th + th, td + td { border-left: 1px solid var(--border); } tbody tr:last-child td { border-bottom: 0; } tbody tr { transition: background .12s; } tbody tr:hover { background: #f7faff; }
+.numeric-value { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.money-value, .quantity-value { font-feature-settings: "tnum"; }
 label { color: #344054; font-size: .9rem; font-weight: 600; }
 .field { display: grid; gap: .38rem; margin-bottom: 1rem; width: 100%; }
 .error { background: #fff1f0; border: 1px solid #fecdca; border-radius: 7px; color: var(--danger); padding: .65rem .75rem; }
 .error-banner { align-items: center; background: #fff1f0; border-bottom: 1px solid #fda29b; color: #912018; display: flex; justify-content: space-between; padding: .65rem 1rem; position: relative; z-index: 20; }
+.page-state { color: var(--muted); margin: .75rem 0; }
+.page-state-error { color: var(--danger); }
+.page-state-success { color: #067647; }
 .error-banner button { background: transparent; border: 0; color: inherit; min-height: auto; padding: .15rem .4rem; }
 dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); max-width: min(900px, calc(100vw - 2rem)); padding: 1.25rem; } dialog::backdrop { background: rgba(15,23,42,.45); }
 fieldset { border: 1px solid var(--border); border-radius: 8px; padding: .75rem; } legend { color: #475467; font-weight: 600; padding: 0 .3rem; }

@@ -7,6 +7,7 @@
 - [Units of measure and conversions](units-of-measure.md)
 - [Equipment directory and state history](equipment.md)
 - [Organization and addresses](organization.md)
+- [Catalog items](catalog-items.md)
 - [Authorization](authorization.md)
 - [База даных](database.md)
 - [EF Core migrations](ef-core-migrations.md)

@@ -1,5 +1,6 @@
 {
-  "common": {
+  "pageState": { "loading": "Loading…", "error": "Could not load the data.", "saving": "Saving…", "success": "Changes saved." },
+  "common": { "noResults": "No data found.",
     "email": "Email",
     "password": "Password",
     "save": "Save",
@@ -34,6 +35,11 @@
     "overview": "Overview",
     "newRecord": "New record",
     "administration": "Administration",
+    "users": "Users",
+    "menu": "Menu",
+    "overviewSection": "Overview",
+    "masterDataSection": "Master data",
+    "actionsSection": "Actions",
     "navigation": "Main navigation"
   },
   "roles": {
@@ -105,6 +111,9 @@
     "editDepartment": "Edit department",
     "department": "Department",
     "description": "Description",
+    "resizeColumn": "Resize column",
+    "expand": "Expand child departments",
+    "collapse": "Collapse child departments",
     "newStorage": "New storage location",
     "editStorage": "Edit storage location",
     "kind": "Physical kind",
@@ -206,6 +215,9 @@
   "organization": { "title": "Organization", "legalName": "Legal name", "tradingName": "Trading name", "legalForm": "Legal form", "taxNumber": "Tax number", "statisticalNumber": "Statistical number", "registrationNumber": "Company registration number", "currency": "Default currency", "timeZone": "Time zone", "phone": "Phone", "website": "Website", "printFooter": "Print footer" },
   "addresses": { "title": "Addresses", "add": "Add address", "edit": "Edit address", "type": "Address type", "country": "Country", "locality": "Locality", "postalCode": "Postal code", "line": "Address", "primary": "Primary address", "makePrimary": "Make primary" },
   "addressTypes": { "Registered": "Registered", "Correspondence": "Correspondence", "Office": "Office", "Delivery": "Delivery", "Other": "Other" },
+  "catalogItems": { "section": "Items", "search": "Article or name", "add": "Add item", "edit": "Edit item", "workingName": "Working name", "fullName": "Full name", "article": "Article number", "baseUnit": "Base unit of measure", "cost": "Cost" },
+  "catalogItemClasses": { "search": "Class code or name", "allNodeTypes": "All node types", "groups": "Groups", "classes": "Classes", "group": "Group", "class": "Class", "nodeType": "Node type", "parentGroup": "Parent group", "addGroup": "Add group", "addClass": "Add class", "edit": "Edit class", "allItems": "All items" },
+  "catalogItemTypes": { "Product": "Products", "Work": "Work", "PrimaryMaterial": "Primary materials", "AuxiliaryMaterial": "Auxiliary materials", "SemiFinishedProduct": "Semi-finished products", "Packaging": "Packaging", "ToolingAndTools": "Tooling and tools", "SparePart": "Spare parts", "PurchasedService": "Purchased services", "Waste": "Waste" },
   "sample": {
     "title": "Sample form",
     "intro": "UI placeholder for the first shift-report iteration.",

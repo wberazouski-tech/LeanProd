@@ -7,10 +7,11 @@ import { Permissions } from '../../../core/auth/permissions';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from '../master-data.models';
 import { MasterDataService } from '../master-data.service';
+import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 
 @Component({
   selector: 'app-units-of-measure', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslocoPipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, PageStateComponent],
   templateUrl: './units-of-measure.component.html', styleUrls: ['../master-data.css', './units-of-measure.component.css']
 })
 export class UnitsOfMeasureComponent implements OnInit {
@@ -22,7 +23,7 @@ export class UnitsOfMeasureComponent implements OnInit {
   items: UnitSummary[] = []; catalog: UnitCatalogOption[] = []; conversions: UnitConversion[] = [];
   unitOptions: UnitSummary[] = [];
   hoveredConversion?: UnitConversion;
-  selected?: UnitDetails; selectedCatalog?: UnitCatalogOption; page = 1; total = 0; message = '';
+  selected?: UnitDetails; selectedCatalog?: UnitCatalogOption; page = 1; total = 0; message = ''; state: PageState = 'loading';
   readonly quantityTypes = ['Mass', 'Length', 'Area', 'Volume', 'Time', 'Temperature', 'Count', 'Other'];
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '' });
   readonly catalogSearch = this.fb.nonNullable.control('');
@@ -31,7 +32,7 @@ export class UnitsOfMeasureComponent implements OnInit {
   readonly conversionForm = this.fb.nonNullable.group({ fromUnitId: ['', Validators.required], toUnitId: ['', Validators.required], multiplier: [1, [Validators.required, Validators.min(0.000000000001)]], offset: [0, Validators.required] });
 
   ngOnInit(): void { this.load(); this.loadUnitOptions(); this.loadConversions(); }
-  load(page = 1): void { const f = this.filters.getRawValue(); this.api.units(page, f.search.trim(), f.isActive, this.language.current()).subscribe(x => { this.items = x.items; this.page = x.page; this.total = x.totalCount; }); }
+  load(page = 1): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.units(page, f.search.trim(), f.isActive, this.language.current()).subscribe({ next: x => { this.items = x.items; this.page = x.page; this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
   select(item: UnitSummary): void { this.api.unit(item.id, this.language.current()).subscribe(x => { this.selected = x; this.editForm.reset({ quantityType: x.quantityType, decimalPlaces: x.decimalPlaces, localizedName: x.translations.find(v => v.languageCode === this.language.current())?.name ?? '' }); }); }
   openUnitDialog(): void { this.selectedCatalog = undefined; this.catalogSearch.setValue(''); this.createForm.reset({ quantityType: '', decimalPlaces: 3, localizedName: '' }); this.searchCatalog(); this.unitDialog?.nativeElement.showModal(); }
   searchCatalog(): void { this.api.unitCatalog(this.catalogSearch.value.trim()).subscribe(x => this.catalog = x); }

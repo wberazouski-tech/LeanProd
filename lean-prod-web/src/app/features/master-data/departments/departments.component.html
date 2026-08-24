@@ -16,21 +16,24 @@
     </button>
   }
 </form>
-<div class="tree-table">
+<app-page-state [state]="state" />
+<div class="tree-table departments-table">
 <table>
+  <colgroup><col [style.width.px]="columnWidths.code" /><col [style.width.px]="columnWidths.name" /><col [style.width.px]="columnWidths.status" />@if (canManage) { <col [style.width.px]="columnWidths.actions" /> }</colgroup>
   <thead>
     <tr>
-      <th>{{ "masterData.code" | transloco }}</th>
-      <th>{{ "admin.name" | transloco }}</th>
-      <th>{{ "admin.status" | transloco }}</th>
-      @if (canManage) { <th class="actions-column"></th> }
+      <th><button type="button" class="sort-header" (click)="sortBy('code')">{{ "masterData.code" | transloco }} <span aria-hidden="true">{{ sortKey === 'code' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('code', $event)"></span></th>
+      <th><button type="button" class="sort-header" (click)="sortBy('name')">{{ "admin.name" | transloco }} <span aria-hidden="true">{{ sortKey === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('name', $event)"></span></th>
+      <th><button type="button" class="sort-header" (click)="sortBy('isActive')">{{ "admin.status" | transloco }} <span aria-hidden="true">{{ sortKey === 'isActive' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('status', $event)"></span></th>
+      @if (canManage) { <th class="actions-column"><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('actions', $event)"></span></th> }
     </tr>
   </thead>
   <tbody>
-    @for (item of items; track item.id) {
+    @if (state === 'empty') { <tr><td [attr.colspan]="canManage ? 4 : 3">{{ "common.noResults" | transloco }}</td></tr> }
+    @for (item of sortedItems; track item.id) {
       <tr (click)="select(item)" [class.selected-row]="selected?.id === item.id" [attr.aria-selected]="selected?.id === item.id">
-        <td>{{ item.code }}</td>
-        <td><span class="tree-name" [style.--tree-depth]="item.depth"><span class="tree-branch" aria-hidden="true">{{ item.depth ? '└' : '' }}</span>{{ item.name }}</span></td>
+        <td><button type="button" class="tree-toggle" [class.is-leaf]="!hasChildren(item)" [attr.aria-label]="(isExpanded(item) ? 'masterData.collapse' : 'masterData.expand') | transloco" [attr.aria-expanded]="hasChildren(item) ? isExpanded(item) : null" (click)="toggleExpanded(item, $event)"><span aria-hidden="true">{{ hasChildren(item) ? (isExpanded(item) ? '▾' : '▸') : '' }}</span></button><span class="tree-code" [style.--tree-depth]="item.depth">{{ item.code }}</span></td>
+        <td>{{ item.name }}</td>
         <td>
           {{ (item.isActive ? "admin.active" : "admin.inactive") | transloco }}
         </td>

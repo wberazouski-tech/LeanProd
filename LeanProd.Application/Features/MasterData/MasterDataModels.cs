@@ -1,10 +1,21 @@
+using LeanProd.Domain.MasterData;
+
 namespace LeanProd.Application.Features.MasterData;
 
 public sealed record MasterDataQuery(int Page, int PageSize, string? Search, bool? IsActive);
 public sealed record MasterDataPage<T>(IReadOnlyCollection<T> Items, int Page, int PageSize, int TotalCount);
 public sealed record OptionItem(Guid Id, string Code, string Name);
 public sealed record StorageLocationOption(Guid Id, string Code, string Name, Guid DepartmentId);
-public sealed record CatalogItem(Guid Id, string Code);
+public sealed record LookupItem(Guid Id, string Code);
+
+public sealed record CatalogItemClassSummary(Guid Id, CatalogItemType Type, string Code, string Name,
+    bool IsGroup, Guid? ParentId, bool IsActive);
+public sealed record CatalogItemClassDetails(Guid Id, CatalogItemType Type, string Code, string Name,
+    bool IsGroup, Guid? ParentId, bool IsActive, string RowVersion);
+public sealed record CatalogItemClassOption(Guid Id, CatalogItemType Type, string Code, string Name,
+    bool IsGroup, Guid? ParentId);
+public sealed record SaveCatalogItemClassCommand(CatalogItemType Type, string Code, string Name,
+    bool IsGroup, Guid? ParentId, string? RowVersion);
 
 public sealed record DepartmentSummary(Guid Id, string Code, string Name, Guid? ParentDepartmentId, string? ParentName, bool IsActive);
 public sealed record DepartmentDetails(Guid Id, string Code, string Name, string? Description,

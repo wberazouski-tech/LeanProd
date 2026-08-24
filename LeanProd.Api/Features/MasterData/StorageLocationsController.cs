@@ -25,9 +25,9 @@ public sealed class StorageLocationsController(IMasterDataService service, IAddr
     [HttpGet("options")]
     public async Task<ActionResult<IReadOnlyCollection<StorageLocationOption>>> Options(CancellationToken ct) => Ok(await service.GetStorageLocationOptionsAsync(ct));
     [HttpGet("kinds")]
-    public async Task<ActionResult<IReadOnlyCollection<CatalogItem>>> Kinds(CancellationToken ct) => Ok(await service.GetStorageLocationKindsAsync(ct));
+    public async Task<ActionResult<IReadOnlyCollection<LookupItem>>> Kinds(CancellationToken ct) => Ok(await service.GetStorageLocationKindsAsync(ct));
     [HttpGet("types")]
-    public async Task<ActionResult<IReadOnlyCollection<CatalogItem>>> Types(CancellationToken ct) => Ok(await service.GetStorageLocationTypesAsync(ct));
+    public async Task<ActionResult<IReadOnlyCollection<LookupItem>>> Types(CancellationToken ct) => Ok(await service.GetStorageLocationTypesAsync(ct));
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<StorageLocationDetails>> Get(Guid id, CancellationToken ct) { var value = await service.GetStorageLocationAsync(id, ct); return value is null ? NotFound() : Ok(value); }
     [HttpPost, Authorize(Policy = Permissions.MasterDataManage)]

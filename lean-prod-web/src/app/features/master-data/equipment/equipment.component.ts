@@ -6,8 +6,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions';
 import { EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem } from '../master-data.models';
 import { MasterDataService } from '../master-data.service';
+import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 
-@Component({ selector: 'app-equipment', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe], templateUrl: './equipment.component.html', styleUrls: ['../master-data.css', './equipment.component.css'] })
+@Component({ selector: 'app-equipment', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, PageStateComponent], templateUrl: './equipment.component.html', styleUrls: ['../master-data.css', './equipment.component.css'] })
 export class EquipmentComponent implements OnInit {
   private readonly api = inject(MasterDataService); private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService); private readonly t = inject(TranslocoService);
@@ -18,14 +19,14 @@ export class EquipmentComponent implements OnInit {
   @ViewChild('stateDialog') stateDialog?: ElementRef<HTMLDialogElement>;
   items: EquipmentSummary[] = []; options: EquipmentOption[] = []; departments: OptionItem[] = [];
   types: EquipmentType[] = []; history: EquipmentStateEvent[] = []; selected?: EquipmentDetails;
-  editingType?: EquipmentType; editingState?: EquipmentStateEvent; page = 1; total = 0; message = '';
+  editingType?: EquipmentType; editingState?: EquipmentStateEvent; page = 1; total = 0; message = ''; state: PageState = 'loading';
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '', departmentId: '', equipmentTypeId: '', state: '' });
   readonly form = this.fb.nonNullable.group({ name: ['', Validators.required], inventoryNumber: '', equipmentTypeId: '', departmentId: ['', Validators.required], parentEquipmentId: '', serialNumber: '', manufacturer: '', model: '', commissionedOn: '', description: '' });
   readonly typeForm = this.fb.nonNullable.group({ name: ['', Validators.required], description: '' });
   readonly stateForm = this.fb.nonNullable.group({ state: ['', Validators.required], startedAtLocal: [this.localNow(), Validators.required], endedAtLocal: '', comment: '' });
 
   ngOnInit(): void { this.load(); this.loadReferences(); }
-  load(page = 1): void { const f = this.filters.getRawValue(); this.api.equipment(page, f).subscribe(x => { this.items = x.items; this.page = x.page; this.total = x.totalCount; }); }
+  load(page = 1): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.equipment(page, f).subscribe({ next: x => { this.items = x.items; this.page = x.page; this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
   loadReferences(): void { this.api.departmentOptions().subscribe(x => this.departments = x); this.api.equipmentOptions().subscribe(x => this.options = x); this.api.equipmentTypes().subscribe(x => this.types = x); }
   select(item: EquipmentSummary): void { this.api.equipmentDetails(item.id).subscribe(x => { this.selected = x; this.loadHistory(); }); }
   openCreate(): void { this.selected = undefined; this.form.reset({ name: '', inventoryNumber: '', equipmentTypeId: '', departmentId: '', parentEquipmentId: '', serialNumber: '', manufacturer: '', model: '', commissionedOn: '', description: '' }); this.equipmentDialog?.nativeElement.showModal(); }

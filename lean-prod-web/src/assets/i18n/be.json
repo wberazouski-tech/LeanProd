@@ -1,5 +1,7 @@
 {
+  "pageState": { "loading": "Загрузка…", "error": "Не ўдалося загрузіць даныя.", "saving": "Захаванне…", "success": "Змены захаваныя." },
   "common": {
+    "noResults": "Даныя не знойдзены.",
     "email": "Email",
     "password": "Пароль",
     "save": "Захаваць",
@@ -34,6 +36,11 @@
     "overview": "Агляд",
     "newRecord": "Новы запіс",
     "administration": "Адміністраванне",
+    "users": "Карыстальнікі",
+    "menu": "Меню",
+    "overviewSection": "Агляд",
+    "masterDataSection": "Даведнікі",
+    "actionsSection": "Дзеянні",
     "navigation": "Асноўная навігацыя"
   },
   "roles": {
@@ -105,6 +112,9 @@
     "editDepartment": "Рэдагаванне падраздзялення",
     "department": "Падраздзяленне",
     "description": "Апісанне",
+    "resizeColumn": "Змяніць шырыню калонкі",
+    "expand": "Раскрыць падраздзелы",
+    "collapse": "Згарнуць падраздзелы",
     "newStorage": "Новае месца захоўвання",
     "editStorage": "Рэдагаванне месца захоўвання",
     "kind": "Характар",
@@ -206,6 +216,9 @@
   "organization": { "title": "Арганізацыя", "legalName": "Юрыдычная назва", "tradingName": "Гандлёвая назва", "legalForm": "Прававая форма", "taxNumber": "Падатковы нумар", "statisticalNumber": "Статыстычны нумар", "registrationNumber": "Рэгістрацыйны нумар", "currency": "Валюта па змаўчанні", "timeZone": "Часавы пояс", "phone": "Тэлефон", "website": "Вэб-сайт", "printFooter": "Ніжні калантытул друку" },
   "addresses": { "title": "Адрасы", "add": "Дадаць адрас", "edit": "Рэдагаваць адрас", "type": "Тып адраса", "country": "Краіна", "locality": "Населены пункт", "postalCode": "Паштовы індэкс", "line": "Адрас", "primary": "Асноўны адрас", "makePrimary": "Зрабіць асноўным" },
   "addressTypes": { "Registered": "Юрыдычны", "Correspondence": "Для карэспандэнцыі", "Office": "Офіс", "Delivery": "Дастаўка", "Other": "Іншы" },
+  "catalogItems": { "section": "Каталог", "search": "Артыкул або назва", "add": "Дадаць элемент", "edit": "Рэдагаваць элемент", "workingName": "Працоўная назва", "fullName": "Поўная назва", "article": "Артыкул", "baseUnit": "Базавая адзінка вымярэння", "cost": "Кошт" },
+  "catalogItemClasses": { "search": "Код або назва класа", "allNodeTypes": "Усе тыпы вузлоў", "groups": "Групы", "classes": "Класы", "group": "Група", "class": "Клас", "nodeType": "Тып вузла", "parentGroup": "Бацькоўская група", "addGroup": "Дадаць групу", "addClass": "Дадаць клас", "edit": "Рэдагаваць клас", "allItems": "Усе элементы" },
+  "catalogItemTypes": { "Product": "Прадукцыя", "Work": "Праца для кліента", "PrimaryMaterial": "Асноўныя матэрыялы", "AuxiliaryMaterial": "Дапаможныя матэрыялы", "SemiFinishedProduct": "Паўфабрыкаты", "Packaging": "Тара і ўпаковачныя матэрыялы", "ToolingAndTools": "Аснастка і інструменты", "SparePart": "Запчасткі", "PurchasedService": "Набываемыя паслугі", "Waste": "Адходы" },
   "sample": {
     "title": "Прыклад формы",
     "intro": "UI-заглушка для першай ітэрацыі зменнай справаздачы.",

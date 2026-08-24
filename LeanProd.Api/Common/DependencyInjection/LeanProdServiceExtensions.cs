@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using LeanProd.Api.Common.Identity;
@@ -74,7 +75,8 @@ public static class LeanProdServiceExtensions
                 return new BadRequestObjectResult(problem);
             };
         });
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(options =>
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
