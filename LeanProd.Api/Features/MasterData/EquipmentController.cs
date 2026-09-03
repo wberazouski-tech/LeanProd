@@ -18,7 +18,7 @@ public sealed class EquipmentController(IEquipmentService service) : MasterDataC
         string? search = null, bool? isActive = null, Guid? departmentId = null, Guid? equipmentTypeId = null,
         string? state = null, CancellationToken ct = default)
     {
-        if (page < 1 || pageSize is < 1 or > 100) return Problem(statusCode: 400, title: "Invalid paging");
+        if (page < 1 || pageSize is < 1 or > 5000) return Problem(statusCode: 400, title: "Invalid paging");
         return Ok(await service.GetEquipmentAsync(new EquipmentQuery(page, pageSize, search, isActive, departmentId, equipmentTypeId, state), ct));
     }
 

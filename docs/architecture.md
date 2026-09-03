@@ -22,17 +22,22 @@ This specification was originally written for 1C. The web application preserves 
 
 1. **Identity and Access** — users, roles, personal defaults and permission policies.
 2. **Organizations** — the singleton organization profile and shared addresses owned by the organization, departments or storage locations.
-3. **Master Data** — departments, storage locations, units of measure, equipment, products, downtime reasons and effective performance standards.
-4. **Shift Accounting** — shift-report aggregate containing production and linked downtime entries.
-5. **Quality** — rejected-product reports and their product rows.
-6. **Period Closing** — closed periods and centralized mutation guard.
-7. **Reporting** — read-only projections for performance, downtime, waste, rejects and equipment KPIs.
+3. **Master Data** — departments, storage locations, units of measure, equipment, products and product classes.
+4. **Workforce** — employees, brigades and effective-dated brigade membership.
+5. **Technologies** — product or product-class specifications, stage graphs, material norms and supply routes, outputs and operations.
+6. **Shift Accounting** — shift-report aggregate containing production and linked downtime entries.
+7. **Quality** — rejected-product reports and their product rows.
+8. **Period Closing** — closed periods and centralized mutation guard.
+9. **Reporting** — read-only projections for performance, downtime, waste, rejects and equipment KPIs.
+10. **Setup** — first-run SQL Server connection and database provisioning; this is a host capability, not a business aggregate.
 
 ## Architectural boundaries
 
 The first release is a modular monolith. Each module owns its write model and exposes application commands/queries. Controllers must not contain formulas or direct EF Core queries. Cross-module changes run in a single database transaction. Reporting uses separate projections and must not mutate operational data.
 
-Angular is organized by features (`core`, `features/identity`, `features/organization`, `features/master-data`, and future operational modules). API contracts are typed, and HTTP access is encapsulated in feature services.
+Backend code uses the same business feature boundary in Domain, Application, Infrastructure and API. In particular, technology specifications live under `Technologies`, separately from `MasterData`, while referencing master-data identities through foreign keys. API contracts are typed, and HTTP access is encapsulated in feature services.
+
+Angular is organized by features (`core`, `features/identity`, `features/organization`, `features/master-data`, `features/workforce`, and setup). The existing technology UI remains under `features/master-data/technologies` for compatibility; moving that UI is a separate change.
 
 ## Non-negotiable business invariants
 

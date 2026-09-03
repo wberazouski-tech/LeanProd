@@ -8,7 +8,8 @@
     "lint": "ng lint",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "ng test --watch=false --browsers=ChromeHeadless"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "test:i18n": "node scripts/check-i18n.mjs"
   },
   "private": true,
   "dependencies": {

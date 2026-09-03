@@ -4,7 +4,15 @@ LeanProd uses ASP.NET Core Identity roles mapped to application permissions. End
 
 Permission constants and the role matrix are owned by `LeanProd.Application/Features/Identity`. API policy infrastructure is in `LeanProd.Api/Common/Authorization`.
 
-## Organization permissions
+## Implemented permissions
+
+- `Users.Manage` controls user and role administration.
+- `MasterData.View` and `MasterData.Manage` control reference data and currently also technology specifications.
+- `Organization.View` and `Organization.Manage` control the singleton organization profile.
+- `Workforce.View` and `Workforce.Manage` control employees, brigades and memberships.
+- Shift reports, quality, reports, period closing and audit already have permission constants and role assignments; their business endpoints are introduced with the corresponding modules.
+
+### Organization permissions
 
 - `Organization.View` permits reading the singleton organization profile and its addresses. It is included in every standard operational role.
 - `Organization.Manage` permits changing the profile and adding organization addresses. It is assigned to `SystemAdministrator` and `MasterDataAdministrator`.
@@ -31,6 +39,4 @@ Angular receives effective permissions from `login`, `register`, and `me`, expos
 - Reuse of a revoked token revokes every still-active token in that family.
 - Angular retries one failed authorized request after a coordinated refresh. A page reload restores the session through the refresh cookie.
 
-Local bootstrap administrator credentials are configured through .NET User Secrets and must not be committed. The seeded account receives the `SystemAdministrator` role.
-Логін: admin@leanprod.local
-Пароль: LeanProd@Local123!
+Local bootstrap administrator credentials are configured through .NET User Secrets and must not be committed. The seeded account receives the `SystemAdministrator` role. The example email may be `admin@leanprod.local`, but the password must be supplied as a strong local secret and must never be documented or committed.

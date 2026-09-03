@@ -1,9 +1,200 @@
-<h1>{{ 'equipment.title' | transloco }}</h1>
+<h1>
+  {{ 'equipment.title' | transloco }}
+  @if (filterSummary) { <span class="title-filters">({{ filterSummary }})</span> }
+</h1>
 <app-page-state [state]="state" />
-<form class="filters" [formGroup]="filters" (ngSubmit)="load()"><input formControlName="search" [placeholder]="'equipment.search' | transloco"><select formControlName="departmentId"><option value="">{{ 'equipment.allDepartments' | transloco }}</option>@for (x of departments; track x.id) { <option [value]="x.id">{{ x.name }}</option> }</select><select formControlName="equipmentTypeId"><option value="">{{ 'equipment.allTypes' | transloco }}</option>@for (x of types; track x.id) { <option [value]="x.id">{{ x.name }}</option> }</select><select formControlName="state"><option value="">{{ 'equipment.allStates' | transloco }}</option>@for (x of states; track x) { <option [value]="x">{{ ('equipmentStates.' + x) | transloco }}</option> }</select><select formControlName="isActive"><option value="">{{ 'admin.allStatuses' | transloco }}</option><option value="true">{{ 'admin.activePlural' | transloco }}</option><option value="false">{{ 'admin.inactivePlural' | transloco }}</option></select><button>{{ 'admin.find' | transloco }}</button>@if (canManage) { <button type="button" (click)="openCreate()">{{ 'equipment.add' | transloco }}</button><button type="button" (click)="openType()">{{ 'equipment.addType' | transloco }}</button> }</form>
-<table><thead><tr><th>{{ 'admin.name' | transloco }}</th><th>{{ 'equipment.type' | transloco }}</th><th>{{ 'masterData.department' | transloco }}</th><th>{{ 'equipment.parent' | transloco }}</th><th>{{ 'equipment.currentState' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th></tr></thead><tbody>@for (item of items; track item.id) { <tr (click)="select(item)"><td>{{ label(item.name, item.inventoryNumber) }}</td><td>{{ item.typeName || '—' }}</td><td>{{ item.departmentName }}</td><td>{{ item.parentName ? label(item.parentName, item.parentInventoryNumber) : '—' }}</td><td>{{ item.currentState ? (('equipmentStates.' + item.currentState) | transloco) : '—' }}</td><td>{{ (item.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td></tr> }</tbody></table><p>{{ 'admin.total' | transloco }}: {{ total }} <button [disabled]="page === 1" (click)="load(page - 1)">{{ 'admin.back' | transloco }}</button> <button [disabled]="page * 20 >= total" (click)="load(page + 1)">{{ 'admin.next' | transloco }}</button></p>
-@if (selected) { <section class="editor"><h2>{{ label(selected.name, selected.inventoryNumber) }}</h2><p>{{ 'equipment.currentState' | transloco }}: <strong>{{ selected.currentState ? (('equipmentStates.' + selected.currentState) | transloco) : '—' }}</strong></p>@if (canManage) { <div class="actions"><button (click)="openEdit()">{{ 'equipment.edit' | transloco }}</button><button (click)="openState()">{{ 'equipment.changeState' | transloco }}</button>@if (selected.isActive) { <button (click)="setActive(false)">{{ 'admin.deactivate' | transloco }}</button> } @else { <button (click)="setActive(true)">{{ 'admin.activate' | transloco }}</button> }</div> }<h3>{{ 'equipment.stateHistory' | transloco }}</h3><table><thead><tr><th>{{ 'equipment.state' | transloco }}</th><th>{{ 'equipment.started' | transloco }}</th><th>{{ 'equipment.ended' | transloco }}</th><th>{{ 'equipment.comment' | transloco }}</th><th></th></tr></thead><tbody>@for (event of history; track event.id) { <tr [class.planned]="isPlanned(event)"><td>{{ ('equipmentStates.' + event.state) | transloco }} @if (isPlanned(event)) { <small>({{ 'equipment.planned' | transloco }})</small> }</td><td>{{ event.startedAtUtc | date:'medium' }}</td><td>{{ event.endedAtUtc ? (event.endedAtUtc | date:'medium') : '—' }}</td><td>{{ event.comment || '—' }}</td><td>@if (canManage) { <button type="button" (click)="openState(event)">{{ 'equipment.editInterval' | transloco }}</button> }</td></tr> }</tbody></table></section> }
-<section class="editor"><h2>{{ 'equipment.types' | transloco }}</h2>@if (types.length === 0) { <p>{{ 'equipment.noTypes' | transloco }}</p> } @else { <table><thead><tr><th>{{ 'admin.name' | transloco }}</th><th>{{ 'masterData.description' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th><th></th></tr></thead><tbody>@for (type of types; track type.id) { <tr><td>{{ type.name }}</td><td>{{ type.description || '—' }}</td><td>{{ (type.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td><td>@if (canManage) { <button (click)="openType(type)">{{ 'admin.edit' | transloco }}</button> @if (type.isActive) { <button (click)="setTypeActive(type, false)">{{ 'admin.deactivate' | transloco }}</button> } @else { <button (click)="setTypeActive(type, true)">{{ 'admin.activate' | transloco }}</button> } }</td></tr> }</tbody></table> }</section><p>{{ message }}</p>
-<dialog #equipmentDialog><form method="dialog" class="dialog-close"><button>×</button></form><h2>{{ (selected ? 'equipment.edit' : 'equipment.add') | transloco }}</h2><form class="dialog-form" [formGroup]="form" (ngSubmit)="save()"><label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200"></label><label>{{ 'equipment.inventoryNumber' | transloco }}<input formControlName="inventoryNumber" maxlength="50"></label><label>{{ 'equipment.type' | transloco }}<select formControlName="equipmentTypeId"><option value="">—</option>@for (x of types; track x.id) { @if (x.isActive || x.id === selected?.equipmentTypeId) { <option [value]="x.id">{{ x.name }}</option> } }</select></label><label>{{ 'masterData.department' | transloco }}<select formControlName="departmentId"><option value="">—</option>@for (x of departments; track x.id) { <option [value]="x.id">{{ x.name }}</option> }</select></label><label>{{ 'equipment.parent' | transloco }}<select formControlName="parentEquipmentId"><option value="">—</option>@for (x of options; track x.id) { @if (x.id !== selected?.id) { <option [value]="x.id">{{ label(x.name, x.inventoryNumber) }}</option> } }</select></label><label>{{ 'equipment.serialNumber' | transloco }}<input formControlName="serialNumber"></label><label>{{ 'equipment.manufacturer' | transloco }}<input formControlName="manufacturer"></label><label>{{ 'equipment.model' | transloco }}<input formControlName="model"></label><label>{{ 'equipment.commissionedOn' | transloco }}<input type="date" formControlName="commissionedOn"></label><label>{{ 'masterData.description' | transloco }}<textarea formControlName="description"></textarea></label><button [disabled]="form.invalid">{{ 'common.save' | transloco }}</button></form></dialog>
-<dialog #typeDialog><form method="dialog" class="dialog-close"><button>×</button></form><h2>{{ editingType ? ('equipment.editType' | transloco) : ('equipment.addType' | transloco) }}</h2><form class="dialog-form" [formGroup]="typeForm" (ngSubmit)="saveType()"><label>{{ 'admin.name' | transloco }}<input formControlName="name"></label><label>{{ 'masterData.description' | transloco }}<textarea formControlName="description"></textarea></label><button [disabled]="typeForm.invalid">{{ 'common.save' | transloco }}</button></form></dialog>
-<dialog #stateDialog><form method="dialog" class="dialog-close"><button>×</button></form><h2>{{ (editingState ? 'equipment.editInterval' : 'equipment.changeState') | transloco }}</h2><form class="dialog-form" [formGroup]="stateForm" (ngSubmit)="changeState()"><label>{{ 'equipment.state' | transloco }}<select formControlName="state"><option value="">—</option>@for (x of states; track x) { <option [value]="x">{{ ('equipmentStates.' + x) | transloco }}</option> }</select></label><label>{{ 'equipment.started' | transloco }}<input type="datetime-local" formControlName="startedAtLocal"></label><label>{{ 'equipment.endedOptional' | transloco }}<input type="datetime-local" formControlName="endedAtLocal"></label><label>{{ 'equipment.comment' | transloco }}<textarea formControlName="comment"></textarea></label><button [disabled]="stateForm.invalid">{{ 'common.save' | transloco }}</button></form></dialog>
+
+<div class="equipment-workspace">
+  <div class="equipment-main">
+    <form class="filters" [formGroup]="filters" (ngSubmit)="load()">
+  <input formControlName="search" [placeholder]="'equipment.search' | transloco">
+  <select formControlName="departmentId">
+    <option value="">{{ 'equipment.allDepartments' | transloco }}</option>
+    @for (x of departments; track x.id) {
+    <option [value]="x.id">{{ x.name }}</option> }
+  </select>
+  <select formControlName="isActive">
+    <option value="">{{ 'admin.allStatuses' | transloco }}</option>
+    <option value="true">{{ 'admin.activePlural' | transloco }}</option>
+    <option value="false">{{ 'admin.inactivePlural' | transloco }}</option>
+  </select><button>{{ 'admin.find' | transloco }}</button>@if (canManage) { <button type="button"
+    (click)="openCreate()">{{ 'equipment.add' | transloco }}</button> }<app-table-actions [visible]="canManage"
+    [selected]="!!selected" (editRequested)="openEdit()" (copyRequested)="copySelected()" />
+</form>
+    <table>
+      <thead>
+        <tr>
+          <th><button
+              type="button"
+              class="sort-header"
+              (click)="sortBy('name')">{{ 'admin.name'
+                | transloco }} <span aria-hidden="true">{{ sortKey === 'name' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button></th>
+          <th><button
+              type="button"
+              class="sort-header"
+              (click)="sortBy('inventoryNumber')">{{ 'equipment.inventoryNumber'
+                | transloco }} <span aria-hidden="true">{{ sortKey === 'inventoryNumber' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button></th>
+          <th><button
+              type="button"
+              class="sort-header"
+              (click)="sortBy('equipmentType')">{{ 'equipment.type'
+                | transloco }} <span aria-hidden="true">{{ sortKey === 'equipmentType' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button></th>
+          <th>{{ 'masterData.department' | transloco }}</th>
+          <th>{{ 'equipment.parent' | transloco }}</th>
+          <th>{{ 'equipment.currentState' | transloco }}</th>
+          <th><button
+              type="button"
+              class="sort-header"
+              (click)="sortBy('isActive')">{{ 'admin.status'
+                | transloco }} <span aria-hidden="true">{{ sortKey === 'isActive' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button>
+          </th>
+          <th class="actions-column"></th>
+        </tr>
+      </thead>
+      <tbody>@for (item of sortedItems; track item.id) { <tr (click)="select(item)"
+          [class.selected-row]="selectedRowId === item.id"
+          [attr.aria-selected]="selectedRowId === item.id">
+          <td>{{ item.name }}</td>
+          <td>{{ item.inventoryNumber || '—' }}</td>
+          <td>{{ item.typeName || '—' }}</td>
+          <td>{{ item.departmentName }}</td>
+          <td>{{ item.parentName ? label(item.parentName, item.parentInventoryNumber) : '—' }}</td>
+          <td>{{ item.currentState ? (('equipmentStates.' + item.currentState) | transloco) : '—' }}</td>
+          <td>{{ (item.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
+          <td class="type-actions">
+            @if (canManage) { 
+              <button 
+                type="button" 
+                class="icon-button" (click)="openEdit()"
+                [title]="'admin.edit' | transloco">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" />
+                </svg>
+              </button>}
+          </td>
+        </tr> }</tbody>
+    </table>
+    <p class="table-total">{{ 'admin.total' | transloco }}: {{ total }}</p>
+    @if (selected) { <section class="editor equipment-details">
+      <h2>{{ label(selected.name, selected.inventoryNumber) }}</h2>@if (selected.currentState) { <p>{{
+        'equipment.currentState' | transloco }}: <strong>{{ ('equipmentStates.' + selected.currentState) | transloco
+          }}</strong></p> }@if (canManage) { <div class="actions"><button type="button" (click)="openState()">{{
+          'equipment.changeState' | transloco }}</button></div> }<h3>{{ 'equipment.stateHistory' | transloco }}</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'equipment.state' | transloco }}</th>
+            <th>{{ 'equipment.started' | transloco }}</th>
+            <th>{{ 'equipment.ended' | transloco }}</th>
+            <th>{{ 'equipment.comment' | transloco }}</th>
+            <th class="actions-column"></th>
+          </tr>
+        </thead>
+        <tbody>@for (event of history; track event.id) { <tr [class.planned]="isPlanned(event)">
+            <td>{{ ('equipmentStates.' + event.state) | transloco }} @if (isPlanned(event)) { <small>({{
+                'equipment.planned' | transloco }})</small> }</td>
+            <td>{{ event.startedAtUtc | date:'dd.MM.yyyy HH:mm' }}</td>
+            <td>{{ event.endedAtUtc ? (event.endedAtUtc | date:'dd.MM.yyyy HH:mm' ) : '__.__.____ __:__' }}</td>
+            <td>{{ event.comment || '—' }}</td>
+            <td class="actions-column">@if (canManage) { <button type="button" class="icon-button"
+                (click)="openState(event)" [title]="'equipment.editInterval' | transloco"
+                [attr.aria-label]="'equipment.editInterval' | transloco"><svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" />
+                </svg></button> }</td>
+          </tr> }</tbody>
+      </table>
+    </section> }
+  </div>
+  <aside class="equipment-types">
+    <div class="types-header">
+      <h2>{{ 'equipment.types' | transloco }}</h2>@if (canManage) { <button type="button" (click)="openType()">{{
+        'equipment.addType' | transloco }}</button> }
+    </div><table>
+      <thead>
+        <tr>
+          <th>{{ 'admin.name' | transloco }}</th>
+          <th>{{ 'admin.status' | transloco }}</th>
+          <th class="actions-column"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="type-filter-row" [class.selected-type]="filters.controls.equipmentTypeId.value === ''" (click)="filterByType()">
+          <td><strong>{{ 'equipment.allTypes' | transloco }}</strong></td><td>—</td><td></td>
+        </tr>
+        @for (type of types; track type.id) { <tr class="type-filter-row" [class.selected-type]="filters.controls.equipmentTypeId.value === type.id" (click)="filterByType(type.id)">
+          <td>
+            <strong>{{ type.name }}</strong>
+            @if (type.description) { 
+              <small>{{ type.description }}</small> }
+          </td>
+          <td>{{ (type.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
+          <td class="type-actions">
+            @if (canManage) { 
+              <button 
+                type="button" 
+                class="icon-button" (click)="openType(type); $event.stopPropagation()"
+                [title]="'admin.edit' | transloco">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" />
+                </svg>
+            </button>}
+          </td>
+        </tr> }
+      </tbody>
+    </table>
+  </aside>
+</div>
+<p>{{ message }}</p>
+<dialog #equipmentDialog>
+  <h2>{{ (selected ? 'equipment.edit' : 'equipment.add') | transloco }}</h2>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()"><label>{{ 'admin.name' | transloco }}<input
+        formControlName="name" maxlength="200"></label><label>{{ 'equipment.inventoryNumber' | transloco }}<input
+        formControlName="inventoryNumber" maxlength="50"></label><label>{{ 'equipment.type' | transloco }}<select
+        formControlName="equipmentTypeId">
+        <option value="">—</option>@for (x of types; track x.id) { @if (x.isActive || x.id ===
+        selected?.equipmentTypeId) { <option [value]="x.id">{{ x.name }}</option> } }
+      </select></label><label>{{ 'masterData.department' | transloco }}<select formControlName="departmentId">
+        <option value="">—</option>@for (x of departments; track x.id) { <option [value]="x.id">{{ x.name }}</option> }
+      </select></label><label>{{ 'equipment.parent' | transloco }}<select formControlName="parentEquipmentId">
+        <option value="">—</option>@for (x of options; track x.id) { @if (x.id !== selected?.id) { <option
+          [value]="x.id">{{ label(x.name, x.inventoryNumber) }}</option> } }
+      </select></label><label>{{ 'equipment.serialNumber' | transloco }}<input
+        formControlName="serialNumber"></label><label>{{ 'equipment.manufacturer' | transloco }}<input
+        formControlName="manufacturer"></label><label>{{ 'equipment.model' | transloco }}<input
+        formControlName="model"></label><label>{{ 'equipment.commissionedOn' | transloco }}<input type="date"
+        formControlName="commissionedOn"></label><label>{{ 'masterData.description' | transloco }}<textarea
+        formControlName="description"></textarea></label>
+    <div class="dialog-actions"><button type="submit" [disabled]="form.invalid">{{ 'common.save' | transloco
+        }}</button><button type="button" (click)="equipmentDialog.close()">{{ 'common.close' | transloco }}</button>
+    </div>
+  </form>
+</dialog>
+<dialog #typeDialog>
+  <h2>{{ editingType ? ('equipment.editType' | transloco) : ('equipment.addType' | transloco) }}</h2>
+  <form class="dialog-form" [formGroup]="typeForm" (ngSubmit)="saveType()"><label>{{ 'admin.name' | transloco }}<input
+        formControlName="name"></label><label>{{ 'masterData.description' | transloco }}<textarea
+        formControlName="description"></textarea></label>
+    <label class="type-active"><input type="checkbox" formControlName="isActive"><span>{{ 'admin.active' | transloco }}</span></label>
+    <div class="dialog-actions"><button type="submit" [disabled]="typeForm.invalid">{{ 'common.save' | transloco
+        }}</button><button type="button" (click)="typeDialog.close()">{{ 'common.close' | transloco }}</button></div>
+  </form>
+</dialog>
+<dialog #stateDialog>
+  <h2>{{ (editingState ? 'equipment.editInterval' : 'equipment.changeState') | transloco }}</h2>
+  <form class="dialog-form" [formGroup]="stateForm" (ngSubmit)="changeState()"><label>{{ 'equipment.state' | transloco
+      }}<select formControlName="state">
+        <option value="">—</option>@for (x of states; track x) { <option [value]="x">{{ ('equipmentStates.' + x) |
+          transloco }}</option> }
+      </select></label><label>{{ 'equipment.started' | transloco }}<input type="datetime-local"
+        formControlName="startedAtLocal"></label><label>{{ 'equipment.endedOptional' | transloco }}<input
+        type="datetime-local" formControlName="endedAtLocal"></label><label>{{ 'equipment.comment' | transloco
+      }}<textarea formControlName="comment"></textarea></label>
+    <div class="dialog-actions"><button type="submit" [disabled]="stateForm.invalid">{{ 'common.save' | transloco
+        }}</button><button type="button" (click)="stateDialog.close()">{{ 'common.close' | transloco }}</button></div>
+  </form>
+</dialog>

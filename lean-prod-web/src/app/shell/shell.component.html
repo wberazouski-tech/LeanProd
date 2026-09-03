@@ -3,6 +3,16 @@
     <span aria-hidden="true">☰</span>{{ "shell.menu" | transloco }}
   </button>
   <strong>LeanProd</strong><span class="subtitle">{{ "shell.subtitle" | transloco }}</span>
+  <button
+    class="sidebar-toggle"
+    type="button"
+    (click)="toggleSidebar()"
+    [attr.aria-expanded]="!sidebarCollapsed"
+    [attr.aria-label]="(sidebarCollapsed ? 'shell.expandSidebar' : 'shell.collapseSidebar') | transloco"
+    [title]="(sidebarCollapsed ? 'shell.expandSidebar' : 'shell.collapseSidebar') | transloco"
+  >
+    <span aria-hidden="true">{{ sidebarCollapsed ? "›" : "‹" }}</span>
+  </button>
   @if (auth.currentUser(); as user) {
     <span class="user">{{ user.displayName }} · {{ roleList(user.roles) }}</span
     ><button type="button" (click)="logout()">
@@ -10,7 +20,7 @@
     </button>
   }
 </header>
-<div class="shell">
+<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed">
   <nav id="main-navigation" [class.open]="menuOpen" (click)="closeMenu()" [attr.aria-label]="'shell.navigation' | transloco">
     <span class="nav-section">{{ "shell.overviewSection" | transloco }}</span>
     <a
@@ -26,17 +36,22 @@
         "equipment.title" | transloco
       }}</a>
       <a routerLink="/catalog/products" routerLinkActive="active">{{ "catalogItems.section" | transloco }}</a>
+      <a routerLink="/master-data/technologies" routerLinkActive="active">{{ "technologies.title" | transloco }}</a>
       </div>
     }
     <span class="nav-section">{{ "shell.actionsSection" | transloco }}</span>
     <a routerLink="/sample-form" routerLinkActive="active">{{
       "shell.newRecord" | transloco
     }}</a>
-    @if (auth.hasPermission(permissions.organizationView) || auth.hasPermission(permissions.masterDataView) || auth.hasPermission(permissions.usersManage)) {
+    @if (auth.hasPermission(permissions.organizationView) || auth.hasPermission(permissions.masterDataView) || auth.hasPermission(permissions.workforceView) || auth.hasPermission(permissions.usersManage)) {
       <div class="nav-group">
         <span class="nav-section">{{ "shell.administration" | transloco }}</span>
         @if (auth.hasPermission(permissions.organizationView)) {
           <a routerLink="/administration/organization" routerLinkActive="active">{{ "organization.title" | transloco }}</a>
+        }
+        @if (auth.hasPermission(permissions.workforceView)) {
+          <a routerLink="/administration/employees" routerLinkActive="active">{{ "workforce.employees" | transloco }}</a>
+          <a routerLink="/administration/brigades" routerLinkActive="active">{{ "workforce.brigades" | transloco }}</a>
         }
         @if (auth.hasPermission(permissions.masterDataView)) {
           <a routerLink="/master-data/departments" routerLinkActive="active">{{ "masterData.departments" | transloco }}</a>
@@ -45,6 +60,9 @@
         }
         @if (auth.hasPermission(permissions.usersManage)) {
           <a routerLink="/administration" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ "shell.users" | transloco }}</a>
+        }
+        @if (auth.hasRole("SystemAdministrator")) {
+          <a routerLink="/administration/database-settings" routerLinkActive="active">{{ "shell.databaseSettings" | transloco }}</a>
         }
       </div>
     }

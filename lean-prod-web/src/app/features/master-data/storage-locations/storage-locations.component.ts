@@ -9,15 +9,16 @@ import { CatalogItem, OptionItem, StorageDetails, StorageSummary } from '../mast
 import { MasterDataService } from '../master-data.service';
 import { AddressListComponent } from '../addresses/address-list.component';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
+import { TableActionsComponent } from '../../../core/ui/table-actions.component';
 
-@Component({ selector: 'app-storage-locations', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent], templateUrl: './storage-locations.component.html', styleUrl: '../master-data.css' })
+@Component({ selector: 'app-storage-locations', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent, TableActionsComponent], templateUrl: './storage-locations.component.html', styleUrl: '../master-data.css' })
 export class StorageLocationsComponent implements OnInit {
   private readonly api = inject(MasterDataService); private readonly fb = inject(FormBuilder); private readonly t = inject(TranslocoService); private readonly auth = inject(AuthService);
   items: (StorageSummary & { depth: number })[] = []; departments: OptionItem[] = []; parents: OptionItem[] = []; kinds: CatalogItem[] = []; types: CatalogItem[] = []; selected?: StorageDetails; total = 0; message = ''; editorOpen = false; state: PageState = 'loading';
   sortKey: 'code' | 'name' | 'departmentName' | 'kindCode' | 'typeCodes' | 'isActive' = 'code'; sortDirection: 'asc' | 'desc' = 'asc';
   readonly canManage = this.auth.hasPermission(Permissions.masterDataManage);
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '' });
-  readonly form = this.fb.nonNullable.group({ code: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(4)]], name: ['', Validators.required], description: '', departmentId: ['', Validators.required], kindId: ['', Validators.required], parentStorageLocationId: '', typeIds: this.fb.nonNullable.control<string[]>([]) });
+  readonly form = this.fb.nonNullable.group({ code: ['', Validators.maxLength(4)], name: ['', Validators.required], description: '', departmentId: ['', Validators.required], kindId: ['', Validators.required], parentStorageLocationId: '', typeIds: this.fb.nonNullable.control<string[]>([]) });
   ngOnInit(): void { this.load(); this.loadOptions(); }
   load(): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.storages(1, f.search.trim(), f.isActive, 5000).subscribe({ next: x => { this.items = this.asTree(x.items); this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
   loadOptions(): void { forkJoin({ departments: this.api.departmentOptions(), parents: this.api.storageOptions(), kinds: this.api.kinds(), types: this.api.types() }).subscribe(x => { this.departments = x.departments; this.parents = x.parents; this.kinds = x.kinds; this.types = x.types; }); }
@@ -42,6 +43,8 @@ export class StorageLocationsComponent implements OnInit {
   sortBy(key: 'code' | 'name' | 'departmentName' | 'kindCode' | 'typeCodes' | 'isActive'): void { if (this.sortKey === key) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; else { this.sortKey = key; this.sortDirection = 'asc'; } }
   select(item: StorageSummary): void { this.loadStorage(item.id, false); }
   edit(item: StorageSummary, event: Event): void { event.stopPropagation(); this.loadStorage(item.id, true); }
+  editSelected(): void { if (this.selected) this.loadStorage(this.selected.id, true); }
+  copySelected(): void { if (!this.selected) return; const x = this.selected; this.selected = undefined; this.form.reset({ code: '', name: x.name, description: x.description ?? '', departmentId: x.departmentId, kindId: x.kindId, parentStorageLocationId: x.parentStorageLocationId ?? '', typeIds: [...x.typeIds] }); this.editorOpen = true; }
   create(): void { this.selected = undefined; this.form.reset({ code: '', name: '', description: '', departmentId: '', kindId: '', parentStorageLocationId: '', typeIds: [] }); this.editorOpen = true; }
   closeEditor(): void { this.editorOpen = false; }
   toggleType(id: string, checked: boolean): void { const ids = this.form.controls.typeIds.value.filter(x => x !== id); this.form.controls.typeIds.setValue(checked ? [...ids, id] : ids); }

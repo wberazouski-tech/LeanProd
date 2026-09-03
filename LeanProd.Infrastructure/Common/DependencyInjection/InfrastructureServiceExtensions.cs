@@ -2,11 +2,15 @@ using LeanProd.Application.Common.Abstractions;
 using LeanProd.Application.Features.Identity;
 using LeanProd.Application.Features.MasterData;
 using LeanProd.Infrastructure.Features.MasterData;
+using LeanProd.Application.Features.Technologies;
+using LeanProd.Infrastructure.Features.Technologies;
 using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using LeanProd.Infrastructure.Features.Identity;
+using LeanProd.Application.Features.Workforce;
+using LeanProd.Infrastructure.Features.Workforce;
 using LeanProd.Application.Features.Organizations;
 using LeanProd.Infrastructure.Features.Organizations;
 using Microsoft.AspNetCore.Identity;
@@ -20,32 +24,37 @@ public static class InfrastructureServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var provider = configuration["Database:Provider"] ?? "SqlServer";
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "ConnectionStrings:DefaultConnection is not configured. Use .NET User Secrets locally.");
-
-        services.AddDbContext<LeanProdDbContext>(options =>
+        services.AddDbContext<LeanProdDbContext>((serviceProvider, options) =>
         {
-            if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+            var database = serviceProvider.GetRequiredService<IRuntimeDatabaseConnection>();
+            if (!database.IsConfigured)
+                throw new InvalidOperationException(
+                    "LeanProd database is not configured. Open database settings to connect or create a database.");
+
+            if (database.Provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             {
-                options.UseSqlite(connectionString);
+                options.UseSqlite(database.ConnectionString);
                 return;
             }
 
-            if (!provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException($"Unsupported database provider '{provider}'.");
+            if (!database.Provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"Unsupported database provider '{database.Provider}'.");
 
-            options.UseSqlServer(connectionString, sql =>
+            options.UseSqlServer(database.ConnectionString, sql =>
                 sql.MigrationsAssembly(typeof(LeanProdDbContext).Assembly.FullName));
         });
 
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<LeanProdDbContext>());
         services.AddScoped<IUserAdministrationService, UserAdministrationService>();
-        services.AddScoped<IMasterDataService, MasterDataService>();
+        services.AddScoped<ICatalogItemClassService, CatalogItemClassService>();
+        services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IStorageLocationService, StorageLocationService>();
+        services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IBrigadeService, BrigadeService>();
         services.AddSingleton<IInternationalUnitCatalog, InternationalUnitCatalog>();
         services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
         services.AddScoped<ICatalogItemService, CatalogItemService>();
+        services.AddScoped<ICatalogTechnologyService, CatalogTechnologyService>();
         services.AddScoped<IEquipmentService, EquipmentService>();
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IAddressService, AddressService>();

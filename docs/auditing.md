@@ -19,7 +19,7 @@ The base class supplies:
 
 Creation fields are protected from later modification. All timestamps come from the injected `TimeProvider` and are stored in UTC. Controllers and handlers must not set audit values themselves.
 
-`RowVersion` must be included in update commands once editable business entities are introduced. An EF Core `DbUpdateConcurrencyException` means the record changed since it was read and should normally become an HTTP 409 Problem Details response.
+`RowVersion` is included in update commands for editable business entities such as organization data, master data, workforce records and technologies. An EF Core `DbUpdateConcurrencyException` means the record changed since it was read and should normally become an HTTP 409 Problem Details response.
 
 This metadata records the creator and latest editor only. It is not a full immutable audit history. Critical business transitions such as report submission and period closing will also need append-only audit events.
 

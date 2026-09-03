@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LeanProd.Api.Features.MasterData;
 
 [ApiController, Route("api/storage-locations"), Authorize(Policy = Permissions.MasterDataView)]
-public sealed class StorageLocationsController(IMasterDataService service, IAddressService addresses) : MasterDataControllerBase
+public sealed class StorageLocationsController(IStorageLocationService service, IAddressService addresses) : MasterDataControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<MasterDataPage<StorageLocationSummary>>> List(int page = 1, int pageSize = 20, string? search = null, bool? isActive = null, Guid? departmentId = null, Guid? kindId = null, Guid? typeId = null, CancellationToken ct = default)

@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "ProjectRoot": "D:\\Project_0\\LeanProd",
+  "Skills": [
+    "aspnet-core",
+    "coverage-analysis",
+    "coverlet",
+    "entity-framework-core",
+    "microsoft-extensions",
+    "minimal-api-file-upload",
+    "optimizing-ef-core-queries",
+    "playwright-visual-testing",
+    "xunit"
+  ],
+  "UpdatedAt": "2026-08-26T20:27:50.9448669+00:00"
+}

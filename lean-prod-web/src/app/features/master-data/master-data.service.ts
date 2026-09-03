@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { AddressDetails, CatalogItem, CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
+import { AddressDetails, CatalogItem, CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologySummary, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, TechnologyStageTemplate, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
 
 @Injectable({ providedIn: 'root' })
 export class MasterDataService {
@@ -18,7 +18,7 @@ export class MasterDataService {
   types() { return this.http.get<CatalogItem[]>(`${this.api}storage-locations/types`); }
   saveStorage(id: string | undefined, value: object) { return id ? this.http.put<StorageDetails>(`${this.api}storage-locations/${id}`, value) : this.http.post<StorageDetails>(`${this.api}storage-locations`, value); }
   setStorageActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}storage-locations/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
-  units(page = 1, search = '', isActive = '', language = 'en') { let p = new HttpParams().set('page', page).set('pageSize', 20).set('language', language); if (search) p = p.set('search', search); if (isActive) p = p.set('isActive', isActive); return this.http.get<Page<UnitSummary>>(`${this.api}unit-of-measures`, { params: p }); }
+  units(search = '', isActive = '', language = 'en') { let p = new HttpParams().set('page', 1).set('pageSize', 5000).set('language', language); if (search) p = p.set('search', search); if (isActive) p = p.set('isActive', isActive); return this.http.get<Page<UnitSummary>>(`${this.api}unit-of-measures`, { params: p }); }
   unit(id: string, language = 'en') { return this.http.get<UnitDetails>(`${this.api}unit-of-measures/${id}`, { params: { language } }); }
   unitOptions(language = 'en') { return this.http.get<UnitSummary[]>(`${this.api}unit-of-measures/options`, { params: { language } }); }
   unitCatalog(search = '') { let p = new HttpParams(); if (search) p = p.set('search', search); return this.http.get<UnitCatalogOption[]>(`${this.api}unit-of-measures/catalog`, { params: p }); }
@@ -33,7 +33,7 @@ export class MasterDataService {
   catalogItemClassOptions(type: CatalogItemType, activeOnly = true) { return this.http.get<CatalogItemClassOption[]>(`${this.api}catalog-item-classes/options`, { params: { type, activeOnly } }); }
   saveCatalogItemClass(id: string | undefined, value: object) { return id ? this.http.put<CatalogItemClassDetails>(`${this.api}catalog-item-classes/${id}`, value) : this.http.post<CatalogItemClassDetails>(`${this.api}catalog-item-classes`, value); }
   setCatalogItemClassActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-item-classes/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
-  equipment(page = 1, filters: { search?: string; isActive?: string; departmentId?: string; equipmentTypeId?: string; state?: string } = {}) { let p = new HttpParams().set('page', page).set('pageSize', 20); for (const [key, value] of Object.entries(filters)) if (value) p = p.set(key, value); return this.http.get<Page<EquipmentSummary>>(`${this.api}equipment`, { params: p }); }
+  equipment(filters: { search?: string; isActive?: string; departmentId?: string; equipmentTypeId?: string; state?: string } = {}) { let p = new HttpParams().set('page', 1).set('pageSize', 5000); for (const [key, value] of Object.entries(filters)) if (value) p = p.set(key, value); return this.http.get<Page<EquipmentSummary>>(`${this.api}equipment`, { params: p }); }
   equipmentDetails(id: string) { return this.http.get<EquipmentDetails>(`${this.api}equipment/${id}`); }
   equipmentOptions() { return this.http.get<EquipmentOption[]>(`${this.api}equipment/options`); }
   saveEquipment(id: string | undefined, value: object) { return id ? this.http.put<EquipmentDetails>(`${this.api}equipment/${id}`, value) : this.http.post<EquipmentDetails>(`${this.api}equipment`, value); }
@@ -56,5 +56,11 @@ export class MasterDataService {
   saveCatalogItem(id: string | undefined, value: object) { return id ? this.http.put<CatalogItemDetails>(`${this.api}catalog-items/${id}`, value) : this.http.post<CatalogItemDetails>(`${this.api}catalog-items`, value); }
   changeCatalogItemClass(id: string, catalogItemClassId: string) { return this.http.patch<CatalogItemDetails>(`${this.api}catalog-items/${id}/class`, { catalogItemClassId }); }
   setCatalogItemActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-items/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
+  technologies(filters: { search?: string; isActive?: string; catalogItemId?: string; catalogItemClassId?: string } = {}) { let p = new HttpParams().set('page', 1).set('pageSize', 5000); for (const [key, value] of Object.entries(filters)) if (value) p = p.set(key, value); return this.http.get<Page<CatalogTechnologySummary>>(`${this.api}catalog-technologies`, { params: p }); }
+  technology(id: string) { return this.http.get<CatalogTechnologyDetails>(`${this.api}catalog-technologies/${id}`); }
+  saveTechnology(id: string | undefined, value: object) { return id ? this.http.put<CatalogTechnologyDetails>(`${this.api}catalog-technologies/${id}`, value) : this.http.post<CatalogTechnologyDetails>(`${this.api}catalog-technologies`, value); }
+  setTechnologyActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-technologies/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
+  technologyStageTemplates(activeOnly = false) { return this.http.get<TechnologyStageTemplate[]>(`${this.api}catalog-technologies/stage-templates`, { params: { activeOnly } }); }
+  saveTechnologyStageTemplate(id: string | undefined, value: object) { return id ? this.http.put<TechnologyStageTemplate>(`${this.api}catalog-technologies/stage-templates/${id}`, value) : this.http.post<TechnologyStageTemplate>(`${this.api}catalog-technologies/stage-templates`, value); }
   private ownerAddressUrl(owner: 'organization' | 'department' | 'storage-location', id?: string): string { return owner === 'organization' ? `${this.api}organization/addresses` : `${this.api}${owner === 'department' ? 'departments' : 'storage-locations'}/${id}/addresses`; }
 }

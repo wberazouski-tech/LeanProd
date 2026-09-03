@@ -1,5 +1,6 @@
 using LeanProd.Domain.Common;
 using LeanProd.Domain.Organizations;
+using LeanProd.Domain.Workforce;
 
 namespace LeanProd.Domain.MasterData;
 
@@ -15,5 +16,7 @@ public sealed class Department : AuditableEntity
     public List<StorageLocation> StorageLocations { get; set; } = [];
     public List<Equipment> Equipment { get; set; } = [];
     public List<Address> Addresses { get; set; } = [];
+    public List<Employee> Employees { get; set; } = [];
+    public List<Brigade> Brigades { get; set; } = [];
     public bool IsActive { get; set; } = true;
 }

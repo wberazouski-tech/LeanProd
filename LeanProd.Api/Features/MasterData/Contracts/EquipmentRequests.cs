@@ -19,6 +19,7 @@ public sealed record SaveEquipmentRequest(
 public sealed record SaveEquipmentTypeRequest(
     [Required, StringLength(200)] string Name,
     [StringLength(1000)] string? Description,
+    bool? IsActive,
     string? RowVersion);
 
 public sealed record ChangeEquipmentStateRequest(

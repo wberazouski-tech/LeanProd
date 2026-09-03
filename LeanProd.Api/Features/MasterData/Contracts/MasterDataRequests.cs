@@ -19,21 +19,21 @@ public sealed record ChangeCatalogItemClassRequest(Guid CatalogItemClassId);
 
 public sealed record SaveCatalogItemClassRequest(
     LeanProd.Domain.MasterData.CatalogItemType Type,
-    [Required, StringLength(50)] string Code,
+    [StringLength(50)] string Code,
     [Required, StringLength(200)] string Name,
     bool IsGroup,
     Guid? ParentId,
     string? RowVersion);
 
 public sealed record SaveDepartmentRequest(
-    [Required, StringLength(4, MinimumLength = 4)] string Code,
+    [StringLength(4)] string Code,
     [Required, StringLength(200)] string Name,
     [StringLength(1000)] string? Description,
     Guid? ParentDepartmentId,
     string? RowVersion);
 
 public sealed record SaveStorageLocationRequest(
-    [Required, StringLength(4, MinimumLength = 4)] string Code,
+    [StringLength(4)] string Code,
     [Required, StringLength(200)] string Name,
     [StringLength(1000)] string? Description,
     Guid DepartmentId,

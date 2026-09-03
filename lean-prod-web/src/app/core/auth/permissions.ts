@@ -4,6 +4,8 @@ export const Permissions = {
   masterDataManage: 'MasterData.Manage',
   organizationView: 'Organization.View',
   organizationManage: 'Organization.Manage',
+  workforceView: 'Workforce.View',
+  workforceManage: 'Workforce.Manage',
   shiftReportsView: 'ShiftReports.View',
   shiftReportsCreate: 'ShiftReports.Create',
   shiftReportsEditOwn: 'ShiftReports.EditOwn',

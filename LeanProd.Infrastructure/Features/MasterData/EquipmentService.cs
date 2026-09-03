@@ -1,5 +1,6 @@
 using LeanProd.Application.Features.MasterData;
 using LeanProd.Domain.MasterData;
+using LeanProd.Domain.MasterData.Policies;
 using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -88,7 +89,7 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
     public async Task<MasterDataResult<EquipmentTypeDetails>> CreateEquipmentTypeAsync(SaveEquipmentTypeCommand command, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(command.Name)) return Validation<EquipmentTypeDetails>("Name is required.");
-        var item = new EquipmentType { Name = command.Name.Trim(), Description = Clean(command.Description) }; db.EquipmentTypes.Add(item);
+        var item = new EquipmentType { Name = command.Name.Trim(), Description = Clean(command.Description), IsActive = command.IsActive }; db.EquipmentTypes.Add(item);
         try { await db.SaveChangesAsync(ct); return MasterDataResult<EquipmentTypeDetails>.Success(TypeDetails(item)); }
         catch (DbUpdateException) { return Conflict<EquipmentTypeDetails>("An equipment type with this name already exists."); }
     }
@@ -98,7 +99,9 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
         var item = await db.EquipmentTypes.SingleOrDefaultAsync(x => x.Id == id, ct); if (item is null) return NotFound<EquipmentTypeDetails>();
         if (string.IsNullOrWhiteSpace(command.Name)) return Validation<EquipmentTypeDetails>("Name is required.");
         if (!SetVersion(item, command.RowVersion)) return Validation<EquipmentTypeDetails>("Row version is required.");
-        item.Name = command.Name.Trim(); item.Description = Clean(command.Description);
+        if (!command.IsActive && item.IsActive && await db.Equipment.AnyAsync(x => x.EquipmentTypeId == id && x.IsActive, ct))
+            return MasterDataResult<EquipmentTypeDetails>.Failure(MasterDataError.Dependency, "Remove this type from active equipment first.");
+        item.Name = command.Name.Trim(); item.Description = Clean(command.Description); item.IsActive = command.IsActive;
         try { await db.SaveChangesAsync(ct); return MasterDataResult<EquipmentTypeDetails>.Success(TypeDetails(item)); }
         catch (DbUpdateConcurrencyException) { return Conflict<EquipmentTypeDetails>("The equipment type was changed by another request."); }
         catch (DbUpdateException) { return Conflict<EquipmentTypeDetails>("An equipment type with this name already exists."); }
@@ -119,7 +122,8 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
 
     public async Task<MasterDataResult<EquipmentStateEventDetails>> ChangeStateAsync(Guid equipmentId, ChangeEquipmentStateCommand command, CancellationToken ct)
     {
-        var inputValidation = ValidateStateInput(command); if (inputValidation is not null) return inputValidation;
+        var inputValidation = EquipmentPolicy.ValidateState(command.State, command.StartedAtUtc, command.EndedAtUtc);
+        if (inputValidation is not null) return Validation<EquipmentStateEventDetails>(inputValidation);
         if (!await db.Equipment.AnyAsync(x => x.Id == equipmentId, ct)) return NotFound<EquipmentStateEventDetails>();
         var state = NormalizeState(command.State);
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
@@ -133,13 +137,19 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
                 .OrderBy(x => x.StartedAtUtc).FirstOrDefaultAsync(ct);
             if (previous is not null && previous.State == state && (previous.EndedAtUtc is null || previous.EndedAtUtc > command.StartedAtUtc))
                 return Validation<EquipmentStateEventDetails>("The equipment already has this state at the selected time.");
-            var endValidation = ValidateEnd(command.StartedAtUtc, command.EndedAtUtc, nextEvent?.StartedAtUtc);
-            if (endValidation is not null) return endValidation;
+            var endValidation = EquipmentPolicy.ValidateStateEnd(
+                command.StartedAtUtc, command.EndedAtUtc, nextEvent?.StartedAtUtc);
+            if (endValidation is not null) return Validation<EquipmentStateEventDetails>(endValidation);
             if (previous is not null && (previous.EndedAtUtc is null || previous.EndedAtUtc > command.StartedAtUtc))
                 previous.EndedAtUtc = command.StartedAtUtc;
-            var next = new EquipmentStateEvent { EquipmentId = equipmentId, State = state,
-                StartedAtUtc = command.StartedAtUtc, EndedAtUtc = command.EndedAtUtc ?? nextEvent?.StartedAtUtc,
-                Comment = Clean(command.Comment) };
+            var next = new EquipmentStateEvent
+            {
+                EquipmentId = equipmentId,
+                State = state,
+                StartedAtUtc = command.StartedAtUtc,
+                EndedAtUtc = command.EndedAtUtc ?? nextEvent?.StartedAtUtc,
+                Comment = Clean(command.Comment)
+            };
             db.EquipmentStateEvents.Add(next); await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct);
             return MasterDataResult<EquipmentStateEventDetails>.Success(EventDetails(next));
         }
@@ -152,7 +162,8 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
 
     public async Task<MasterDataResult<EquipmentStateEventDetails>> UpdateStateAsync(Guid equipmentId, Guid eventId, ChangeEquipmentStateCommand command, CancellationToken ct)
     {
-        var inputValidation = ValidateStateInput(command); if (inputValidation is not null) return inputValidation;
+        var inputValidation = EquipmentPolicy.ValidateState(command.State, command.StartedAtUtc, command.EndedAtUtc);
+        if (inputValidation is not null) return Validation<EquipmentStateEventDetails>(inputValidation);
         var item = await db.EquipmentStateEvents.SingleOrDefaultAsync(x => x.Id == eventId && x.EquipmentId == equipmentId, ct);
         if (item is null) return NotFound<EquipmentStateEventDetails>();
         if (!SetVersion(item, command.RowVersion)) return Validation<EquipmentStateEventDetails>("Row version is required.");
@@ -165,8 +176,9 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
                 .OrderByDescending(x => x.StartedAtUtc).FirstOrDefaultAsync(ct);
             var nextEvent = await db.EquipmentStateEvents.Where(x => x.EquipmentId == equipmentId && x.Id != eventId && x.StartedAtUtc > command.StartedAtUtc)
                 .OrderBy(x => x.StartedAtUtc).FirstOrDefaultAsync(ct);
-            var endValidation = ValidateEnd(command.StartedAtUtc, command.EndedAtUtc, nextEvent?.StartedAtUtc);
-            if (endValidation is not null) return endValidation;
+            var endValidation = EquipmentPolicy.ValidateStateEnd(
+                command.StartedAtUtc, command.EndedAtUtc, nextEvent?.StartedAtUtc);
+            if (endValidation is not null) return Validation<EquipmentStateEventDetails>(endValidation);
             if (previous is not null && (previous.EndedAtUtc is null || previous.EndedAtUtc > command.StartedAtUtc))
                 previous.EndedAtUtc = command.StartedAtUtc;
             item.State = NormalizeState(command.State); item.StartedAtUtc = command.StartedAtUtc;
@@ -186,41 +198,33 @@ public sealed class EquipmentService(LeanProdDbContext db) : IEquipmentService
         }
     }
 
-    private static MasterDataResult<EquipmentStateEventDetails>? ValidateStateInput(ChangeEquipmentStateCommand command)
-    {
-        if (!EquipmentStateCodes.All.Contains(command.State, StringComparer.OrdinalIgnoreCase))
-            return Validation<EquipmentStateEventDetails>("Select a valid equipment state.");
-        if (command.StartedAtUtc.Kind != DateTimeKind.Utc || (command.EndedAtUtc is not null && command.EndedAtUtc.Value.Kind != DateTimeKind.Utc))
-            return Validation<EquipmentStateEventDetails>("State dates must include the UTC offset.");
-        if (command.EndedAtUtc is not null && command.EndedAtUtc <= command.StartedAtUtc)
-            return Validation<EquipmentStateEventDetails>("State end date must be later than its start date.");
-        return null;
-    }
-
-    private static MasterDataResult<EquipmentStateEventDetails>? ValidateEnd(DateTime start, DateTime? requestedEnd, DateTime? nextStart)
-    {
-        if (requestedEnd is not null && requestedEnd <= start)
-            return Validation<EquipmentStateEventDetails>("State end date must be later than its start date.");
-        if (requestedEnd is not null && nextStart is not null && requestedEnd > nextStart)
-            return Validation<EquipmentStateEventDetails>("The state interval overlaps the next state.");
-        return null;
-    }
-
     private static string NormalizeState(string state) => EquipmentStateCodes.All.Single(x => x.Equals(state, StringComparison.OrdinalIgnoreCase));
     private static EquipmentStateEventDetails EventDetails(EquipmentStateEvent x) => new(x.Id, x.State,
         x.StartedAtUtc, x.EndedAtUtc, x.Comment, Convert.ToBase64String(x.RowVersion));
 
     private async Task<MasterDataResult<EquipmentDetails>?> ValidateEquipment(SaveEquipmentCommand c, Guid? id, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(c.Name)) return Validation<EquipmentDetails>("Name is required.");
-        if (c.Name.Trim().Length > 200 || Clean(c.InventoryNumber)?.Length > 50) return Validation<EquipmentDetails>("Name or inventory number is too long.");
-        if (!await db.Departments.AnyAsync(x => x.Id == c.DepartmentId && x.IsActive, ct)) return Validation<EquipmentDetails>("The department must be active.");
-        if (c.EquipmentTypeId is not null && !await db.EquipmentTypes.AnyAsync(x => x.Id == c.EquipmentTypeId && x.IsActive, ct)) return Validation<EquipmentDetails>("The equipment type must be active.");
-        if (id is not null && c.ParentEquipmentId == id) return Validation<EquipmentDetails>("Equipment cannot be its own parent.");
-        if (c.ParentEquipmentId is not null && !await db.Equipment.AnyAsync(x => x.Id == c.ParentEquipmentId && x.IsActive, ct)) return Validation<EquipmentDetails>("The parent equipment must be active.");
+        var error = EquipmentPolicy.ValidateInput(c.Name, c.InventoryNumber);
+        if (error is not null) return Validation<EquipmentDetails>(error);
+        var departmentIsActive = await db.Departments.AnyAsync(
+            x => x.Id == c.DepartmentId && x.IsActive, ct);
+        var equipmentTypeIsActive = c.EquipmentTypeId is null || await db.EquipmentTypes.AnyAsync(
+            x => x.Id == c.EquipmentTypeId && x.IsActive, ct);
+        var parentIsActive = c.ParentEquipmentId is null || await db.Equipment.AnyAsync(
+            x => x.Id == c.ParentEquipmentId && x.IsActive, ct);
+        error = EquipmentPolicy.ValidateReferences(
+            departmentIsActive, equipmentTypeIsActive, parentIsActive);
+        if (error is not null) return Validation<EquipmentDetails>(error);
+        var ancestors = new List<Guid>();
         var parent = c.ParentEquipmentId;
-        while (parent is not null) { if (parent == id) return Validation<EquipmentDetails>("The equipment hierarchy cannot contain a cycle."); parent = await db.Equipment.Where(x => x.Id == parent).Select(x => x.ParentEquipmentId).SingleOrDefaultAsync(ct); }
-        return null;
+        while (parent is not null)
+        {
+            ancestors.Add(parent.Value);
+            parent = await db.Equipment.Where(x => x.Id == parent)
+                .Select(x => x.ParentEquipmentId).SingleOrDefaultAsync(ct);
+        }
+        error = HierarchyPolicy.Validate(id, c.ParentEquipmentId, ancestors, "Equipment");
+        return error is null ? null : Validation<EquipmentDetails>(error);
     }
     private static Equipment NewEquipment(SaveEquipmentCommand c) => new() { Name = c.Name.Trim(), InventoryNumber = Clean(c.InventoryNumber), EquipmentTypeId = c.EquipmentTypeId, DepartmentId = c.DepartmentId, ParentEquipmentId = c.ParentEquipmentId, SerialNumber = Clean(c.SerialNumber), Manufacturer = Clean(c.Manufacturer), Model = Clean(c.Model), CommissionedOn = c.CommissionedOn, Description = Clean(c.Description) };
     private static EquipmentDetails Details(Equipment x)

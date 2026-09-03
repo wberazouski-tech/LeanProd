@@ -19,7 +19,9 @@ LeanProd.Api ────────────────┐
 
 Business rules must not be placed in controllers, EF configurations or Angular. Infrastructure types must not leak into Domain or Application.
 
-## Implemented organization slice
+## Implemented feature slices
+
+### Organizations
 
 - `LeanProd.Domain/Organizations` owns `Organization`, `Address` and fixed address-type codes.
 - `LeanProd.Application/Features/Organizations` defines organization/address use cases and transport-neutral models.
@@ -27,3 +29,21 @@ Business rules must not be placed in controllers, EF configurations or Angular. 
 - `LeanProd.Api/Features/Organizations` exposes the singleton organization profile and shared-address endpoints.
 
 `Organization` is a database-enforced singleton with key `1`. `Address` has exactly one owner: the organization, a department, or a storage location. This invariant is enforced by application logic and a SQL check constraint.
+
+### Workforce
+
+- `LeanProd.Domain/Workforce` owns employees, brigades and effective-dated memberships.
+- `LeanProd.Application/Features/Workforce` defines use cases and transport-neutral models.
+- `LeanProd.Infrastructure/Features/Workforce` contains services and EF mappings.
+- `LeanProd.Api/Features/Workforce` exposes `/api/employees` and `/api/brigades`.
+
+Workforce endpoints use `Workforce.View` and `Workforce.Manage`. Membership intervals and coefficients are preserved as history instead of being overwritten.
+
+### Technologies
+
+- `LeanProd.Domain/Technologies` owns the complete specification aggregate and technology enums.
+- `LeanProd.Application/Features/Technologies` defines technology queries, commands and DTOs.
+- `LeanProd.Infrastructure/Features/Technologies` implements validation, aggregate persistence and EF mappings.
+- `LeanProd.Api/Features/Technologies` exposes `/api/catalog-technologies` without changing the public contract.
+
+Technologies reference products, product classes, units, departments, equipment and storage locations from `MasterData`; those references do not transfer ownership. Updating a technology replaces its child graph inside an explicit database transaction. Optimistic concurrency is enforced by `RowVersion`.

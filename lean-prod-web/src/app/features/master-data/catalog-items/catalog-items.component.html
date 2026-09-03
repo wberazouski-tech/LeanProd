@@ -1,13 +1,18 @@
 <nav class="catalog-tabs" [attr.aria-label]="'catalogItems.section' | transloco">
   <a routerLink="/catalog/products" routerLinkActive="active">{{ 'catalogItemTypes.Product' | transloco }}</a>
   <a routerLink="/catalog/works" routerLinkActive="active">{{ 'catalogItemTypes.Work' | transloco }}</a>
-  <a routerLink="/catalog/primary-materials" routerLinkActive="active">{{ 'catalogItemTypes.PrimaryMaterial' | transloco }}</a>
-  <a routerLink="/catalog/auxiliary-materials" routerLinkActive="active">{{ 'catalogItemTypes.AuxiliaryMaterial' | transloco }}</a>
-  <a routerLink="/catalog/semi-finished-products" routerLinkActive="active">{{ 'catalogItemTypes.SemiFinishedProduct' | transloco }}</a>
+  <a routerLink="/catalog/primary-materials" routerLinkActive="active">{{ 'catalogItemTypes.PrimaryMaterial' | transloco
+    }}</a>
+  <a routerLink="/catalog/auxiliary-materials" routerLinkActive="active">{{ 'catalogItemTypes.AuxiliaryMaterial' |
+    transloco }}</a>
+  <a routerLink="/catalog/semi-finished-products" routerLinkActive="active">{{ 'catalogItemTypes.SemiFinishedProduct' |
+    transloco }}</a>
   <a routerLink="/catalog/packaging" routerLinkActive="active">{{ 'catalogItemTypes.Packaging' | transloco }}</a>
-  <a routerLink="/catalog/tooling-and-tools" routerLinkActive="active">{{ 'catalogItemTypes.ToolingAndTools' | transloco }}</a>
+  <a routerLink="/catalog/tooling-and-tools" routerLinkActive="active">{{ 'catalogItemTypes.ToolingAndTools' | transloco
+    }}</a>
   <a routerLink="/catalog/spare-parts" routerLinkActive="active">{{ 'catalogItemTypes.SparePart' | transloco }}</a>
-  <a routerLink="/catalog/purchased-services" routerLinkActive="active">{{ 'catalogItemTypes.PurchasedService' | transloco }}</a>
+  <a routerLink="/catalog/purchased-services" routerLinkActive="active">{{ 'catalogItemTypes.PurchasedService' |
+    transloco }}</a>
   <a routerLink="/catalog/waste" routerLinkActive="active">{{ 'catalogItemTypes.Waste' | transloco }}</a>
 </nav>
 
@@ -21,7 +26,9 @@
         <option value="false">{{ 'admin.inactivePlural' | transloco }}</option>
       </select>
       <button>{{ 'admin.find' | transloco }}</button>
-      @if (canManage) { <button type="button" (click)="create()">{{ 'catalogItems.add' | transloco }}</button> }
+      @if (canManage) { <button type="button" (click)="create()">{{ 'catalogItems.add' | transloco }}</button>
+      }<app-table-actions [visible]="canManage" [selected]="!!selected" (editRequested)="editSelected()"
+        (copyRequested)="copySelected()" />
     </form>
     <app-page-state [state]="state" />
 
@@ -35,30 +42,68 @@
           <col [style.width.px]="columnWidths.baseUnit" />
           <col [style.width.px]="columnWidths.cost" />
           <col [style.width.px]="columnWidths.status" />
-          @if (canManage) { <col [style.width.px]="columnWidths.actions" /> }
+          @if (canManage) {
+          <col [style.width.px]="columnWidths.actions" /> }
         </colgroup>
-        <thead><tr>
-          <th><button type="button" class="sort-header" (click)="sortBy('workingName')">{{ 'catalogItems.workingName' | transloco }} <span aria-hidden="true">{{ sortKey === 'workingName' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('workingName', $event)"></span></th>
-          <th><button type="button" class="sort-header" (click)="sortBy('articleNumber')">{{ 'catalogItems.article' | transloco }} <span aria-hidden="true">{{ sortKey === 'articleNumber' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('articleNumber', $event)"></span></th>
-          <th><button type="button" class="sort-header" (click)="sortBy('fullName')">{{ 'catalogItems.fullName' | transloco }} <span aria-hidden="true">{{ sortKey === 'fullName' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('fullName', $event)"></span></th>
-          <th>{{ 'catalogItemClasses.class' | transloco }}<span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('class', $event)"></span></th>
-          <th><button type="button" class="sort-header" (click)="sortBy('baseUnitName')">{{ 'catalogItems.baseUnit' | transloco }} <span aria-hidden="true">{{ sortKey === 'baseUnitName' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('baseUnit', $event)"></span></th>
-          <th><button type="button" class="sort-header" (click)="sortBy('cost')">{{ 'catalogItems.cost' | transloco }} <span aria-hidden="true">{{ sortKey === 'cost' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('cost', $event)"></span></th>
-          <th><button type="button" class="sort-header" (click)="sortBy('isActive')">{{ 'admin.status' | transloco }} <span aria-hidden="true">{{ sortKey === 'isActive' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('status', $event)"></span></th>
-          @if (canManage) { <th class="actions-column"><span class="column-resizer" role="separator" aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco" (mousedown)="startResize('actions', $event)"></span></th> }
-        </tr></thead>
+        <thead>
+          <tr>
+            <th><button type="button" class="sort-header" (click)="sortBy('workingName')">{{ 'catalogItems.workingName'
+                | transloco }} <span aria-hidden="true">{{ sortKey === 'workingName' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('workingName', $event)"></span></th>
+            <th><button type="button" class="sort-header" (click)="sortBy('articleNumber')">{{ 'catalogItems.article' |
+                transloco }} <span aria-hidden="true">{{ sortKey === 'articleNumber' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('articleNumber', $event)"></span></th>
+            <th><button type="button" class="sort-header" (click)="sortBy('fullName')">{{ 'catalogItems.fullName' |
+                transloco }} <span aria-hidden="true">{{ sortKey === 'fullName' ? (sortDirection === 'asc' ? '▲' : '▼')
+                  : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('fullName', $event)"></span></th>
+            <th>{{ 'catalogItemClasses.class' | transloco }}<span class="column-resizer" role="separator"
+                aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('class', $event)"></span></th>
+            <th><button type="button" class="sort-header" (click)="sortBy('baseUnitName')">{{ 'catalogItems.baseUnit' |
+                transloco }} <span aria-hidden="true">{{ sortKey === 'baseUnitName' ? (sortDirection === 'asc' ? '▲' :
+                  '▼') : '↕' }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('baseUnit', $event)"></span></th>
+            <th><button type="button" class="sort-header" (click)="sortBy('cost')">{{ 'catalogItems.cost' | transloco }}
+                <span aria-hidden="true">{{ sortKey === 'cost' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'
+                  }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('cost', $event)"></span></th>
+            <th><button type="button" class="sort-header" (click)="sortBy('isActive')">{{ 'admin.status' | transloco }}
+                <span aria-hidden="true">{{ sortKey === 'isActive' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'
+                  }}</span></button><span class="column-resizer" role="separator" aria-orientation="vertical"
+                [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('status', $event)"></span></th>
+            @if (canManage) { <th class="actions-column"><span class="column-resizer" role="separator"
+                aria-orientation="vertical" [attr.aria-label]="'masterData.resizeColumn' | transloco"
+                (mousedown)="startResize('actions', $event)"></span></th> }
+          </tr>
+        </thead>
         <tbody>
           @for (item of sortedItems; track item.id) {
-            <tr (click)="select(item)" [class.selected-row]="selected?.id === item.id" [class.dragging-row]="draggedItem?.id === item.id" [attr.draggable]="canManage ? 'true' : null" (dragstart)="startItemDrag(item, $event)" (dragend)="endItemDrag()">
-              <td>{{ item.workingName }}</td>
-              <td>{{ item.articleNumber || '—' }}</td>
-              <td>{{ item.fullName || '—' }}</td>
-              <td>{{ displayClass(item) }}</td>
-              <td>{{ displayUnit(item) }}</td>
-              <td class="numeric-value money-value">{{ item.cost | moneyFormat }}</td>
-              <td>{{ (item.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
-              @if (canManage) { <td class="actions-column"><button type="button" class="icon-button" (click)="edit(item, $event)" [title]="'catalogItems.edit' | transloco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" /></svg></button></td> }
-            </tr>
+          <tr (click)="select(item)" [class.selected-row]="selected?.id === item.id"
+            [class.dragging-row]="draggedItem?.id === item.id" [attr.draggable]="canManage ? 'true' : null"
+            (dragstart)="startItemDrag(item, $event)" (dragend)="endItemDrag()">
+            <td>{{ item.workingName }}</td>
+            <td>{{ item.articleNumber || '—' }}</td>
+            <td>{{ item.fullName || '—' }}</td>
+            <td>{{ displayClass(item) }}</td>
+            <td>{{ displayUnit(item) }}</td>
+            <td class="numeric-value money-value">{{ item.cost | moneyFormat }}</td>
+            <td>{{ (item.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
+            @if (canManage) { <td class="actions-column"><button type="button" class="icon-button"
+                (click)="edit(item, $event)" [title]="'catalogItems.edit' | transloco"><svg viewBox="0 0 24 24"
+                  aria-hidden="true">
+                  <path
+                    d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" />
+                </svg></button></td> }
+          </tr>
           }
         </tbody>
       </table>
@@ -68,21 +113,34 @@
   <aside class="class-pane">
     <div class="class-toolbar">
       @if (canManage) {
-        <button type="button" (click)="createClass(true)">{{ 'catalogItemClasses.addGroup' | transloco }}</button>
-        <button type="button" (click)="createClass(false)">{{ 'catalogItemClasses.addClass' | transloco }}</button>
+      <button type="button" (click)="createClass(true)">{{ 'catalogItemClasses.addGroup' | transloco }}</button>
+      <button type="button" (click)="createClass(false)">{{ 'catalogItemClasses.addClass' | transloco }}</button>
       }
     </div>
     <app-page-state [state]="classState" />
     <div class="class-tree">
       @for (item of sortedClasses; track item.id) {
-        <div class="class-node" (click)="selectClass(item)" [class.selected-row]="selectedClass?.id === item.id" [class.inactive-node]="!item.isActive" [class.drop-target]="dropTargetClassId === item.id" [class.drop-blocked]="draggedItem && !canDropOnClass(item)" [attr.aria-selected]="selectedClass?.id === item.id" (dragover)="dragOverClass(item, $event)" (dragleave)="leaveClassDropTarget(item)" (drop)="dropItemOnClass(item, $event)">
-          <button type="button" class="tree-toggle" [class.is-leaf]="!hasClassChildren(item)" [attr.aria-label]="(isClassExpanded(item) ? 'masterData.collapse' : 'masterData.expand') | transloco" [attr.aria-expanded]="hasClassChildren(item) ? isClassExpanded(item) : null" (click)="toggleClassExpanded(item, $event)"><span aria-hidden="true">{{ hasClassChildren(item) ? (isClassExpanded(item) ? '−' : '+') : '' }}</span></button>
-          <span class="tree-code" [style.--tree-depth]="item.depth">
-            <span class="node-icon" aria-hidden="true">{{ item.isGroup ? '▣' : '▪' }}</span>
-            <span class="node-name">{{ item.name }}</span>
-          </span>
-          @if (canManage) { <button type="button" class="icon-button" (click)="editClass(item, $event)" [attr.aria-label]="'admin.edit' | transloco" [title]="'admin.edit' | transloco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" /></svg></button> }
-        </div>
+      <div class="class-node" (click)="selectClass(item)" [class.selected-row]="selectedClass?.id === item.id"
+        [class.inactive-node]="!item.isActive" [class.drop-target]="dropTargetClassId === item.id"
+        [class.drop-blocked]="draggedItem && !canDropOnClass(item)" [attr.aria-selected]="selectedClass?.id === item.id"
+        (dragover)="dragOverClass(item, $event)" (dragleave)="leaveClassDropTarget(item)"
+        (drop)="dropItemOnClass(item, $event)">
+        <button type="button" class="tree-toggle" [class.is-leaf]="!hasClassChildren(item)"
+          [attr.aria-label]="(isClassExpanded(item) ? 'masterData.collapse' : 'masterData.expand') | transloco"
+          [attr.aria-expanded]="hasClassChildren(item) ? isClassExpanded(item) : null"
+          (click)="toggleClassExpanded(item, $event)"><span aria-hidden="true">{{ hasClassChildren(item) ?
+            (isClassExpanded(item) ? '−' : '+') : '' }}</span></button>
+        <span class="tree-code" [style.--tree-depth]="item.depth">
+          <span class="node-icon" aria-hidden="true">{{ item.isGroup ? '▣' : '▪' }}</span>
+          <span class="node-name">{{ item.name }}</span>
+        </span>
+        @if (canManage) { <button type="button" class="icon-button" (click)="editClass(item, $event)"
+          [attr.aria-label]="'admin.edit' | transloco" [title]="'admin.edit' | transloco"><svg viewBox="0 0 24 24"
+            aria-hidden="true">
+            <path
+              d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a1 1 0 0 0 0-1.4l-1.5-1.5a1 1 0 0 0-1.4 0l-1.6 1.6L20 8.1l1-2.2Z" />
+          </svg></button> }
+      </div>
       }
     </div>
   </aside>
@@ -90,52 +148,76 @@
 <p>{{ 'admin.total' | transloco }}: {{ total }}</p>
 
 @if (selected && !editorOpen) {
-  <section class="selected-details catalog-details">
-    <dl><div><dt>{{ 'masterData.description' | transloco }}</dt><dd>{{ selected.description || '—' }}</dd></div></dl>
-  </section>
+<section class="selected-details catalog-details">
+  <dl>
+    <div>
+      <dt>{{ 'masterData.description' | transloco }}</dt>
+      <dd>{{ selected.description || '—' }}</dd>
+    </div>
+  </dl>
+</section>
 }
 
 @if (canManage && editorOpen) {
-  <div class="modal-layer" (click)="closeEditor()">
-    <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
-      <section class="editor">
-        <h2>{{ (selected ? 'catalogItems.edit' : 'catalogItems.add') | transloco }}</h2>
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <label>{{ 'catalogItems.workingName' | transloco }}<input formControlName="workingName" /></label>
-          <label>{{ 'catalogItems.article' | transloco }}<input formControlName="articleNumber" /></label>
-          <label class="wide">{{ 'catalogItems.fullName' | transloco }}<input formControlName="fullName" /></label>
-          <label>{{ 'catalogItems.baseUnit' | transloco }}<select formControlName="baseUnitOfMeasureId"><option value="">—</option>@for (unit of units; track unit.id) { <option [value]="unit.id">{{ unit.displayName }}{{ unit.symbol ? ' (' + unit.symbol + ')' : '' }}</option> }</select></label>
-          <label>{{ 'catalogItemClasses.class' | transloco }}<select formControlName="catalogItemClassId"><option value="">—</option>@for (item of classOptions; track item.id) { <option [value]="item.id">{{ displayClass(item) }}</option> }</select></label>
-          <label>{{ 'catalogItems.cost' | transloco }}<input type="number" formControlName="cost" min="0" step="0.01" (input)="limitCostScale($event)" /></label>
-          <label class="wide">{{ 'masterData.description' | transloco }}<textarea formControlName="description"></textarea></label>
-          <button [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
-          <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
-          @if (selected?.isActive) { <button type="button" (click)="setActive(false)">{{ 'admin.deactivate' | transloco }}</button> }
-          @else if (selected) { <button type="button" (click)="setActive(true)">{{ 'admin.activate' | transloco }}</button> }
-        </form>
-        <p>{{ message }}</p>
-      </section>
-    </dialog>
-  </div>
+<div class="modal-layer" (click)="closeEditor()">
+  <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
+    <section class="editor">
+      <h2>{{ (selected ? 'catalogItems.edit' : 'catalogItems.add') | transloco }}</h2>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <label>{{ 'catalogItems.workingName' | transloco }}<input formControlName="workingName" /></label>
+        <label>{{ 'catalogItems.article' | transloco }}<input formControlName="articleNumber" /></label>
+        <label class="wide">{{ 'catalogItems.fullName' | transloco }}<input formControlName="fullName" /></label>
+        <label>{{ 'catalogItems.baseUnit' | transloco }}<select formControlName="baseUnitOfMeasureId">
+            <option value="">—</option>@for (unit of units; track unit.id) { <option [value]="unit.id">{{
+              unit.displayName }}{{ unit.symbol ? ' (' + unit.symbol + ')' : '' }}</option> }
+          </select></label>
+        <label>{{ 'catalogItemClasses.class' | transloco }}<select formControlName="catalogItemClassId">
+            <option value="">—</option>@for (item of classOptions; track item.id) { <option [value]="item.id">{{
+              displayClass(item) }}</option> }
+          </select></label>
+        <label>{{ 'catalogItems.cost' | transloco }}<input type="number" formControlName="cost" min="0" step="0.01"
+            (input)="limitCostScale($event)" /></label>
+        <label class="wide">{{ 'masterData.description' | transloco }}<textarea
+            formControlName="description"></textarea></label>
+        <button [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
+        <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
+        @if (selected?.isActive) { <button type="button" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
+          }}</button> }
+        @else if (selected) { <button type="button" (click)="setActive(true)">{{ 'admin.activate' | transloco
+          }}</button> }
+      </form>
+      <p>{{ message }}</p>
+    </section>
+  </dialog>
+</div>
 }
 
 @if (canManage && classEditorOpen) {
-  <div class="modal-layer" (click)="closeClassEditor()">
-    <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
-      <section class="editor">
-        <h2>{{ (selectedClass ? 'catalogItemClasses.edit' : (classForm.controls.isGroup.value ? 'catalogItemClasses.addGroup' : 'catalogItemClasses.addClass')) | transloco }}</h2>
-        <form [formGroup]="classForm" (ngSubmit)="saveClass()">
-          <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" /></label>
-          <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" /></label>
-          <label>{{ 'catalogItemClasses.parentGroup' | transloco }}<select formControlName="parentId"><option value="">—</option>@for (item of parentClassOptions; track item.id) { <option [value]="item.id">{{ displayClass(item) }}</option> }</select></label>
-          <label>{{ 'catalogItemClasses.nodeType' | transloco }}<select formControlName="isGroup"><option [ngValue]="true">{{ 'catalogItemClasses.group' | transloco }}</option><option [ngValue]="false">{{ 'catalogItemClasses.class' | transloco }}</option></select></label>
-          <button [disabled]="classForm.invalid">{{ 'common.save' | transloco }}</button>
-          <button type="button" (click)="closeClassEditor()">{{ 'common.close' | transloco }}</button>
-          @if (selectedClass?.isActive) { <button type="button" (click)="setClassActive(false)">{{ 'admin.deactivate' | transloco }}</button> }
-          @else if (selectedClass) { <button type="button" (click)="setClassActive(true)">{{ 'admin.activate' | transloco }}</button> }
-        </form>
-        <p>{{ classMessage }}</p>
-      </section>
-    </dialog>
-  </div>
+<div class="modal-layer" (click)="closeClassEditor()">
+  <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
+    <section class="editor">
+      <h2>{{ (selectedClass ? 'catalogItemClasses.edit' : (classForm.controls.isGroup.value ?
+        'catalogItemClasses.addGroup' : 'catalogItemClasses.addClass')) | transloco }}</h2>
+      <form [formGroup]="classForm" (ngSubmit)="saveClass()">
+        <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" /></label>
+        <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" /></label>
+        <label>{{ 'catalogItemClasses.parentGroup' | transloco }}<select formControlName="parentId">
+            <option value="">—</option>@for (item of parentClassOptions; track item.id) { <option [value]="item.id">{{
+              displayClass(item) }}</option> }
+          </select></label>
+        <label>{{ 'catalogItemClasses.nodeType' | transloco }}<select formControlName="isGroup">
+            <option [ngValue]="true">{{ 'catalogItemClasses.group' | transloco }}</option>
+            <option [ngValue]="false">{{ 'catalogItemClasses.class' | transloco }}</option>
+          </select></label>
+        <button [disabled]="classForm.invalid">{{ 'common.save' | transloco }}</button>
+        <button type="button" (click)="closeClassEditor()">{{ 'common.close' | transloco }}</button>
+        @if (selectedClass?.isActive) { <button type="button" (click)="setClassActive(false)">{{ 'admin.deactivate' |
+          transloco }}</button> }
+        @else if (selectedClass) { <button type="button" (click)="setClassActive(true)">{{ 'admin.activate' | transloco
+          }}</button> }
+      </form>
+      <p>{{ classMessage }}</p>
+    </section>
+  </dialog>
+</div>
 }

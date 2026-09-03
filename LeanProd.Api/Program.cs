@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using LeanProd.Api.Common.DependencyInjection;
 using LeanProd.Api.Common.Health;
+using LeanProd.Api.Features.Setup;
+using LeanProd.Application.Common.Abstractions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +24,16 @@ using Serilog;
 using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+var databaseSettingsStore = new DatabaseSettingsStore(builder.Configuration);
+if (databaseSettingsStore.Load() is { } databaseSettings)
+{
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["Database:Provider"] = databaseSettings.Provider,
+        ["Database:ApplyMigrationsOnStartup"] = "false",
+        ["ConnectionStrings:DefaultConnection"] = databaseSettings.ConnectionString
+    });
+}
 builder.Host.UseSerilog((context, services, logger) => logger
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
@@ -117,14 +130,41 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 app.MapHealthChecks("/health/ready", readinessOptions).AllowAnonymous();
 app.MapHealthChecks("/health", readinessOptions).AllowAnonymous();
 
-if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<LeanProdDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
-await app.Services.SeedIdentityAsync(app.Configuration);
+var runtimeDatabase = app.Services.GetRequiredService<IRuntimeDatabaseConnection>();
+var hasDatabaseConnection = runtimeDatabase.IsConfigured;
+await app.StartAsync();
 
-app.Run();
+var databaseStartupState = app.Services.GetRequiredService<DatabaseStartupState>();
+databaseStartupState.DatabaseInitializationFailed = hasDatabaseConnection;
+try
+{
+    if (hasDatabaseConnection && app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LeanProdDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+    if (hasDatabaseConnection)
+    {
+        await app.Services.SeedIdentityAsync(app.Configuration);
+        databaseStartupState.DatabaseInitializationFailed = false;
+    }
+    else
+    {
+        app.Services.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("LeanProd.Api.Setup")
+            .LogWarning("LeanProd database is not configured. Open the database setup page to connect or create a database.");
+    }
+}
+catch (Exception exception)
+{
+    databaseStartupState.DatabaseInitializationFailed = true;
+    app.Services.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("LeanProd.Api.StartupDatabase")
+        .LogError(exception,
+            "LeanProd database startup task failed. The API remains available so an administrator can fix database settings.");
+}
+
+await app.WaitForShutdownAsync();
 
 public partial class Program;

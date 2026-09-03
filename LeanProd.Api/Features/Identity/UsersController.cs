@@ -20,8 +20,8 @@ public sealed class UsersController(IUserAdministrationService users) : BaseApiC
         [FromQuery] string? search = null, [FromQuery] bool? isActive = null,
         [FromQuery] string? role = null, CancellationToken cancellationToken = default)
     {
-        if (page < 1 || pageSize is < 1 or > 100)
-            return Problem(statusCode: 400, title: "Invalid paging", detail: "Page must be positive and pageSize must be between 1 and 100.");
+        if (page < 1 || pageSize is < 1 or > 5000)
+            return Problem(statusCode: 400, title: "Invalid paging", detail: "Page must be positive and pageSize must be between 1 and 5000.");
 
         return Ok(await users.GetUsersAsync(
             new UserListQuery(page, pageSize, search, isActive, role), cancellationToken));

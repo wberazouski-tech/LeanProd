@@ -18,7 +18,7 @@ public sealed class UnitOfMeasuresController(IUnitOfMeasureService service) : Ma
         int page = 1, int pageSize = 20, string? search = null, bool? isActive = null,
         string language = "en", CancellationToken ct = default)
     {
-        if (page < 1 || pageSize is < 1 or > 100) return Problem(statusCode: 400, title: "Invalid paging");
+        if (page < 1 || pageSize is < 1 or > 5000) return Problem(statusCode: 400, title: "Invalid paging");
         return Ok(await service.GetUnitsAsync(new(page, pageSize, search, isActive), language, ct));
     }
 

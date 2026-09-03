@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LeanProd.Api.Features.MasterData;
 
 [ApiController, Route("api/catalog-item-classes"), Authorize(Policy = Permissions.MasterDataView)]
-public sealed class CatalogItemClassesController(IMasterDataService service) : MasterDataControllerBase
+public sealed class CatalogItemClassesController(ICatalogItemClassService service) : MasterDataControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<MasterDataPage<CatalogItemClassSummary>>> List(

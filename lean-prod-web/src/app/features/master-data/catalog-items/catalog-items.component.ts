@@ -11,10 +11,12 @@ import { CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummar
 import { MasterDataService } from '../master-data.service';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 import { MoneyFormatPipe } from '../../../core/ui/number-format.pipe';
+import { buildCatalogClassTree, descendantLeafIds } from './catalog-class-tree';
+import { TableActionsComponent } from '../../../core/ui/table-actions.component';
 
 @Component({
   selector: 'app-catalog-items', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, RouterLink, RouterLinkActive, PageStateComponent, MoneyFormatPipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, RouterLink, RouterLinkActive, PageStateComponent, MoneyFormatPipe, TableActionsComponent],
   templateUrl: './catalog-items.component.html',
   styleUrls: ['../master-data.css', './catalog-items.component.css']
 })
@@ -43,7 +45,8 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   draggedItem?: CatalogItemSummary;
   dropTargetClassId?: string;
   readonly expandedClassIds = new Set<string>();
-  sortKey: 'articleNumber' | 'workingName' | 'fullName' | 'baseUnitName' | 'cost' | 'isActive' = 'articleNumber'; sortDirection: 'asc' | 'desc' = 'asc';
+  sortKey: 'articleNumber' | 'workingName' | 'fullName' | 'baseUnitName' | 'cost' | 'isActive' = 'articleNumber'; 
+  sortDirection: 'asc' | 'desc' = 'asc';
   classSortKey: 'code' | 'name' | 'isGroup' | 'isActive' = 'code'; classSortDirection: 'asc' | 'desc' = 'asc';
   resizingColumn?: 'workingName' | 'articleNumber' | 'fullName' | 'class' | 'baseUnit' | 'cost' | 'status' | 'actions';
   resizeStartX = 0;
@@ -76,7 +79,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
     description: ['', Validators.maxLength(1000)]
   });
   readonly classForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(50)]],
+    code: ['', Validators.maxLength(50)],
     name: ['', [Validators.required, Validators.maxLength(200)]],
     isGroup: false,
     parentId: ''
@@ -100,7 +103,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this.destroyed.next(); this.destroyed.complete(); }
   load(): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.catalogItems(this.type, f.search.trim(), f.isActive).subscribe({ next: x => { this.items = x.items; this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
-  loadClasses(): void { this.classState = 'loading'; const f = this.classFilters.getRawValue(); this.api.catalogItemClasses(this.type, f.search.trim(), f.isActive, f.isGroup).subscribe({ next: x => { this.classes = this.asClassTree(x.items); this.classTotal = x.totalCount; this.classState = x.items.length ? 'ready' : 'empty'; }, error: () => this.classState = 'error' }); }
+  loadClasses(): void { this.classState = 'loading'; const f = this.classFilters.getRawValue(); this.api.catalogItemClasses(this.type, f.search.trim(), f.isActive, f.isGroup).subscribe({ next: x => { this.classes = buildCatalogClassTree(x.items); this.classTotal = x.totalCount; this.classState = x.items.length ? 'ready' : 'empty'; }, error: () => this.classState = 'error' }); }
   get sortedItems(): CatalogItemSummary[] { return this.filteredItems.sort((a, b) => this.compareItems(a, b)); }
   get sortedClasses(): (CatalogItemClassSummary & { depth: number })[] {
     const ids = new Set(this.classes.map(item => item.id));
@@ -122,7 +125,13 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   }
   get classOptions(): CatalogItemClassOption[] { return this.classSelectionOptions.filter(x => !x.isGroup); }
   get parentClassOptions(): CatalogItemClassOption[] { const blocked = this.selectedClass ? this.descendantClassIds(this.selectedClass.id).add(this.selectedClass.id) : new Set<string>(); return this.classSelectionOptions.filter(x => x.isGroup && !blocked.has(x.id)); }
-  sortBy(key: 'articleNumber' | 'workingName' | 'fullName' | 'baseUnitName' | 'cost' | 'isActive'): void { if (this.sortKey === key) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; else { this.sortKey = key; this.sortDirection = 'asc'; } }
+  
+  sortBy(key: 'articleNumber' | 'workingName' | 'fullName' | 'baseUnitName' | 'cost' | 'isActive'): void {
+    if (this.sortKey === key) 
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; 
+    else { 
+      this.sortKey = key; this.sortDirection = 'asc'; } }
+  
   sortClassesBy(key: 'code' | 'name' | 'isGroup' | 'isActive'): void { if (this.classSortKey === key) this.classSortDirection = this.classSortDirection === 'asc' ? 'desc' : 'asc'; else { this.classSortKey = key; this.classSortDirection = 'asc'; } }
   startResize(column: 'workingName' | 'articleNumber' | 'fullName' | 'class' | 'baseUnit' | 'cost' | 'status' | 'actions', event: MouseEvent): void { event.preventDefault(); event.stopPropagation(); this.resizingColumn = column; this.resizeStartX = event.clientX; this.resizeStartWidth = this.columnWidths[column]; }
   @HostListener('document:mousemove', ['$event']) resize(event: MouseEvent): void { if (!this.resizingColumn) return; const minWidth = this.resizingColumn === 'status' ? 78 : this.resizingColumn === 'actions' ? 46 : 80; this.columnWidths[this.resizingColumn] = Math.max(minWidth, this.resizeStartWidth + event.clientX - this.resizeStartX); }
@@ -145,6 +154,8 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   setClassActive(active: boolean): void { if (!this.selectedClass) return; this.api.setCatalogItemClassActive(this.selectedClass.id, active).subscribe(() => { this.selectedClass = { ...this.selectedClass!, isActive: active }; this.classEditorOpen = false; this.loadClasses(); this.loadClassSelectionOptions(); }); }
   select(item: CatalogItemSummary): void { this.loadItem(item.id, false); }
   edit(item: CatalogItemSummary, event: Event): void { event.stopPropagation(); this.loadItem(item.id, true); }
+  editSelected(): void { if (this.selected) this.loadItem(this.selected.id, true); }
+  copySelected(): void { if (!this.selected) return; const x = this.selected; this.selected = undefined; this.message = ''; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.editorOpen = true; }
   startItemDrag(item: CatalogItemSummary, event: DragEvent): void { if (!this.canManage) return; this.draggedItem = item; event.dataTransfer?.setData('text/plain', item.id); if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'; }
   endItemDrag(): void { this.draggedItem = undefined; this.dropTargetClassId = undefined; }
   canDropOnClass(item: CatalogItemClassSummary): boolean { return !!this.draggedItem && !item.isGroup && item.isActive && this.draggedItem.catalogItemClassId !== item.id; }
@@ -198,8 +209,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   private sortValue(item: CatalogItemSummary): string | number { if (this.sortKey === 'cost') return item.cost; if (this.sortKey === 'isActive') return Number(item.isActive); if (this.sortKey === 'baseUnitName') return this.displayUnit(item).toLocaleLowerCase(); return (item[this.sortKey] ?? '').toLocaleLowerCase(); }
   private compareClasses(a: CatalogItemClassSummary, b: CatalogItemClassSummary): number { const left = this.classSortValue(a); const right = this.classSortValue(b); const result = typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right)); return (this.classSortDirection === 'asc' ? result : -result) || a.code.localeCompare(b.code); }
   private classSortValue(item: CatalogItemClassSummary): string | number { if (this.classSortKey === 'isActive') return Number(item.isActive); if (this.classSortKey === 'isGroup') return Number(item.isGroup); return item[this.classSortKey].toLocaleLowerCase(); }
-  private descendantClassIds(id: string): Set<string> { const result = new Set<string>(); const add = (parentId: string): void => { for (const item of this.classes.filter(x => x.parentId === parentId)) { if (!item.isGroup) result.add(item.id); add(item.id); } }; add(id); return result; }
-  private asClassTree(source: CatalogItemClassSummary[]): (CatalogItemClassSummary & { depth: number })[] { const result: (CatalogItemClassSummary & { depth: number })[] = []; const ids = new Set(source.map(x => x.id)); const children = new Map<string | null, CatalogItemClassSummary[]>(); for (const item of source) { const parent = item.parentId && ids.has(item.parentId) ? item.parentId : null; children.set(parent, [...(children.get(parent) ?? []), item]); } const add = (parent: string | null, depth: number): void => { for (const item of (children.get(parent) ?? []).sort((a, b) => a.code.localeCompare(b.code))) { result.push({ ...item, depth }); add(item.id, depth + 1); } }; add(null, 0); return result; }
+  private descendantClassIds(id: string): Set<string> { return descendantLeafIds(this.classes, id); }
   private loadClassSelectionOptions(): void { this.api.catalogItemClassOptions(this.type).subscribe(x => this.classSelectionOptions = x.sort((a, b) => a.code.localeCompare(b.code))); }
   private loadUnits(): void { this.api.unitOptions(this.t.getActiveLang()).subscribe(x => this.units = x.filter(unit => unit.isActive)); }
   private loadItem(id: string, openEditor: boolean): void { this.api.catalogItem(id).subscribe(x => { this.selected = x; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: x.articleNumber ?? '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.editorOpen = openEditor && this.canManage; }); }

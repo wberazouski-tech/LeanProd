@@ -1,6 +1,6 @@
-.filters { align-items: end; background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; display: flex; flex-wrap: wrap; gap: .65rem; margin-bottom: 1rem; padding: .8rem; }
-.editor { background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; box-shadow: 0 5px 18px rgba(29,52,84,.05); margin-top: 1.25rem; padding: 1rem; }
-.editor form { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
+.filters { align-items: end; background: linear-gradient(180deg,#fff,#fafbfd); border: 1px solid #d2dae3; border-radius: 5px; display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; padding: .55rem .65rem; }
+.editor { background: #fff; border: 1px solid #d2dae3; border-radius: 5px; box-shadow: none; margin-top: .75rem; padding: .75rem; }
+.editor form { align-items: end; display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: .75rem; }
 .editor label { display: flex; flex-direction: column; gap: .35rem; }
 fieldset label { display: inline-block; font-weight: 400; margin-right: 1rem; }
 tbody tr { cursor: pointer; }

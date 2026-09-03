@@ -7,6 +7,8 @@ public static class Permissions
     public const string MasterDataManage = "MasterData.Manage";
     public const string OrganizationView = "Organization.View";
     public const string OrganizationManage = "Organization.Manage";
+    public const string WorkforceView = "Workforce.View";
+    public const string WorkforceManage = "Workforce.Manage";
     public const string ShiftReportsView = "ShiftReports.View";
     public const string ShiftReportsCreate = "ShiftReports.Create";
     public const string ShiftReportsEditOwn = "ShiftReports.EditOwn";
@@ -21,6 +23,7 @@ public static class Permissions
     public static readonly HashSet<string> All =
     [
         UsersManage, MasterDataView, MasterDataManage, OrganizationView, OrganizationManage,
+        WorkforceView, WorkforceManage,
         ShiftReportsView, ShiftReportsCreate, ShiftReportsEditOwn,
         ShiftReportsEditAny, ShiftReportsSubmit, QualityView, QualityManage,
         ReportsView, PeriodsClose, AuditView

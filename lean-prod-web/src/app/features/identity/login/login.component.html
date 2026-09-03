@@ -8,5 +8,6 @@
   </label>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
   <button type="submit" [disabled]="form.invalid || submitting()">{{ 'auth.login' | transloco }}</button>
+  @if (setupAvailable()) { <p class="auth-link"><a routerLink="/setup">{{ 'setup.title' | transloco }}</a></p> }
   <p class="auth-link"><a routerLink="/register">{{ 'auth.createAccount' | transloco }}</a></p>
 </form></section></main>

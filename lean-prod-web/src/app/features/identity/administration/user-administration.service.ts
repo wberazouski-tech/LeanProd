@@ -8,7 +8,7 @@ export class UserAdministrationService {
   private readonly http = inject(HttpClient);
   private readonly usersUrl = `${environment.apiUrl}users`;
   list(page: number, search: string, isActive: string, role: string) {
-    let params = new HttpParams().set('page', page).set('pageSize', 20);
+    let params = new HttpParams().set('page', page).set('pageSize', 5000);
     if (search) params = params.set('search', search);
     if (isActive) params = params.set('isActive', isActive);
     if (role) params = params.set('role', role);

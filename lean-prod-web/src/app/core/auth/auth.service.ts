@@ -16,6 +16,9 @@ export class AuthService {
   hasPermission(permission: string): boolean {
     return this.currentUser()?.permissions.includes(permission) ?? false;
   }
+  hasRole(role: string): boolean {
+    return this.currentUser()?.roles.includes(role) ?? false;
+  }
 
   restoreSession(): Observable<CurrentUser | null> {
     return this.refresh().pipe(catchError(() => { this.currentUser.set(null); return of(null); }));

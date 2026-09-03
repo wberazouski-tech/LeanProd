@@ -6,3 +6,9 @@
 </div>
 <app-error-banner />
 <router-outlet />
+@if (loading.visible()) {
+  <div class="global-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+    <span class="global-loading-spinner" aria-hidden="true"></span>
+    <span>{{ 'pageState.loading' | transloco }}</span>
+  </div>
+}

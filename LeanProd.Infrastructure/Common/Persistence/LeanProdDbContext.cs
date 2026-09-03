@@ -3,6 +3,8 @@ using LeanProd.Domain.Common;
 using LeanProd.Infrastructure.Features.Identity;
 using LeanProd.Domain.MasterData;
 using LeanProd.Domain.Organizations;
+using LeanProd.Domain.Technologies;
+using LeanProd.Domain.Workforce;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -27,11 +29,22 @@ public sealed class LeanProdDbContext(
     public DbSet<CatalogItemClass> CatalogItemClasses => Set<CatalogItemClass>();
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
     public DbSet<CatalogItemCostHistory> CatalogItemCostHistory => Set<CatalogItemCostHistory>();
+    public DbSet<CatalogTechnology> CatalogTechnologies => Set<CatalogTechnology>();
+    public DbSet<TechnologyStageTemplate> TechnologyStageTemplates => Set<TechnologyStageTemplate>();
+    public DbSet<CatalogTechnologyStage> CatalogTechnologyStages => Set<CatalogTechnologyStage>();
+    public DbSet<CatalogTechnologyStageLink> CatalogTechnologyStageLinks => Set<CatalogTechnologyStageLink>();
+    public DbSet<CatalogTechnologyMaterial> CatalogTechnologyMaterials => Set<CatalogTechnologyMaterial>();
+    public DbSet<CatalogTechnologyStageOutput> CatalogTechnologyStageOutputs => Set<CatalogTechnologyStageOutput>();
+    public DbSet<CatalogTechnologyOperation> CatalogTechnologyOperations => Set<CatalogTechnologyOperation>();
+    public DbSet<CatalogTechnologyMaterialSupplyRouteStep> CatalogTechnologyMaterialSupplyRouteSteps => Set<CatalogTechnologyMaterialSupplyRouteStep>();
     public DbSet<Equipment> Equipment => Set<Equipment>();
     public DbSet<EquipmentType> EquipmentTypes => Set<EquipmentType>();
     public DbSet<EquipmentStateEvent> EquipmentStateEvents => Set<EquipmentStateEvent>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Brigade> Brigades => Set<Brigade>();
+    public DbSet<BrigadeMembership> BrigadeMemberships => Set<BrigadeMembership>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

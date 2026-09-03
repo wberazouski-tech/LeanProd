@@ -29,7 +29,7 @@ public sealed record SaveEquipmentCommand(string Name, string? InventoryNumber, 
     Guid DepartmentId, Guid? ParentEquipmentId, string? SerialNumber, string? Manufacturer, string? Model,
     DateOnly? CommissionedOn, string? Description, string? RowVersion);
 public sealed record EquipmentTypeDetails(Guid Id, string Name, string? Description, bool IsActive, string RowVersion);
-public sealed record SaveEquipmentTypeCommand(string Name, string? Description, string? RowVersion);
+public sealed record SaveEquipmentTypeCommand(string Name, string? Description, bool IsActive, string? RowVersion);
 public sealed record EquipmentStateEventDetails(Guid Id, string State, DateTime StartedAtUtc,
     DateTime? EndedAtUtc, string? Comment, string RowVersion);
 public sealed record ChangeEquipmentStateCommand(string State, DateTime StartedAtUtc, DateTime? EndedAtUtc,

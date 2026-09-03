@@ -2,6 +2,7 @@
 .editor { background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; box-shadow: 0 5px 18px rgba(29,52,84,.05); margin-top: 1.25rem; padding: 1rem; }
 .editor form { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .5rem; }
 .editor label { display: flex; flex-direction: column; gap: .35rem; }
+.field-error { color: #b42318; font-size: .78rem; }
 .editor textarea { min-width: 18rem; }
 fieldset label { display: inline-block; font-weight: 400; margin-right: 1rem; }
 tbody tr { cursor: pointer; }
@@ -35,3 +36,13 @@ p { color: #667085; }
 dialog form { align-items: stretch !important; display: grid !important; grid-template-columns: repeat(2,minmax(180px,1fr)); }
 dialog h3 { grid-column: 1/-1; } dialog textarea { min-width: 0 !important; } dialog button { align-self: end; }
 @media (max-width: 760px) { .filters > * { flex: 1 1 100%; }.editor form > label { width: 100%; }.editor input,.editor select,.editor textarea { width: 100%; }dialog form { grid-template-columns: 1fr; } }
+
+/* Shared compact list and editor layout */
+.filters { background: linear-gradient(180deg,#fff,#fafbfd); border-color: #d2dae3; border-radius: 5px; gap: .5rem; margin-bottom: .75rem; padding: .55rem .65rem; }
+.filters > button[type="button"]:first-child { background: linear-gradient(180deg,#36a6ee,#087dca); border-color: #0875bc; color: #fff; }
+.filters > button[type="button"]:first-child:hover:not(:disabled) { background: linear-gradient(180deg,#2699df,#066eb3); border-color: #0668a9; }
+.editor { border-color: #d2dae3; border-radius: 5px; box-shadow: none; margin-top: .75rem; padding: .75rem; }
+.editor form { gap: .6rem; }
+.compact-data-table th,.compact-data-table td,.departments-table th,.departments-table td { line-height: 1.25; padding: .3rem .45rem; }
+.sort-header { font-size: .7rem; min-height: 23px; }
+.table-total { font-size: .76rem; margin-top: .45rem; }

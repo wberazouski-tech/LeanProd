@@ -1,6 +1,6 @@
 # Release 1 — рэалізаваныя магчымасці
 
-Актуальна на 21 жніўня 2026 года. Дакумент апісвае фактычна рэалізаваную частку Release 1, а не ўвесь запланаваны аб’ём рэлізу.
+Актуальна на 3 верасня 2026 года. Дакумент апісвае фактычна рэалізаваную частку Release 1, а не ўвесь запланаваны аб’ём рэлізу.
 
 ## 1. Карыстальнікі і доступ
 
@@ -181,7 +181,12 @@ POST   /api/storage-locations/{id}/deactivate
 /master-data/storage-locations
 /master-data/units-of-measure
 /master-data/equipment
+/master-data/technologies
 /administration/organization
+/administration/employees
+/administration/brigades
+/administration/database-settings
+/setup
 ```
 
 Інтэрфейс першай ітэрацыі наўмысна просты: HTML-табліцы, фільтры, пагінацыя, формы і мінімальны CSS.
@@ -202,6 +207,11 @@ AddEquipment
 MakeEquipmentStateIntervalsEditable
 AddOrganizationAndAddresses
 AddCatalogItems
+AddCatalogItemCostHistory
+SetCatalogItemCostScale
+AddCatalogItemClasses
+AddWorkforceAndBrigades
+AddCatalogTechnologies
 ```
 
 ## 8. Праверкі
@@ -215,7 +225,7 @@ AddCatalogItems
 - `/health/ready`;
 - загрузка Angular і асноўных API даведнікаў.
 
-Integration tests пакрываюць Identity, authorization, refresh-token rotation, стварэнне падраздзялення і месца з некалькімі тыпамі, абавязковасць мінімум аднаго тыпу і default-налады карыстальніка. Поўны запуск Testcontainers выконваецца ў CI, таму што лакальная Windows-машына не мае Docker.
+Integration tests пакрываюць Identity, authorization, refresh-token rotation, асноўныя даведнікі і абсталяванне. Поўная database-backed праверка залежыць ад Testcontainers і патрабуе даступнага Docker daemon; адсутнасць Docker з'яўляецца абмежаваннем асяроддзя, а не паспяховым вынікам тэстаў.
 
 ## 9. Адзінкі вымярэння
 
@@ -264,7 +274,33 @@ Integration tests пакрываюць Identity, authorization, refresh-token ro
 
 Падрабязнае рашэнне: [catalog-items.md](catalog-items.md).
 
-## 13. Што яшчэ не зроблена ў Release 1
+## 13. Workforce
+
+Рэалізаваны асобны backend-feature `Workforce`:
+
+- супрацоўнікі з табельным нумарам, імем, пасадай, падраздзяленнем і статусам;
+- брыгады з кодам, назвай і неабавязковым падраздзяленнем;
+- храналагічнае сяброўства супрацоўнікаў у брыгадах;
+- каэфіцыенты ўдзелу з датай дзеяння;
+- permissions `Workforce.View` і `Workforce.Manage`;
+- API `/api/employees` і `/api/brigades`;
+- Angular-старонкі `/administration/employees` і `/administration/brigades`.
+
+## 14. Technologies (спецыфікацыі)
+
+Рэалізаваны асобны backend-feature `Technologies`. Спецыфікацыя прызначаецца актыўнай прадукцыі або канчатковаму класу прадукцыі і змяшчае версію, тэрмін дзеяння, этапы, граф залежнасцей, нормы матэрыялаў, маршруты падачы, выхады і аперацыі.
+
+Backend-код вынесены з `MasterData` ва ўсе чатыры слаі `Technologies`. Публічны API `/api/catalog-technologies`, JSON-кантракты і permissions пакінуты сумяшчальнымі. Angular-інтэрфейс пакуль наўмысна застаецца ў `features/master-data/technologies`.
+
+Падрабязнае рашэнне: [technologies.md](technologies.md).
+
+## 15. Наладжванне базы даных
+
+API можа стартаваць у setup-рэжыме без рабочага runtime connection string. Рэалізаваны падключэнне існуючай LeanProd-базы, стварэнне новай базы, праверка гісторыі EF migrations, асобнае пацвярджэнне міграцыі старой базы і лакальнае шыфраванае захоўванне runtime-рэквізітаў. Angular мае маршруты `/setup` і `/administration/database-settings`.
+
+Падрабязнае рашэнне: [database.md](database.md).
+
+## 16. Што яшчэ не зроблена ў Release 1
 
 Зыходны roadmap змяшчае наступныя даведнікі і функцыі, якія яшчэ не рэалізаваныя:
 

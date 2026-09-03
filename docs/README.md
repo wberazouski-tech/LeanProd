@@ -8,6 +8,7 @@
 - [Equipment directory and state history](equipment.md)
 - [Organization and addresses](organization.md)
 - [Catalog items](catalog-items.md)
+- [Technologies and specifications](technologies.md)
 - [Authorization](authorization.md)
 - [База даных](database.md)
 - [EF Core migrations](ef-core-migrations.md)

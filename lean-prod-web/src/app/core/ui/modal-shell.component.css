@@ -1,0 +1,21 @@
+:host { display: contents; }
+.modal-layer { align-items: center; background: rgba(15, 29, 43, .52); display: flex; inset: 0; justify-content: center; padding: 1rem; position: fixed; z-index: 50; }
+.modal-layer dialog[open] { margin: 0; max-height: calc(100vh - 2rem); overflow: auto; position: static; }
+.modal-header { align-items: center; border-bottom: 1px solid #d8e0e8; display: flex; gap: 1rem; justify-content: space-between; padding-bottom: .65rem; }
+.modal-header h2 { margin: 0; }
+.modal-header .icon-button { border-color: transparent !important; border-radius: 50%; font-size: 1.2rem; height: 30px; min-height: 30px; padding: 0; width: 30px; }
+:host ::ng-deep dialog { width: min(760px, calc(100vw - 2rem)); }
+:host ::ng-deep .editor { border: 0; box-shadow: none; margin: 0; padding: 0; }
+:host ::ng-deep form { align-items: start; display: grid; gap: .75rem 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: .85rem 0 0; }
+:host ::ng-deep form > label { display: grid; font-weight: 600; gap: .4rem; min-width: 0; }
+:host ::ng-deep form > label.field-wide { grid-column: 1 / -1; }
+:host ::ng-deep form input,
+:host ::ng-deep form select,
+:host ::ng-deep form textarea { margin: 0; min-width: 0; width: 100%; }
+:host ::ng-deep form textarea { min-height: 96px; }
+:host ::ng-deep .dialog-actions { align-items: center; display: flex; gap: .5rem; grid-column: 1 / -1; justify-content: flex-end; margin-top: .25rem; }
+@media (max-width: 640px) {
+  :host ::ng-deep form { grid-template-columns: 1fr; }
+  :host ::ng-deep form > label.field-wide,
+  :host ::ng-deep .dialog-actions { grid-column: 1; }
+}

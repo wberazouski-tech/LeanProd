@@ -63,6 +63,16 @@ Migration `20260820142343_AddOrganizationAndAddresses`:
 
 This is a reviewed data-preserving migration. New installations receive the same schema and initial singleton organization record.
 
+## Current feature migrations
+
+- `20260823204817_AddCatalogItemCostHistory` adds effective catalog-item cost history.
+- `20260823211506_SetCatalogItemCostScale` standardizes cost precision.
+- `20260824182019_AddCatalogItemClasses` adds hierarchical product classes.
+- `20260826213319_AddWorkforceAndBrigades` adds employees, brigades and membership history.
+- `20260828231256_AddCatalogTechnologies` adds technologies, stage templates, stages, dependency links, materials and routes, outputs and operations.
+
+Moving technology CLR types from `MasterData` to `Technologies` is a code-ownership refactor only. Table names and relational mappings remain stable, so it must not create a schema migration. `dotnet ef migrations has-pending-model-changes` should report no changes after such a move.
+
 ## Mapping conventions
 
 New production entities must explicitly define required fields, maximum string lengths, decimal precision, indexes, delete behavior, and optimistic concurrency where concurrent updates are possible. Store timestamps as UTC. Feature-specific tables should use a stable schema once the module's first tables are introduced; changing schemas later requires a migration and deployment review.

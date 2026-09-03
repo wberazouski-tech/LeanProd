@@ -1,0 +1,42 @@
+<section class="setup-page">
+  <div class="setup-header">
+    <div>
+      <h1>{{ 'setup.title' | transloco }}</h1>
+      @if (status(); as current) {
+        <p>{{ (current.isConfigured && !current.canConfigureAnonymously ? 'setup.configured' : 'setup.notConfigured') | transloco }}</p>
+      }
+    </div>
+    <a routerLink="/login">{{ 'auth.login' | transloco }}</a>
+  </div>
+
+  <form class="setup-form" [formGroup]="form">
+    <label>{{ 'setup.server' | transloco }} <input formControlName="server" autocomplete="off"></label>
+    <label>{{ 'setup.database' | transloco }} <input formControlName="database" autocomplete="off"></label>
+    <label>{{ 'setup.adminLogin' | transloco }} <input formControlName="adminLogin" autocomplete="username"></label>
+    <label>{{ 'setup.adminPassword' | transloco }} <input type="password" formControlName="adminPassword" autocomplete="current-password"></label>
+    <label>{{ 'setup.appLogin' | transloco }} <input formControlName="appLogin" autocomplete="off"><span class="hint">{{ 'setup.appLoginHint' | transloco }}</span></label>
+    <label class="check"><input type="checkbox" formControlName="encrypt"> {{ 'setup.encrypt' | transloco }}</label>
+    <label class="check"><input type="checkbox" formControlName="trustServerCertificate"> {{ 'setup.trustServerCertificate' | transloco }}</label>
+    <label class="check"><input type="checkbox" formControlName="applyMigrations"> {{ 'setup.applyMigrations' | transloco }}</label>
+
+    <div class="actions">
+      <button type="button" (click)="test()" [disabled]="form.invalid || !!busy()">{{ 'setup.test' | transloco }}</button>
+      <button type="button" (click)="connectExisting()" [disabled]="form.invalid || !!busy()">{{ 'setup.connectExisting' | transloco }}</button>
+      <button type="button" (click)="createNew()" [disabled]="form.invalid || !!busy()">{{ 'setup.createNew' | transloco }}</button>
+    </div>
+  </form>
+
+  @if (busy()) { <p class="page-state">{{ 'pageState.saving' | transloco }}</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (result(); as setupResult) {
+    <section class="setup-result" [class.warning]="setupResult.status === 'RequiresMigration'">
+      <h2>{{ setupResult.message }}</h2>
+      @if (setupResult.pendingMigrations.length) {
+        <p>{{ 'setup.pendingMigrations' | transloco }}: {{ setupResult.pendingMigrations.length }}</p>
+      }
+      @if (setupResult.appliedMigrations.length) {
+        <p>{{ 'setup.appliedMigrations' | transloco }}: {{ setupResult.appliedMigrations.length }}</p>
+      }
+    </section>
+  }
+</section>

@@ -1,4 +1,4 @@
-dialog { width: min(900px, 92vw); max-height: 88vh; border: 1px solid #888; padding: 1rem; }
+dialog { width: min(900px, 92vw); max-height: 88vh; border: 1px solid #cbd5df; border-radius: 5px; padding: 1rem; }
 dialog::backdrop { background: rgb(0 0 0 / 35%); }
 .dialog-close { float: right; }
 .dialog-close button { font-size: 1.25rem; }

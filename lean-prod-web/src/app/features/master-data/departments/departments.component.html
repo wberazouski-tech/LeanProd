@@ -15,6 +15,7 @@
       {{ "masterData.newDepartment" | transloco }}
     </button>
   }
+  <app-table-actions [visible]="canManage" [selected]="!!selected" (editRequested)="editSelected()" (copyRequested)="copySelected()" />
 </form>
 <app-page-state [state]="state" />
 <div class="tree-table departments-table">

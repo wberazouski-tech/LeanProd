@@ -17,6 +17,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using LeanProd.Api.Common.Identity;
+using LeanProd.Api.Features.Setup;
 using LeanProd.Application.Common.Abstractions;
 
 namespace LeanProd.Api.Common.DependencyInjection;
@@ -29,6 +30,11 @@ public static class LeanProdServiceExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IDatabaseSettingsStore, DatabaseSettingsStore>();
+        services.AddSingleton<IRuntimeDatabaseConnection>(provider =>
+            provider.GetRequiredService<IDatabaseSettingsStore>());
+        services.AddSingleton<DatabaseStartupState>();
+        services.AddScoped<IDatabaseProvisioningService, DatabaseProvisioningService>();
         services.AddInfrastructure(configuration);
         var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
             ?? throw new InvalidOperationException("JWT configuration is missing.");

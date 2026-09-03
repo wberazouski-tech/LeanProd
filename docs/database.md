@@ -39,3 +39,57 @@ dotnet user-secrets set "BootstrapAdmin:Password" "<strong-local-password>" --pr
 ```
 
 Remove or rotate the bootstrap password after creating managed production users.
+
+## In-app SQL setup
+
+The API now supports a setup-only mode. If no runtime connection string is
+available from configuration or local encrypted storage, the API still starts
+and exposes `/api/setup/status`.
+
+After setup, the application SQL connection is stored locally at:
+
+```text
+%ProgramData%\LeanProd\database-settings.json
+```
+
+The app SQL password is encrypted with Windows DPAPI for the local machine. The
+SQL administrator password is never stored; it is used only during connect/create
+operations.
+
+### Connect existing database
+
+The administrator supplies SQL Server, database, SQL admin login/password and
+the desired application login. The backend then:
+
+1. Opens SQL Server with the admin connection and verifies that the database
+   exists.
+2. Verifies that this is a LeanProd database by checking `__EFMigrationsHistory`
+   and core identity schema.
+3. Reads EF Core migration history and compares it with the current application
+   migrations.
+4. If the database is current, it does not run migrations.
+5. If the database is older, it returns `RequiresMigration` with the message
+   `Database version is older than application version. Apply migrations?`.
+   Migrations are applied only after the administrator confirms.
+6. If the database is not LeanProd, it returns
+   `Selected database is not a LeanProd database.` and does not modify it.
+7. Creates or updates the SQL login/user for the application, grants
+   `db_datareader` and `db_datawriter`, verifies the app connection, and stores
+   the encrypted runtime connection string.
+
+### Create new database
+
+For a new database, the backend creates the SQL database with the admin
+connection, runs all EF Core migrations, creates/updates the application
+login/user, grants runtime permissions, verifies the app connection, and stores
+the encrypted runtime connection string.
+
+### Admin UI
+
+The Angular app exposes:
+
+- `/setup` for first-run setup or recovery when the runtime database connection
+  is broken.
+- `/administration/database-settings` for authenticated system administrators.
+
+When the backend is not configured, the login page redirects to `/setup`.
