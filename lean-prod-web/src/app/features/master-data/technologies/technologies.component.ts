@@ -7,7 +7,6 @@ import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
-import { QuantityFormatPipe } from '../../../core/ui/number-format.pipe';
 import { TableActionsComponent } from '../../../core/ui/table-actions.component';
 import { CatalogItemClassOption, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologyMaterial, CatalogTechnologyStage, CatalogTechnologyStatus, CatalogTechnologySummary, DepartmentSummary, EquipmentOption, OptionItem, StorageOption, TechnologyMaterialConsumptionTrackingMode, TechnologyMaterialMovementKind, TechnologyStageLinkType, TechnologyStageTemplate, UnitSummary } from '../master-data.models';
 import { MasterDataService } from '../master-data.service';
@@ -17,7 +16,7 @@ type DraftTechnology = CatalogTechnologyDetails;
 @Component({
   selector: 'app-technologies',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoPipe, PageStateComponent, QuantityFormatPipe, TableActionsComponent],
+  imports: [CommonModule, FormsModule, TranslocoPipe, PageStateComponent, TableActionsComponent],
   templateUrl: './technologies.component.html',
   styleUrls: ['../master-data.css', './technologies.component.css']
 })
@@ -43,14 +42,18 @@ export class TechnologiesComponent implements OnInit {
   equipment: EquipmentOption[] = [];
   templates: TechnologyStageTemplate[] = [];
   selected?: CatalogTechnologyDetails;
+  selectedTechnologyId = '';
   draft?: DraftTechnology;
   selectedStageId = '';
   selectedMaterialId = '';
+  targetItemText = '';
   search = '';
   isActive = '';
   state: PageState = 'loading';
   refsState: PageState = 'loading';
   message = '';
+  sortKey: 'code' | 'name' | 'target' | 'status' = 'code';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   ngOnInit(): void {
     this.loadRefs();
@@ -66,6 +69,23 @@ export class TechnologiesComponent implements OnInit {
         this.message = this.errorMessage(error);
       }
     });
+  }
+
+  get sortedItems(): CatalogTechnologySummary[] {
+    return [...this.items].sort((a, b) => this.compareItems(a, b));
+  }
+
+  get hasUnsavedChanges(): boolean {
+    return !!this.selected && !!this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.selected);
+  }
+
+  sortBy(key: 'code' | 'name' | 'target' | 'status'): void {
+    if (this.sortKey === key) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortKey = key;
+      this.sortDirection = 'asc';
+    }
   }
 
   loadRefs(): void {
@@ -92,6 +112,7 @@ export class TechnologiesComponent implements OnInit {
         this.departments = refs.departments;
         this.equipment = refs.equipment;
         this.templates = refs.templates;
+        if (this.draft?.catalogItemId) this.setTargetItemText(this.draft.catalogItemId);
         this.refsState = 'ready';
       },
       error: () => this.refsState = 'error'
@@ -99,17 +120,33 @@ export class TechnologiesComponent implements OnInit {
   }
 
   select(item: CatalogTechnologySummary): void {
-    this.api.technology(item.id).subscribe(x => {
+    this.selectedTechnologyId = item.id;
+  }
+
+  private openEditor(id: string): void {
+    this.api.technology(id).subscribe(x => {
       this.selected = x;
       this.draft = this.clone(x);
+      this.targetItemText = x.catalogItemName ?? '';
       this.selectedStageId = x.stages[0]?.id ?? '';
       this.selectedMaterialId = this.selectedStage?.materials[0]?.id ?? '';
     });
   }
 
+  private compareItems(a: CatalogTechnologySummary, b: CatalogTechnologySummary): number {
+    const result = String(this.sortValue(a)).localeCompare(String(this.sortValue(b)), undefined, { numeric: true, sensitivity: 'base' });
+    return (this.sortDirection === 'asc' ? result : -result) || a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+  }
+
+  private sortValue(item: CatalogTechnologySummary): string | number {
+    if (this.sortKey === 'target') return this.targetLabel(item);
+    if (this.sortKey === 'status') return item.status;
+    return item[this.sortKey];
+  }
+
   create(): void {
-    const stage = this.newStage();
     this.selected = undefined;
+    this.selectedTechnologyId = '';
     this.draft = {
       id: '',
       code: '',
@@ -126,12 +163,13 @@ export class TechnologiesComponent implements OnInit {
       status: 'InDevelopment',
       description: null,
       isActive: true,
-      stages: [stage],
+      stages: [],
       stageLinks: [],
       rowVersion: ''
     };
-    this.selectedStageId = stage.id;
+    this.selectedStageId = '';
     this.selectedMaterialId = '';
+    this.setTargetItemText(this.draft.catalogItemId);
   }
 
   copy(): void {
@@ -145,18 +183,20 @@ export class TechnologiesComponent implements OnInit {
     this.remapDraftIds(this.draft);
     this.selected = undefined;
     this.selectedStageId = this.draft.stages[0]?.id ?? '';
+    this.setTargetItemText(this.draft.catalogItemId);
   }
 
   editSelected(): void {
-    const item = this.items.find(x => x.id === this.selected?.id);
-    if (item) this.select(item);
+    if (this.selectedTechnologyId) this.openEditor(this.selectedTechnologyId);
   }
 
   closeEditor(): void {
     this.selected = undefined;
+    this.selectedTechnologyId = '';
     this.draft = undefined;
     this.selectedStageId = '';
     this.selectedMaterialId = '';
+    this.targetItemText = '';
     this.message = '';
   }
 
@@ -167,7 +207,9 @@ export class TechnologiesComponent implements OnInit {
     this.api.saveTechnology(this.draft.id || undefined, this.toPayload(this.draft)).subscribe({
       next: x => {
         this.selected = x;
+        this.selectedTechnologyId = x.id;
         this.draft = this.clone(x);
+        this.targetItemText = x.catalogItemName ?? '';
         this.selectedStageId = x.stages[0]?.id ?? '';
         this.selectedMaterialId = this.selectedStage?.materials[0]?.id ?? '';
         this.message = this.t.translate('masterData.saved');
@@ -194,7 +236,8 @@ export class TechnologiesComponent implements OnInit {
     if (!this.draft.name.trim()) return false;
     if (!this.technologyStatuses.includes(this.draft.status)) return false;
     if (!this.draft.catalogItemId && !this.draft.catalogItemClassId) return false;
-    if (this.draft.versionNo < 1 || this.draft.stages.length === 0) return false;
+    if (this.draft.versionNo < 1) return false;
+    if (this.draft.status !== 'InDevelopment' && this.draft.stages.length === 0) return false;
     if (this.hasDuplicateStageCodes()) return false;
     return this.draft.stages.every(stage =>
       !!stage.id && !!stage.name.trim() && stage.lineNo > 0
@@ -215,10 +258,22 @@ export class TechnologiesComponent implements OnInit {
     if (kind === 'item') {
       this.draft.catalogItemClassId = null;
       this.draft.catalogItemId = this.draft.catalogItemId ?? this.productItems[0]?.id ?? null;
+      this.setTargetItemText(this.draft.catalogItemId);
     } else {
       this.draft.catalogItemId = null;
       this.draft.catalogItemClassId = this.draft.catalogItemClassId ?? this.productClasses[0]?.id ?? null;
+      this.targetItemText = '';
     }
+  }
+
+  onTargetItemInput(value: string): void {
+    this.targetItemText = value;
+    if (!this.draft) return;
+
+    const normalizedValue = value.trim().toLocaleLowerCase();
+    const item = this.productItems.find(x => x.workingName.trim().toLocaleLowerCase() === normalizedValue);
+    this.draft.catalogItemId = item?.id ?? null;
+    this.draft.catalogItemName = item?.workingName ?? null;
   }
 
   get selectedStage(): CatalogTechnologyStage | undefined {
@@ -245,7 +300,7 @@ export class TechnologiesComponent implements OnInit {
   }
 
   removeStage(stage: CatalogTechnologyStage): void {
-    if (!this.draft || this.draft.stages.length <= 1) return;
+    if (!this.draft || (this.draft.stages.length <= 1 && this.draft.status !== 'InDevelopment')) return;
     const removedIndex = this.draft.stages.findIndex(x => x.id === stage.id);
     this.draft.stages = this.draft.stages.filter(x => x.id !== stage.id).map((x, index) => ({ ...x, lineNo: index + 1 }));
     this.draft.stageLinks = this.draft.stageLinks.filter(x => x.fromStageId !== stage.id && x.toStageId !== stage.id);
@@ -483,6 +538,10 @@ export class TechnologiesComponent implements OnInit {
         }))
       }))
     };
+  }
+
+  private setTargetItemText(catalogItemId: string | null): void {
+    this.targetItemText = this.productItems.find(x => x.id === catalogItemId)?.workingName ?? this.draft?.catalogItemName ?? '';
   }
 
   private clone<T>(value: T): T {

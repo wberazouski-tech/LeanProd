@@ -52,11 +52,12 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         SaveCatalogTechnologyCommand command, CancellationToken ct)
     {
         command = await EnsureGeneratedCodesAsync(command, ct);
+        command = command with { Status = CatalogTechnologyStatus.InDevelopment };
         var validation = await Validate(command, null, ct);
         if (validation is not null) return validation;
 
         var technology = new CatalogTechnology();
-        ApplyHeader(technology, command with { Status = CatalogTechnologyStatus.InDevelopment });
+        ApplyHeader(technology, command);
         ApplyChildren(technology, command);
         db.CatalogTechnologies.Add(technology);
 
@@ -276,7 +277,8 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
             return Validation("Valid to cannot be earlier than valid from.");
         if ((command.CatalogItemId is null) == (command.CatalogItemClassId is null))
             return Validation("Technology must target either one catalog item or one catalog item class.");
-        if (command.Stages.Count == 0) return Validation("At least one technology stage is required.");
+        if (command.Status != CatalogTechnologyStatus.InDevelopment && command.Stages.Count == 0)
+            return Validation("At least one technology stage is required outside In development status.");
 
         if (await db.CatalogTechnologies.AnyAsync(x => x.Id != id && x.Code == command.Code.Trim().ToUpperInvariant(), ct))
             return Conflict("A technology with this code already exists.");

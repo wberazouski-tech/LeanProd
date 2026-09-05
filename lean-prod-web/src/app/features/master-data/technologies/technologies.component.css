@@ -4,16 +4,29 @@
 .toolbar-actions,.toolbar-filters{align-items:center;display:flex;flex-wrap:wrap;gap:.5rem}
 .toolbar-filters{margin-left:auto}
 .toolbar-message{color:#475467;margin-left:.25rem}
-.technology-workspace{display:grid;grid-template-columns:minmax(380px,40%) minmax(560px,1fr);gap:1rem}
-.technology-workspace.editor-mode{grid-template-columns:minmax(0,1fr)}
-.technology-workspace.editor-mode .technology-list{display:none}
-.technology-workspace.editor-mode .technology-editor{width:100%;min-width:0}
+.technology-workspace{display:grid;grid-template-columns:1fr;gap:1rem}
 .technology-list{min-width:0}
+.technology-table-wrap{min-width:0;overflow-x:auto}
+.technology-data-table{table-layout:fixed}
+.technology-data-table tbody tr{cursor:pointer}
+.technology-data-table tbody tr.selected-row,.technology-data-table tbody tr.selected-row:hover{background:#dceeff;box-shadow:inset 3px 0 0 var(--primary)}
+.technology-data-table tbody tr.selected-row td{color:#173b78;font-weight:600}
 .technology-editor,.stages-panel,.stage-editor,.links-panel,.subsection,.split>section{background:#fff;border:1px solid #d2dae3;border-radius:5px}
 .technology-list,.technology-editor{overflow:auto}
-.technology-editor{min-height:180px;padding:.7rem}
-.editor-header,.inline-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:.5rem}
+.technology-editor{min-height:120px;padding:.7rem}
+.editor-header,.inline-grid{display:grid;grid-template-columns:repeat(1,minmax(140px,1fr));gap:.5rem}
+.editor-header-first-line {
+    display:grid;
+    grid-template-columns:repeat(4,max-content);
+    gap:.5rem; 
+    justify-content: start;
+    align-items: flex-start;
+    text-align: left}
+.editor-header-first-line > label > span {
+  align-self: flex-start;
+}
 .editor-header label,.inline-grid label{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.editor-header .technology-code-field input{width:8ch}
 .editor-header .create-target{grid-column:span 2}
 .wide{grid-column:1/-1}
 .check-label{align-items:center;flex-direction:row!important;gap:.35rem!important;min-height:2.45rem}

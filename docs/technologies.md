@@ -28,7 +28,7 @@ The aggregate contains:
 - stage outputs with receiving location and primary-output flag;
 - operations with optional department/equipment, setup, run and labor time, and worker count.
 
-Stage dependencies must reference stages in the same aggregate, cannot point to the same stage and cannot form a cycle. Quantities and worker counts are positive; durations, lag, lead time and scrap values are bounded by service and database validation.
+An `InDevelopment` technology may be saved without stages or materials so its header can be registered before the specification is complete. Other statuses require at least one complete stage. Stage dependencies must reference stages in the same aggregate, cannot point to the same stage and cannot form a cycle. Quantities and worker counts are positive; durations, lag, lead time and scrap values are bounded by service and database validation.
 
 ## Defaults, versions and history
 

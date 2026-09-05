@@ -16,7 +16,7 @@ public sealed record SaveCatalogTechnologyRequest(
     bool IsDefault,
     [Required] CatalogTechnologyStatus? Status,
     [StringLength(1000)] string? Description,
-    [Required, MinLength(1)] IReadOnlyCollection<SaveCatalogTechnologyStageRequest> Stages,
+    [Required] IReadOnlyCollection<SaveCatalogTechnologyStageRequest> Stages,
     IReadOnlyCollection<SaveCatalogTechnologyStageLinkRequest> StageLinks,
     string? RowVersion);
 
