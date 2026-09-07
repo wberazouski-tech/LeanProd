@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { AddressDetails, CatalogItem, CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologySummary, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, TechnologyStageTemplate, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
+import { AddressDetails, CatalogItem, CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologySummary, DepartmentDetails, DepartmentSummary, EquipmentDetails, EquipmentOption, EquipmentStateEvent, EquipmentSummary, EquipmentType, OptionItem, OrganizationDetails, Page, StorageDetails, StorageOption, StorageSummary, TechnologyStage, TechnologyStageTemplate, UnitCatalogOption, UnitConversion, UnitDetails, UnitSummary } from './master-data.models';
 
 @Injectable({ providedIn: 'root' })
 export class MasterDataService {
@@ -61,6 +61,8 @@ export class MasterDataService {
   saveTechnology(id: string | undefined, value: object) { return id ? this.http.put<CatalogTechnologyDetails>(`${this.api}catalog-technologies/${id}`, value) : this.http.post<CatalogTechnologyDetails>(`${this.api}catalog-technologies`, value); }
   setTechnologyActive(id: string, active: boolean) { return this.http.post<boolean>(`${this.api}catalog-technologies/${id}/${active ? 'activate' : 'deactivate'}`, {}); }
   technologyStageTemplates(activeOnly = false) { return this.http.get<TechnologyStageTemplate[]>(`${this.api}catalog-technologies/stage-templates`, { params: { activeOnly } }); }
+  technologyStages(activeOnly = true) { return this.http.get<TechnologyStage[]>(`${this.api}catalog-technologies/technology-stages`, { params: { activeOnly } }); }
+  hasTechnologyStageDuplicate(name: string, departmentId: string) { return this.http.get<boolean>(`${this.api}catalog-technologies/stage-duplicates`, { params: { name, departmentId } }); }
   saveTechnologyStageTemplate(id: string | undefined, value: object) { return id ? this.http.put<TechnologyStageTemplate>(`${this.api}catalog-technologies/stage-templates/${id}`, value) : this.http.post<TechnologyStageTemplate>(`${this.api}catalog-technologies/stage-templates`, value); }
   private ownerAddressUrl(owner: 'organization' | 'department' | 'storage-location', id?: string): string { return owner === 'organization' ? `${this.api}organization/addresses` : `${this.api}${owner === 'department' ? 'departments' : 'storage-locations'}/${id}/addresses`; }
 }

@@ -55,41 +55,55 @@ internal sealed class CatalogTechnologyStageConfiguration : IEntityTypeConfigura
 {
     public void Configure(EntityTypeBuilder<CatalogTechnologyStage> builder)
     {
-        builder.ToTable("CatalogTechnologyStages");
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
         builder.Property(x => x.PlannedDurationMinutes).HasPrecision(18, 3);
         builder.Property(x => x.Description).HasMaxLength(1000);
-        builder.HasIndex(x => new { x.CatalogTechnologyId, x.LineNo });
-        builder.HasIndex(x => new { x.CatalogTechnologyId, x.Code }).IsUnique();
+        builder.ToTable("CatalogTechnologyStages", table =>
+            table.HasCheckConstraint("CK_CatalogTechnologyStages_StageNumber", "[StageNumber] > 0"));
+        builder.HasIndex(x => new { x.CatalogTechnologyId, x.StageNumber }).IsUnique();
+        builder.HasIndex(x => new { x.Id, x.CatalogTechnologyId }).IsUnique();
         builder.HasOne(x => x.CatalogTechnology).WithMany(x => x.Stages)
             .HasForeignKey(x => x.CatalogTechnologyId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasOne(x => x.StageTemplate).WithMany(x => x.Stages)
-            .HasForeignKey(x => x.StageTemplateId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(x => x.Department).WithMany()
-            .HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.TechnologyStage).WithMany(x => x.Usages)
+            .HasForeignKey(x => x.TechnologyStageId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Equipment).WithMany()
             .HasForeignKey(x => x.EquipmentId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
-internal sealed class CatalogTechnologyStageLinkConfiguration : IEntityTypeConfiguration<CatalogTechnologyStageLink>
+internal sealed class TechnologyStageConfiguration : IEntityTypeConfiguration<TechnologyStage>
 {
-    public void Configure(EntityTypeBuilder<CatalogTechnologyStageLink> builder)
+    public void Configure(EntityTypeBuilder<TechnologyStage> builder)
     {
-        builder.ToTable("CatalogTechnologyStageLinks", table =>
-            table.HasCheckConstraint("CK_CatalogTechnologyStageLinks_NoSelfLink", "[FromStageId] <> [ToStageId]"));
+        builder.ToTable("TechnologyStages");
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.LinkType).HasConversion<string>().HasMaxLength(30).IsRequired();
-        builder.Property(x => x.LagMinutes).HasPrecision(18, 3);
-        builder.HasIndex(x => new { x.CatalogTechnologyId, x.FromStageId, x.ToStageId, x.LinkType }).IsUnique();
-        builder.HasOne(x => x.CatalogTechnology).WithMany(x => x.StageLinks)
+        builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(1000);
+        builder.HasIndex(x => x.Code).IsUnique();
+        builder.HasIndex(x => new { x.Name, x.DepartmentId });
+        builder.HasOne(x => x.Department).WithMany()
+            .HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(x => new { x.IsActive, x.Name });
+    }
+}
+
+internal sealed class CatalogTechnologyStageTransitionConfiguration : IEntityTypeConfiguration<CatalogTechnologyStageTransition>
+{
+    public void Configure(EntityTypeBuilder<CatalogTechnologyStageTransition> builder)
+    {
+        builder.ToTable("CatalogTechnologyStageTransitions", table =>
+            table.HasCheckConstraint("CK_CatalogTechnologyStageTransitions_NoSelfTransition", "[FromCatalogTechnologyStageId] <> [ToCatalogTechnologyStageId]"));
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => new { x.CatalogTechnologyId, x.FromCatalogTechnologyStageId, x.ToCatalogTechnologyStageId }).IsUnique();
+        builder.HasOne(x => x.CatalogTechnology).WithMany(x => x.StageTransitions)
             .HasForeignKey(x => x.CatalogTechnologyId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasOne(x => x.FromStage).WithMany()
-            .HasForeignKey(x => x.FromStageId).OnDelete(DeleteBehavior.NoAction);
-        builder.HasOne(x => x.ToStage).WithMany()
-            .HasForeignKey(x => x.ToStageId).OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne(x => x.FromCatalogTechnologyStage).WithMany()
+            .HasForeignKey(x => new { x.FromCatalogTechnologyStageId, x.CatalogTechnologyId })
+            .HasPrincipalKey(x => new { x.Id, x.CatalogTechnologyId }).OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne(x => x.ToCatalogTechnologyStage).WithMany()
+            .HasForeignKey(x => new { x.ToCatalogTechnologyStageId, x.CatalogTechnologyId })
+            .HasPrincipalKey(x => new { x.Id, x.CatalogTechnologyId }).OnDelete(DeleteBehavior.NoAction);
     }
 }
 

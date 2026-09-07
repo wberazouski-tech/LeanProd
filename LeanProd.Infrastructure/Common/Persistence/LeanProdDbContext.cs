@@ -31,8 +31,9 @@ public sealed class LeanProdDbContext(
     public DbSet<CatalogItemCostHistory> CatalogItemCostHistory => Set<CatalogItemCostHistory>();
     public DbSet<CatalogTechnology> CatalogTechnologies => Set<CatalogTechnology>();
     public DbSet<TechnologyStageTemplate> TechnologyStageTemplates => Set<TechnologyStageTemplate>();
+    public DbSet<TechnologyStage> TechnologyStages => Set<TechnologyStage>();
     public DbSet<CatalogTechnologyStage> CatalogTechnologyStages => Set<CatalogTechnologyStage>();
-    public DbSet<CatalogTechnologyStageLink> CatalogTechnologyStageLinks => Set<CatalogTechnologyStageLink>();
+    public DbSet<CatalogTechnologyStageTransition> CatalogTechnologyStageTransitions => Set<CatalogTechnologyStageTransition>();
     public DbSet<CatalogTechnologyMaterial> CatalogTechnologyMaterials => Set<CatalogTechnologyMaterial>();
     public DbSet<CatalogTechnologyStageOutput> CatalogTechnologyStageOutputs => Set<CatalogTechnologyStageOutput>();
     public DbSet<CatalogTechnologyOperation> CatalogTechnologyOperations => Set<CatalogTechnologyOperation>();

@@ -20,7 +20,7 @@ public sealed class CatalogTechnology : AuditableEntity
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public List<CatalogTechnologyStage> Stages { get; set; } = [];
-    public List<CatalogTechnologyStageLink> StageLinks { get; set; } = [];
+    public List<CatalogTechnologyStageTransition> StageTransitions { get; set; } = [];
 }
 
 public enum CatalogTechnologyStatus
@@ -37,7 +37,6 @@ public sealed class TechnologyStageTemplate : AuditableEntity
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
-    public List<CatalogTechnologyStage> Stages { get; set; } = [];
 }
 
 public sealed class CatalogTechnologyStage : AuditableEntity
@@ -45,14 +44,10 @@ public sealed class CatalogTechnologyStage : AuditableEntity
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid CatalogTechnologyId { get; set; }
     public CatalogTechnology CatalogTechnology { get; set; } = null!;
-    public Guid? StageTemplateId { get; set; }
-    public TechnologyStageTemplate? StageTemplate { get; set; }
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public int LineNo { get; set; }
+    public Guid TechnologyStageId { get; set; }
+    public TechnologyStage TechnologyStage { get; set; } = null!;
+    public int StageNumber { get; set; }
     public decimal? PlannedDurationMinutes { get; set; }
-    public Guid? DepartmentId { get; set; }
-    public Department? Department { get; set; }
     public Guid? EquipmentId { get; set; }
     public Equipment? Equipment { get; set; }
     public string? Description { get; set; }
@@ -61,17 +56,27 @@ public sealed class CatalogTechnologyStage : AuditableEntity
     public List<CatalogTechnologyOperation> Operations { get; set; } = [];
 }
 
-public sealed class CatalogTechnologyStageLink : AuditableEntity
+public sealed class TechnologyStage : AuditableEntity
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+    public Guid? DepartmentId { get; set; }
+    public Department? Department { get; set; }
+    public List<CatalogTechnologyStage> Usages { get; set; } = [];
+}
+
+public sealed class CatalogTechnologyStageTransition : AuditableEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid CatalogTechnologyId { get; set; }
     public CatalogTechnology CatalogTechnology { get; set; } = null!;
-    public Guid FromStageId { get; set; }
-    public CatalogTechnologyStage FromStage { get; set; } = null!;
-    public Guid ToStageId { get; set; }
-    public CatalogTechnologyStage ToStage { get; set; } = null!;
-    public TechnologyStageLinkType LinkType { get; set; } = TechnologyStageLinkType.FinishToStart;
-    public decimal LagMinutes { get; set; }
+    public Guid FromCatalogTechnologyStageId { get; set; }
+    public CatalogTechnologyStage FromCatalogTechnologyStage { get; set; } = null!;
+    public Guid ToCatalogTechnologyStageId { get; set; }
+    public CatalogTechnologyStage ToCatalogTechnologyStage { get; set; } = null!;
 }
 
 public sealed class CatalogTechnologyMaterial : AuditableEntity
@@ -142,14 +147,6 @@ public sealed class CatalogTechnologyMaterialSupplyRouteStep : AuditableEntity
     public TechnologyMaterialMovementKind MovementKind { get; set; } = TechnologyMaterialMovementKind.Transfer;
     public decimal LeadTimeMinutes { get; set; }
     public string? Note { get; set; }
-}
-
-public enum TechnologyStageLinkType
-{
-    FinishToStart = 1,
-    StartToStart = 2,
-    FinishToFinish = 3,
-    StartToFinish = 4
 }
 
 public enum TechnologyMaterialConsumptionTrackingMode

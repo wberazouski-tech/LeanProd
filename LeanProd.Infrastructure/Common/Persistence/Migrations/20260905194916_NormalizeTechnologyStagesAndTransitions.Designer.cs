@@ -4,6 +4,7 @@ using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LeanProd.Infrastructure.Common.Persistence.Migrations
 {
     [DbContext(typeof(LeanProdDbContext))]
-    partial class LeanProdDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260905194916_NormalizeTechnologyStagesAndTransitions")]
+    partial class NormalizeTechnologyStagesAndTransitions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1248,6 +1251,9 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Property<Guid?>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -1278,6 +1284,8 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("EquipmentId");
 
@@ -1423,9 +1431,6 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Property<Guid?>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DepartmentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -1455,11 +1460,7 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("DepartmentId");
-
                     b.HasIndex("IsActive", "Name");
-
-                    b.HasIndex("Name", "DepartmentId");
 
                     b.ToTable("TechnologyStages", (string)null);
                 });
@@ -2303,6 +2304,11 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("LeanProd.Domain.MasterData.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("LeanProd.Domain.MasterData.Equipment", "Equipment")
                         .WithMany()
                         .HasForeignKey("EquipmentId")
@@ -2315,6 +2321,8 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("CatalogTechnology");
+
+                    b.Navigation("Department");
 
                     b.Navigation("Equipment");
 
@@ -2383,16 +2391,6 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("FromCatalogTechnologyStage");
 
                     b.Navigation("ToCatalogTechnologyStage");
-                });
-
-            modelBuilder.Entity("LeanProd.Domain.Technologies.TechnologyStage", b =>
-                {
-                    b.HasOne("LeanProd.Domain.MasterData.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("LeanProd.Domain.Workforce.Brigade", b =>

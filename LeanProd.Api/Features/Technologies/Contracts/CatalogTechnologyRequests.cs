@@ -17,29 +17,27 @@ public sealed record SaveCatalogTechnologyRequest(
     [Required] CatalogTechnologyStatus? Status,
     [StringLength(1000)] string? Description,
     [Required] IReadOnlyCollection<SaveCatalogTechnologyStageRequest> Stages,
-    IReadOnlyCollection<SaveCatalogTechnologyStageLinkRequest> StageLinks,
+    IReadOnlyCollection<SaveCatalogTechnologyStageTransitionRequest> StageTransitions,
     string? RowVersion);
 
 public sealed record SaveCatalogTechnologyStageRequest(
     Guid? Id,
-    Guid? StageTemplateId,
-    [StringLength(50)] string Code,
-    [Required, StringLength(200)] string Name,
-    int LineNo,
+    Guid? TechnologyStageId,
+    [StringLength(50)] string TechnologyStageCode,
+    [Required, StringLength(200)] string TechnologyStageName,
+    [Range(1, int.MaxValue)] int StageNumber,
     decimal? PlannedDurationMinutes,
-    Guid? DepartmentId,
+    Guid? TechnologyStageDepartmentId,
     Guid? EquipmentId,
     [StringLength(1000)] string? Description,
     IReadOnlyCollection<SaveCatalogTechnologyMaterialRequest> Materials,
     IReadOnlyCollection<SaveCatalogTechnologyStageOutputRequest> Outputs,
     IReadOnlyCollection<SaveCatalogTechnologyOperationRequest> Operations);
 
-public sealed record SaveCatalogTechnologyStageLinkRequest(
+public sealed record SaveCatalogTechnologyStageTransitionRequest(
     Guid? Id,
-    Guid FromStageId,
-    Guid ToStageId,
-    TechnologyStageLinkType LinkType,
-    decimal LagMinutes);
+    Guid FromCatalogTechnologyStageId,
+    Guid ToCatalogTechnologyStageId);
 
 public sealed record SaveCatalogTechnologyMaterialRequest(
     Guid? Id,

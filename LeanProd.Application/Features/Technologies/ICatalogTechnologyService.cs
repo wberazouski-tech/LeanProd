@@ -18,6 +18,8 @@ public interface ICatalogTechnologyService
         bool activeOnly, CancellationToken ct);
     Task<MasterDataResult<TechnologyStageTemplateDetails>> SaveStageTemplateAsync(
         Guid? id, SaveTechnologyStageTemplateCommand command, CancellationToken ct);
+    Task<IReadOnlyCollection<TechnologyStageDetails>> GetTechnologyStagesAsync(bool activeOnly, CancellationToken ct);
+    Task<bool> HasTechnologyStageDuplicateAsync(string name, Guid departmentId, CancellationToken ct);
 }
 
 public sealed record CatalogTechnologyQuery(
@@ -61,19 +63,18 @@ public sealed record CatalogTechnologyDetails(
     string? Description,
     bool IsActive,
     IReadOnlyCollection<CatalogTechnologyStageDto> Stages,
-    IReadOnlyCollection<CatalogTechnologyStageLinkDto> StageLinks,
+    IReadOnlyCollection<CatalogTechnologyStageTransitionDto> StageTransitions,
     string RowVersion);
 
 public sealed record CatalogTechnologyStageDto(
     Guid Id,
-    Guid? StageTemplateId,
-    string? StageTemplateName,
-    string Code,
-    string Name,
-    int LineNo,
+    Guid TechnologyStageId,
+    string TechnologyStageCode,
+    string TechnologyStageName,
+    int StageNumber,
     decimal? PlannedDurationMinutes,
-    Guid? DepartmentId,
-    string? DepartmentName,
+    Guid? TechnologyStageDepartmentId,
+    string? TechnologyStageDepartmentName,
     Guid? EquipmentId,
     string? EquipmentName,
     string? Description,
@@ -81,12 +82,10 @@ public sealed record CatalogTechnologyStageDto(
     IReadOnlyCollection<CatalogTechnologyStageOutputDto> Outputs,
     IReadOnlyCollection<CatalogTechnologyOperationDto> Operations);
 
-public sealed record CatalogTechnologyStageLinkDto(
+public sealed record CatalogTechnologyStageTransitionDto(
     Guid Id,
-    Guid FromStageId,
-    Guid ToStageId,
-    TechnologyStageLinkType LinkType,
-    decimal LagMinutes);
+    Guid FromCatalogTechnologyStageId,
+    Guid ToCatalogTechnologyStageId);
 
 public sealed record CatalogTechnologyMaterialDto(
     Guid Id,
@@ -153,29 +152,30 @@ public sealed record SaveCatalogTechnologyCommand(
     CatalogTechnologyStatus Status,
     string? Description,
     IReadOnlyCollection<SaveCatalogTechnologyStageCommand> Stages,
-    IReadOnlyCollection<SaveCatalogTechnologyStageLinkCommand> StageLinks,
+    IReadOnlyCollection<SaveCatalogTechnologyStageTransitionCommand> StageTransitions,
     string? RowVersion);
 
 public sealed record SaveCatalogTechnologyStageCommand(
     Guid? Id,
-    Guid? StageTemplateId,
-    string Code,
-    string Name,
-    int LineNo,
+    Guid? TechnologyStageId,
+    string TechnologyStageCode,
+    string TechnologyStageName,
+    int StageNumber,
     decimal? PlannedDurationMinutes,
-    Guid? DepartmentId,
+    Guid? TechnologyStageDepartmentId,
     Guid? EquipmentId,
     string? Description,
     IReadOnlyCollection<SaveCatalogTechnologyMaterialCommand> Materials,
     IReadOnlyCollection<SaveCatalogTechnologyStageOutputCommand> Outputs,
     IReadOnlyCollection<SaveCatalogTechnologyOperationCommand> Operations);
 
-public sealed record SaveCatalogTechnologyStageLinkCommand(
+public sealed record SaveCatalogTechnologyStageTransitionCommand(
     Guid? Id,
-    Guid FromStageId,
-    Guid ToStageId,
-    TechnologyStageLinkType LinkType,
-    decimal LagMinutes);
+    Guid FromCatalogTechnologyStageId,
+    Guid ToCatalogTechnologyStageId);
+
+public sealed record TechnologyStageDetails(Guid Id, string Code, string Name, string? Description, bool IsActive,
+    Guid? DepartmentId, string? DepartmentName);
 
 public sealed record SaveCatalogTechnologyMaterialCommand(
     Guid? Id,

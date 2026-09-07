@@ -32,8 +32,8 @@
     </form>
     <app-page-state [state]="state" />
 
-    <div class="tree-table compact-data-table catalog-table">
-      <table [style.width.px]="catalogTableWidth" [style.min-width.px]="catalogTableWidth">
+    <div class="master-data-table-wrap catalog-items-table">
+      <table class="master-data-table" [style.width.px]="catalogTableWidth" [style.min-width.px]="catalogTableWidth">
         <colgroup>
           <col [style.width.px]="columnWidths.workingName" />
           <col [style.width.px]="columnWidths.articleNumber" />

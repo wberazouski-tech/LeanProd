@@ -12,15 +12,10 @@ dialog::backdrop { background: rgb(0 0 0 / 35%); }
 tr.planned { background: #fff8dc; }
 .equipment-workspace { display:grid;gap:.75rem;grid-template-columns:minmax(0,1fr) minmax(285px,340px);align-items:start; }
 .equipment-main { min-width:0; }
-.equipment-main > table { table-layout:fixed; }
-.equipment-main > table tbody tr { cursor:pointer; }
-.equipment-main > table tbody tr.selected-row,.equipment-main > table tbody tr.selected-row:hover { background:#dceeff;box-shadow:inset 3px 0 0 var(--primary); }
-.equipment-main > table tbody tr.selected-row td { color:#173b78;font-weight:600; }
 .equipment-details { margin-top:.65rem; }
 .equipment-details h2,.equipment-types h2 { font-size:1rem;margin:0; }
 .equipment-types { background:#fff;border:1px solid var(--border);border-radius:4px;max-height:calc(100vh - 160px);overflow:auto; }
 .types-header { align-items:center;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;padding:.45rem .55rem; }
-.equipment-types table { border:0;border-radius:0; }
 .equipment-types .type-filter-row { cursor:pointer; }
 .equipment-types .type-filter-row:hover { background:#eef6fc; }
 .equipment-types .type-filter-row.selected-type,.equipment-types .type-filter-row.selected-type:hover { background:#dceeff;box-shadow:inset 3px 0 0 var(--primary);color:#173b78; }

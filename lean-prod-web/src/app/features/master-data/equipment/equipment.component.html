@@ -21,7 +21,7 @@
     (click)="openCreate()">{{ 'equipment.add' | transloco }}</button> }<app-table-actions [visible]="canManage"
     [selected]="!!selected" (editRequested)="openEdit()" (copyRequested)="copySelected()" />
 </form>
-    <table>
+    <div class="master-data-table-wrap"><table class="master-data-table">
       <thead>
         <tr>
           <th><button
@@ -65,7 +65,7 @@
           <td>{{ item.parentName ? label(item.parentName, item.parentInventoryNumber) : '—' }}</td>
           <td>{{ item.currentState ? (('equipmentStates.' + item.currentState) | transloco) : '—' }}</td>
           <td>{{ (item.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
-          <td class="type-actions">
+          <td class="actions-column">
             @if (canManage) { 
               <button 
                 type="button" 
@@ -77,7 +77,7 @@
               </button>}
           </td>
         </tr> }</tbody>
-    </table>
+    </table></div>
     <p class="table-total">{{ 'admin.total' | transloco }}: {{ total }}</p>
     @if (selected) { <section class="editor equipment-details">
       <h2>{{ label(selected.name, selected.inventoryNumber) }}</h2>@if (selected.currentState) { <p>{{

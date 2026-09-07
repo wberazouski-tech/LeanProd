@@ -1,5 +1,5 @@
 :host { display: block; min-height: 100vh; }
-.language-picker { align-items: center; color: #d7e0e8; display: flex; font-size: .72rem; gap: .4rem; height: 46px; justify-content: flex-end; padding: 0 1rem; position: absolute; right: 0; top: 0; z-index: 10; }
+.language-picker { align-items: center; color: #d7e0e8; display: flex; font-size: .72rem; gap: .4rem; height: 54px; justify-content: flex-end; padding: 0 1rem; position: absolute; right: 0; top: 0; z-index: 10; }
 .language-picker label { color: inherit; font-size: .72rem; white-space: nowrap; }
 .language-picker select { background: #f8fafc; border-color: #526170; border-radius: 3px; font-size: .74rem; min-height: 28px; padding: .2rem 1.7rem .2rem .45rem; }
 @media (max-width: 760px) { .language-picker { background: #202c38; height: auto; padding: .4rem .75rem; position: relative; } }

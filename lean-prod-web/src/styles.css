@@ -58,7 +58,7 @@ button[type="button"] { border-color: #bdcad8; color: #263d55; }
 button[type="button"]:hover:not(:disabled) { background: #edf4f9; border-color: #8da7bf; }
 label { color: #263d55; font-size: .78rem; }
 table { border-radius: 4px; }
-th,td { padding: .46rem .55rem; }
+th,td { padding: .15rem .15rem; }
 th { background: linear-gradient(180deg,#fafbfc,#eef1f4); color: #24394f; font-size: .69rem; letter-spacing: .015em; }
 tbody tr:nth-child(even) { background: #fbfcfd; }
 tbody tr:hover { background: #eef6fc; }
@@ -72,3 +72,50 @@ tbody tr:hover { background: #eef6fc; }
 .error-banner { font-size: .8rem; padding: .45rem .75rem; }
 dialog { border-radius: 5px; padding: 1rem; }
 fieldset { border-radius: 4px; }
+
+/* Unified back-office workspace theme. */
+:root { --bg:#eef1f5;--surface:#fff;--text:#263444;--muted:#6b7787;--border:#cfd6de;--primary:#368fdc;--primary-dark:#2478c2;--shadow:0 2px 8px rgba(30,45,62,.1); }
+body { background:var(--bg);color:var(--text); }
+h1 { color:#253447;font-size:1.25rem;font-weight:500;margin-bottom:.75rem; }
+h2 { color:#263444;font-size:1rem;font-weight:600; }
+input,select,textarea { background:#fff;border-color:#cbd3dc;border-radius:2px;min-height:32px; }
+input:focus,select:focus,textarea:focus { border-color:#4c9ce4;box-shadow:0 0 0 2px rgba(54,143,220,.14); }
+button { border-radius:3px;min-height:30px; }
+button:not([type="button"]),button[type="submit"] { background:linear-gradient(180deg,#58a9ec,#2e86d2);border-color:#2479c2; }
+button:not([type="button"]):hover:not(:disabled),button[type="submit"]:hover:not(:disabled) { background:linear-gradient(180deg,#499cdf,#2478c2);border-color:#1f6cad; }
+button[type="button"] { background:linear-gradient(180deg,#fff,#f4f6f8);border-color:#bfc9d4;color:#34465a; }
+.filters,.master-toolbar { background:#fff;border:1px solid var(--border);border-radius:3px;box-shadow:0 1px 2px rgba(31,45,61,.04);gap:.5rem;margin-bottom:.75rem;padding:.55rem; }
+.editor,.selected-details,.setup-form { background:#fff;border:1px solid var(--border);border-radius:3px;box-shadow:var(--shadow); }
+.editor { padding:.75rem; }
+.shell main>form:not(.filters):not(.editor) { background:#fff;border:1px solid var(--border);border-radius:3px;padding:.75rem; }
+table { border-color:var(--border);border-radius:2px;box-shadow:0 1px 2px rgba(31,45,61,.035); }
+th,td { border-color:#d7dde4;padding:.38rem .5rem; }
+th { background:#f0f2f4;color:#354559;font-size:.68rem;font-weight:700;letter-spacing:.018em; }
+tbody tr:nth-child(even) { background:#fafbfc; }
+tbody tr:hover { background:#edf5fc; }
+.tree-table { background:#fff;border-color:var(--border);border-radius:2px; }
+.compact-data-table th,.compact-data-table td,.departments-table th,.departments-table td { padding:.28rem .45rem; }
+.tree-table tbody tr.selected-row,.tree-table tbody tr.selected-row:hover { background:#dbeeff;box-shadow:inset 3px 0 0 #328fdc; }
+.table-total { color:var(--muted);font-size:.75rem; }
+dialog { border-color:#bfc8d2;border-radius:3px;box-shadow:0 12px 32px rgba(24,36,50,.28); }
+dialog::backdrop,.modal-layer { background:rgba(39,47,58,.5); }
+fieldset { border-color:#cfd6de;border-radius:2px; }
+.error { border-radius:2px; }
+.catalog-tabs { background:#fff;border:1px solid var(--border);border-radius:3px;padding:.25rem .35rem 0; }
+.catalog-tabs a { border-radius:2px 2px 0 0; }
+.catalog-tabs a.active { background:#e8f3fc;border-color:#b9d6ee;color:#236da9; }
+.class-pane,.compact-address { border-color:var(--border);border-radius:2px; }
+@media(max-width:760px){.filters,.master-toolbar{padding:.5rem}th,td{padding:.34rem .45rem}}
+
+/* Framed application pages inspired by classic ERP workspaces. */
+.shell main h1 { background:#263b4d;border-bottom:1px solid #162938;color:#fff;font-size:1.05rem;font-weight:500;margin:-1rem -1rem 1rem;padding:.55rem .7rem; }
+.shell main h1::before { color:#fff;content:'+';font-weight:700;margin-right:.4rem; }
+.shell main .filters,.shell main .master-toolbar { background:#f8f9fa;border-color:#d2d8df;box-shadow:none; }
+.shell main table { border-color:#cbd3dc; }
+.shell main th { background:#e9edf1;color:#364657; }
+.shell main td { background-color:rgba(255,255,255,.5); }
+.shell main .editor,.shell main .selected-details,.shell main .technology-editor { box-shadow:none; }
+.shell main .editor>h2:first-child,.shell main .selected-details>h2:first-child { background:#263b4d;color:#fff;margin:-.75rem -.75rem .75rem;padding:.45rem .6rem; }
+.auth-card h1 { background:transparent;border:0;color:#253447;margin:0 0 1rem;padding:0; }
+.auth-card h1::before { content:none; }
+@media(max-width:760px){.shell main h1{margin:-.8rem -.8rem .8rem}}

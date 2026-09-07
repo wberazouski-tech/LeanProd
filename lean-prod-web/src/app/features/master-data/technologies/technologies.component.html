@@ -1,5 +1,5 @@
 <section class="technology-page">
-  <h1>{{ draft?.id ? (draft?.name + (hasUnsavedChanges ? ' *' : '')) : ('technologies.title' | transloco) }}</h1>
+  <h1>{{ editorTitle }}</h1>
   <div class="master-toolbar">
     <div class="toolbar-actions">
       @if (draft) {
@@ -37,8 +37,8 @@
     @if (!draft) {
     <section class="technology-list">
       <app-page-state [state]="state" />
-      <div class="technology-table-wrap">
-        <table class="technology-data-table">
+      <div class="master-data-table-wrap">
+        <table class="master-data-table">
           <thead>
             <tr>
               <th><button type="button" class="sort-header" (click)="sortBy('code')">{{ 'masterData.code' | transloco }}
@@ -88,7 +88,6 @@
     @if (draft) {
     <section class="technology-editor">
       <app-page-state [state]="refsState" />
-      <div class="editor-header">
         <div class="editor-header-first-line">
           <label class="technology-code-field"><span>{{ 'masterData.code' | transloco }}</span>
             <input [(ngModel)]="draft.code" maxlength="8" size="8" [disabled]="!canManage" />
@@ -109,6 +108,7 @@
             'technologies.default' | transloco }}
           </label>
         </div>
+        <div class="editor-header">
         <label class="target-field" [class.create-target]="!selected">{{ 'technologies.targetType' | transloco }}
           <select [ngModel]="targetKind()" (ngModelChange)="changeTarget($event)" [disabled]="!canManage">
             <option value="item">{{ 'technologies.itemTarget' | transloco }}</option>
@@ -136,37 +136,77 @@
         <label>{{ 'technologies.validTo' | transloco }}<input type="date" [(ngModel)]="draft.validTo"
             [disabled]="!canManage" /></label>
        
-        <label class="wide">{{ 'masterData.description' | transloco }}<textarea [(ngModel)]="draft.description"
-            [disabled]="!canManage"></textarea></label>
+
       </div>
 
-      <div class="technology-detail-grid">
-        <section class="stages-panel">
-          <div class="panel-title">
-            <strong>{{ 'technologies.stages' | transloco }}</strong>
-            @if (canManage) { <button type="button" (click)="addStage()">{{ 'technologies.addStage' | transloco
-              }}</button> }
-          </div>
-          @for (stage of draft.stages; track stage.id) {
-          <button type="button" class="stage-row" [class.selected-stage]="selectedStageId === stage.id"
-            [class.incomplete-stage]="isStageIncomplete(stage)" [class.invalid-stage]="isStageCodeDuplicate(stage)"
-            (click)="selectStage(stage)" [attr.aria-pressed]="selectedStageId === stage.id">
-            <span>{{ stage.lineNo }}</span>
-            <strong>{{ stage.code || '...' }}</strong>
-            <span class="stage-name">{{ stage.name || ('technologies.unnamedStage' | transloco) }}</span>
-            @if (isStageCodeDuplicate(stage)) {
-            <span class="stage-status error-status">{{ 'technologies.duplicateStageCode' | transloco }}</span>
-            } @else if (isStageIncomplete(stage)) {
-            <span class="stage-status">{{ 'technologies.incompleteStage' | transloco }}</span>
+      <div class="technology-tabs" role="tablist" [attr.aria-label]="'technologies.title' | transloco">
+        <button type="button" role="tab" [class.active-tab]="activeEditorTab === 'stages'"
+          [attr.aria-selected]="activeEditorTab === 'stages'" (click)="activeEditorTab = 'stages'">
+          {{ 'technologies.stages' | transloco }}
+        </button>
+        <button type="button" role="tab" [class.active-tab]="activeEditorTab === 'materials'"
+          [attr.aria-selected]="activeEditorTab === 'materials'" (click)="activeEditorTab = 'materials'"
+          [disabled]="draft.stages.length === 0">
+          {{ 'technologies.materials' | transloco }}
+        </button>
+        @if (activeEditorTab === 'materials') {
+        <label class="material-stage-selector">{{ 'technologies.stage' | transloco }}
+          <select [ngModel]="selectedStageId" (ngModelChange)="selectStageById($event)">
+            @for (stage of draft.stages; track stage.id) {
+            <option [value]="stage.id">{{ stage.stageNumber }}. {{ stage.technologyStageName }}</option>
             }
-          </button>
-          }
+          </select>
+        </label>
+        }
+      </div>
+
+      <div class="technology-detail-grid" [class.materials-tab]="activeEditorTab === 'materials'">
+        <section class="stages-panel">
+          <div class="panel-title stages-toolbar">
+            @if (canManage) {
+            <button type="button" (click)="openStageEditor()">{{ 'technologyStageDialog.addNew' | transloco }}</button>
+            <button type="button" (click)="openStageSelection()">{{ 'technologyStageDialog.addExisting' | transloco }}</button>
+            }
+          </div>
+          <div class="master-data-table-wrap">
+            <table class="master-data-table stage-overview-table">
+              <colgroup>
+                <col class="stage-number-column" />
+                <col class="next-stage-numbers-column" />
+                <col class="stage-name-column" />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>{{ 'technologyStageGrid.stageNumber' | transloco }}</th>
+                  <th>{{ 'technologyStageGrid.nextStageNumbers' | transloco }}</th>
+                  <th>{{ 'admin.name' | transloco }}</th>
+                  <th>{{ 'masterData.description' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (!draft.stages.length) {
+                <tr class="empty-stage-row"><td colspan="4"></td></tr>
+                } @else {
+                @for (stage of draft.stages; track stage.id) {
+                <tr tabindex="0" [class.selected-row]="selectedStageId === stage.id"
+                  (click)="selectStage(stage)" (keydown.enter)="selectStage(stage)" (keydown.space)="selectStage(stage)">
+                  <td>{{ stage.stageNumber }}</td>
+                  <td>{{ nextStageNumbers(stage) }}</td>
+                  <td>{{ stage.technologyStageName || ('technologies.unnamedStage' | transloco) }}</td>
+                  <td>{{ stage.description ?? '' }}</td>
+                </tr>
+                }
+                }
+              </tbody>
+            </table>
+          </div>
         </section>
 
         @if (selectedStage; as stage) {
         <section class="stage-editor">
-          <div class="panel-title">
-            <strong>{{ 'technologies.stage' | transloco }} {{ stage.lineNo }}</strong>
+          <div class="panel-title stage-editor-title">
+            <strong>{{ 'technologies.stage' | transloco }} {{ stage.stageNumber }}</strong>
             @if (canManage) {
             <span class="panel-actions">
               <button type="button" [disabled]="isFirstStage(stage)" (click)="moveStage(stage, -1)"
@@ -180,29 +220,16 @@
             </span>
             }
           </div>
-          <div class="inline-grid">
-            <label [class.field-error]="isStageCodeDuplicate(stage)">{{ 'masterData.code' | transloco }}<input
-                [(ngModel)]="stage.code" [disabled]="!canManage" />@if (isStageCodeDuplicate(stage)) { <small>{{
-                'technologies.duplicateStageCode' | transloco }}</small> }</label>
-            <label [class.field-error]="!stage.name.trim()">{{ 'admin.name' | transloco }}<input
-                [(ngModel)]="stage.name" [disabled]="!canManage" />@if (!stage.name.trim()) { <small>{{
-                'validation.required' | transloco }}</small> }</label>
-            <label>{{ 'technologies.template' | transloco }}
-              <select [(ngModel)]="stage.stageTemplateId" (ngModelChange)="applyTemplate(stage)"
-                [disabled]="!canManage">
-                <option [ngValue]="null">-</option>
-                @for (template of templates; track template.id) { <option [value]="template.id">{{ template.code }} - {{
-                  template.name }}</option> }
-              </select>
+          <div class="inline-grid stage-configuration">
+            <label>{{ 'technologies.stage' | transloco }}
+              <input [value]="stage.technologyStageName" readonly />
             </label>
+            <label>{{ 'technologies.stage' | transloco }} №<input type="number" min="1" step="10"
+                [(ngModel)]="stage.stageNumber" [disabled]="!canManage" /></label>
             <label>{{ 'technologies.duration' | transloco }}<input type="number" min="0" step="0.001"
                 [(ngModel)]="stage.plannedDurationMinutes" [disabled]="!canManage" /></label>
             <label>{{ 'masterData.department' | transloco }}
-              <select [(ngModel)]="stage.departmentId" [disabled]="!canManage">
-                <option [ngValue]="null">-</option>
-                @for (item of departments; track item.id) { <option [value]="item.id">{{ item.code }} - {{ item.name }}
-                </option> }
-              </select>
+              <input [value]="stage.technologyStageDepartmentName ?? ''" readonly />
             </label>
             <label>{{ 'equipment.title' | transloco }}
               <select [(ngModel)]="stage.equipmentId" [disabled]="!canManage">
@@ -212,7 +239,7 @@
             </label>
           </div>
 
-          <div class="subsection">
+          <div class="subsection materials-content">
             <div class="panel-title">
               <strong>{{ 'technologies.materials' | transloco }}</strong>
               @if (canManage) { <button type="button" (click)="addMaterial(stage)">{{ 'technologies.addMaterial' |
@@ -257,7 +284,7 @@
           </div>
 
           @if (selectedMaterial; as material) {
-          <div class="subsection">
+          <div class="subsection materials-content">
             <div class="panel-title">
               <strong>{{ 'technologies.routes' | transloco }}</strong>
               @if (canManage) { <button type="button" (click)="addRouteStep(material)">{{ 'technologies.addRouteStep' |
@@ -308,7 +335,7 @@
           </div>
           }
 
-          <div class="subsection split">
+          <div class="subsection split stage-configuration">
             <section>
               <div class="panel-title">
                 <strong>{{ 'technologies.outputs' | transloco }}</strong>
@@ -360,29 +387,95 @@
         </section>
         }
 
-        <section class="links-panel">
-          <div class="panel-title">
-            <strong>{{ 'technologies.stageLinks' | transloco }}</strong>
-            @if (canManage) { <button type="button" [disabled]="draft.stages.length < 2" (click)="addLink()">{{
-              'technologies.addLink' | transloco }}</button> }
-          </div>
-          @for (link of draft.stageLinks; track link.id) {
-          <div class="line-editor">
-            <select [(ngModel)]="link.fromStageId" [disabled]="!canManage">@for (stage of draft.stages; track stage.id)
-              { <option [value]="stage.id">{{ stage.lineNo }}. {{ stage.name }}</option> }</select>
-            <select [(ngModel)]="link.toStageId" [disabled]="!canManage">@for (stage of draft.stages; track stage.id) {
-              <option [value]="stage.id">{{ stage.lineNo }}. {{ stage.name }}</option> }
-            </select>
-            <select [(ngModel)]="link.linkType" [disabled]="!canManage">@for (type of linkTypes; track type) { <option
-                [value]="type">{{ ('technologyLinkTypes.' + type) | transloco }}</option> }</select>
-            <input type="number" min="0" step="0.001" [(ngModel)]="link.lagMinutes" [disabled]="!canManage" />
-            @if (canManage) { <button type="button" (click)="removeLink(link.id)">{{ 'common.delete' | transloco
-              }}</button> }
-          </div>
-          }
-        </section>
+      </div>
+       <div class="editor-header">
+      <label class="wide">{{ 'masterData.description' | transloco }}<textarea [(ngModel)]="draft.description"
+            [disabled]="!canManage"></textarea></label>
       </div>
     </section>
     }
   </div>
+
+  @if (canManage && stageEditorDraft; as stage) {
+  <div class="modal-layer" (click)="closeStageEditor()">
+    <dialog open class="stage-dialog" (click)="$event.stopPropagation()">
+      <section class="editor">
+        <h2>{{ 'technologyStageDialog.title' | transloco }}</h2>
+        <form class="stage-dialog-form" (ngSubmit)="saveStageEditor()">
+          <label class="wide">{{ 'technologies.stage' | transloco }}
+            <input type="text" [(ngModel)]="stage.technologyStageName" name="technologyStageName"
+              (ngModelChange)="onStageEditorNameInput($event)" autocomplete="off" />
+          </label>
+          <label>{{ 'technologyStageGrid.stageNumber' | transloco }}
+            <input type="number" min="1" step="10" [(ngModel)]="stage.stageNumber" name="stageNumber" />
+          </label>
+          <label>{{ 'technologyStageGrid.nextStageNumbers' | transloco }}
+            <input type="text" [(ngModel)]="stageEditorNextStageNumbers" name="nextStageNumbers" inputmode="numeric" />
+          </label>
+          <label>{{ 'technologies.duration' | transloco }}
+            <input type="number" min="0" step="0.001" [(ngModel)]="stage.plannedDurationMinutes"
+              name="plannedDurationMinutes" />
+          </label>
+          <label>{{ 'masterData.department' | transloco }}
+            <select [(ngModel)]="stage.technologyStageDepartmentId" name="technologyStageDepartmentId">
+              <option [ngValue]="null">-</option>
+              @for (item of departments; track item.id) {
+              <option [value]="item.id">{{ item.code }} - {{ item.name }}</option>
+              }
+            </select>
+          </label>
+          <label>{{ 'equipment.title' | transloco }}
+            <select [(ngModel)]="stage.equipmentId" name="equipmentId">
+              <option [ngValue]="null">-</option>
+              @for (item of equipment; track item.id) {
+              <option [value]="item.id">{{ item.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="wide">{{ 'masterData.description' | transloco }}
+            <textarea [(ngModel)]="stage.description" name="description"></textarea>
+          </label>
+          <div class="stage-dialog-actions">
+            <button type="submit" [disabled]="!canSaveStageEditor">{{ 'common.save' | transloco }}</button>
+            <button type="button" (click)="closeStageEditor()">{{ 'common.close' | transloco }}</button>
+          </div>
+        </form>
+      </section>
+    </dialog>
+  </div>
+  }
+
+  @if (stageDuplicateConfirmationOpen) {
+  <div class="modal-layer stage-confirmation-layer" (click)="cancelStageEditorDuplicate()">
+    <dialog open class="stage-confirmation-dialog" (click)="$event.stopPropagation()">
+      <h2>{{ 'technologyStageDialog.duplicateTitle' | transloco }}</h2>
+      <p>{{ 'technologyStageDialog.duplicateMessage' | transloco }}</p>
+      <div class="stage-dialog-actions">
+        <button type="button" (click)="confirmStageEditorDuplicate()">{{ 'technologyStageDialog.continue' | transloco }}</button>
+        <button type="button" (click)="cancelStageEditorDuplicate()">{{ 'technologyStageDialog.back' | transloco }}</button>
+      </div>
+    </dialog>
+  </div>
+  }
+
+  @if (canManage && stageSelectionOpen) {
+  <div class="modal-layer" (click)="closeStageSelection()">
+    <dialog open class="stage-dialog stage-selection-dialog" (click)="$event.stopPropagation()">
+      <section class="editor">
+        <h2>{{ 'technologyStageDialog.selectTitle' | transloco }}</h2>
+        <label>{{ 'technologies.stage' | transloco }}
+          <select size="10" [(ngModel)]="selectedTechnologyStageId" name="selectedTechnologyStageId">
+            @for (stage of technologyStages; track stage.id) {
+            <option [value]="stage.id">{{ stage.code }} — {{ stage.name }}{{ stage.departmentName ? ' · ' + stage.departmentName : '' }}</option>
+            }
+          </select>
+        </label>
+        <div class="stage-dialog-actions">
+          <button type="button" [disabled]="!selectedTechnologyStageId" (click)="addSelectedTechnologyStage()">{{ 'technologyStageDialog.addExisting' | transloco }}</button>
+          <button type="button" (click)="closeStageSelection()">{{ 'common.close' | transloco }}</button>
+        </div>
+      </section>
+    </dialog>
+  </div>
+  }
 </section>

@@ -8,7 +8,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 import { TableActionsComponent } from '../../../core/ui/table-actions.component';
-import { CatalogItemClassOption, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologyMaterial, CatalogTechnologyStage, CatalogTechnologyStatus, CatalogTechnologySummary, DepartmentSummary, EquipmentOption, OptionItem, StorageOption, TechnologyMaterialConsumptionTrackingMode, TechnologyMaterialMovementKind, TechnologyStageLinkType, TechnologyStageTemplate, UnitSummary } from '../master-data.models';
+import { CatalogItemClassOption, CatalogItemSummary, CatalogItemType, CatalogTechnologyDetails, CatalogTechnologyMaterial, CatalogTechnologyStage, CatalogTechnologyStatus, CatalogTechnologySummary, EquipmentOption, OptionItem, StorageOption, TechnologyMaterialConsumptionTrackingMode, TechnologyMaterialMovementKind, TechnologyStage, UnitSummary } from '../master-data.models';
 import { MasterDataService } from '../master-data.service';
 
 type DraftTechnology = CatalogTechnologyDetails;
@@ -26,7 +26,6 @@ export class TechnologiesComponent implements OnInit {
   private readonly t = inject(TranslocoService);
 
   readonly canManage = this.auth.hasPermission(Permissions.masterDataManage);
-  readonly linkTypes: TechnologyStageLinkType[] = ['FinishToStart', 'StartToStart', 'FinishToFinish', 'StartToFinish'];
   readonly trackingModes: TechnologyMaterialConsumptionTrackingMode[] = ['NormOnly', 'ActualConsumptionTracked'];
   readonly movementKinds: TechnologyMaterialMovementKind[] = ['Transfer', 'IssueToProduction', 'InternalMove'];
   readonly technologyStatuses: CatalogTechnologyStatus[] = ['InDevelopment', 'Active', 'NotUsed'];
@@ -40,12 +39,18 @@ export class TechnologiesComponent implements OnInit {
   storages: StorageOption[] = [];
   departments: OptionItem[] = [];
   equipment: EquipmentOption[] = [];
-  templates: TechnologyStageTemplate[] = [];
+  technologyStages: TechnologyStage[] = [];
   selected?: CatalogTechnologyDetails;
   selectedTechnologyId = '';
   draft?: DraftTechnology;
   selectedStageId = '';
   selectedMaterialId = '';
+  stageEditorDraft?: CatalogTechnologyStage;
+  stageEditorNextStageNumbers = '';
+  stageDuplicateConfirmationOpen = false;
+  stageSelectionOpen = false;
+  selectedTechnologyStageId = '';
+  activeEditorTab: 'stages' | 'materials' = 'stages';
   targetItemText = '';
   search = '';
   isActive = '';
@@ -79,6 +84,11 @@ export class TechnologiesComponent implements OnInit {
     return !!this.selected && !!this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.selected);
   }
 
+  get editorTitle(): string {
+    if (!this.draft?.id) return this.t.translate('technologies.title');
+    return this.draft.name + (this.hasUnsavedChanges ? ' *' : '');
+  }
+
   sortBy(key: 'code' | 'name' | 'target' | 'status'): void {
     if (this.sortKey === key) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -101,7 +111,7 @@ export class TechnologiesComponent implements OnInit {
       storages: this.api.storageOptions(),
       departments: this.api.departmentOptions(),
       equipment: this.api.equipmentOptions(),
-      templates: this.api.technologyStageTemplates(true)
+      technologyStages: this.api.technologyStages(true)
     }).subscribe({
       next: refs => {
         this.productItems = refs.products.items;
@@ -111,7 +121,7 @@ export class TechnologiesComponent implements OnInit {
         this.storages = refs.storages;
         this.departments = refs.departments;
         this.equipment = refs.equipment;
-        this.templates = refs.templates;
+        this.technologyStages = refs.technologyStages;
         if (this.draft?.catalogItemId) this.setTargetItemText(this.draft.catalogItemId);
         this.refsState = 'ready';
       },
@@ -130,6 +140,7 @@ export class TechnologiesComponent implements OnInit {
       this.targetItemText = x.catalogItemName ?? '';
       this.selectedStageId = x.stages[0]?.id ?? '';
       this.selectedMaterialId = this.selectedStage?.materials[0]?.id ?? '';
+      this.activeEditorTab = 'stages';
     });
   }
 
@@ -164,11 +175,12 @@ export class TechnologiesComponent implements OnInit {
       description: null,
       isActive: true,
       stages: [],
-      stageLinks: [],
+      stageTransitions: [],
       rowVersion: ''
     };
     this.selectedStageId = '';
     this.selectedMaterialId = '';
+    this.activeEditorTab = 'stages';
     this.setTargetItemText(this.draft.catalogItemId);
   }
 
@@ -196,6 +208,7 @@ export class TechnologiesComponent implements OnInit {
     this.draft = undefined;
     this.selectedStageId = '';
     this.selectedMaterialId = '';
+    this.activeEditorTab = 'stages';
     this.targetItemText = '';
     this.message = '';
   }
@@ -238,9 +251,8 @@ export class TechnologiesComponent implements OnInit {
     if (!this.draft.catalogItemId && !this.draft.catalogItemClassId) return false;
     if (this.draft.versionNo < 1) return false;
     if (this.draft.status !== 'InDevelopment' && this.draft.stages.length === 0) return false;
-    if (this.hasDuplicateStageCodes()) return false;
     return this.draft.stages.every(stage =>
-      !!stage.id && !!stage.name.trim() && stage.lineNo > 0
+      !!stage.id && !!stage.technologyStageName.trim() && stage.stageNumber > 0
       && stage.materials.every(material => material.catalogItemId && material.unitOfMeasureId && material.quantity > 0)
       && stage.outputs.every(output => output.catalogItemId && output.unitOfMeasureId && output.receiptStorageLocationId && output.quantity > 0)
       && stage.operations.every(operation => !!operation.name.trim() && operation.workers > 0)
@@ -284,14 +296,120 @@ export class TechnologiesComponent implements OnInit {
     return this.selectedStage?.materials.find(x => x.id === this.selectedMaterialId) ?? this.selectedStage?.materials[0];
   }
 
-  addStage(): void {
+  openStageEditor(): void {
     if (!this.draft) return;
     const stage = this.newStage();
-    stage.lineNo = this.draft.stages.length + 1;
-    stage.code = this.nextStageCode();
+    stage.stageNumber = this.nextStageNumber();
+    this.stageEditorDraft = stage;
+    this.stageEditorNextStageNumbers = '';
+    this.stageDuplicateConfirmationOpen = false;
+  }
+
+  closeStageEditor(): void {
+    this.stageEditorDraft = undefined;
+    this.stageEditorNextStageNumbers = '';
+    this.stageDuplicateConfirmationOpen = false;
+  }
+
+  openStageSelection(): void {
+    if (!this.draft) return;
+    this.selectedTechnologyStageId = '';
+    this.stageSelectionOpen = true;
+  }
+
+  closeStageSelection(): void {
+    this.stageSelectionOpen = false;
+    this.selectedTechnologyStageId = '';
+  }
+
+  addSelectedTechnologyStage(): void {
+    if (!this.draft) return;
+    const masterStage = this.technologyStages.find(stage => stage.id === this.selectedTechnologyStageId);
+    if (!masterStage) return;
+
+    this.draft.stages = [...this.draft.stages, {
+      id: this.newId(),
+      technologyStageId: masterStage.id,
+      technologyStageCode: masterStage.code,
+      technologyStageName: masterStage.name,
+      stageNumber: this.nextStageNumber(),
+      plannedDurationMinutes: null,
+      technologyStageDepartmentId: masterStage.departmentId,
+      technologyStageDepartmentName: masterStage.departmentName,
+      equipmentId: null,
+      equipmentName: null,
+      description: null,
+      materials: [],
+      outputs: [],
+      operations: []
+    }];
+    this.selectedStageId = this.draft.stages.at(-1)!.id;
+    this.selectedMaterialId = '';
+    this.closeStageSelection();
+  }
+
+  saveStageEditor(): void {
+    const nextStageNumbers = this.parseStageEditorNextStageNumbers();
+    if (!this.canSaveStageEditor || !this.draft || !this.stageEditorDraft || !nextStageNumbers) return;
+    this.api.hasTechnologyStageDuplicate(this.stageEditorDraft.technologyStageName, this.stageEditorDraft.technologyStageDepartmentId!).subscribe({
+      next: duplicateExists => {
+        if (duplicateExists) {
+          this.stageDuplicateConfirmationOpen = true;
+          return;
+        }
+        this.commitStageEditor(nextStageNumbers);
+      },
+      error: error => this.message = this.errorMessage(error)
+    });
+  }
+
+  confirmStageEditorDuplicate(): void {
+    const nextStageNumbers = this.parseStageEditorNextStageNumbers();
+    if (!nextStageNumbers) return;
+    this.stageDuplicateConfirmationOpen = false;
+    this.commitStageEditor(nextStageNumbers);
+  }
+
+  cancelStageEditorDuplicate(): void {
+    this.stageDuplicateConfirmationOpen = false;
+  }
+
+  private commitStageEditor(nextStageNumbers: number[]): void {
+    if (!this.draft || !this.stageEditorDraft) return;
+    const stage = this.stageEditorDraft;
     this.draft.stages = [...this.draft.stages, stage];
+    const nextStages = this.draft.stages.filter(item => item.id !== stage.id && nextStageNumbers.includes(item.stageNumber));
+    this.draft.stageTransitions = [...this.draft.stageTransitions, ...nextStages.map(nextStage => ({
+      id: this.newId(),
+      fromCatalogTechnologyStageId: stage.id,
+      toCatalogTechnologyStageId: nextStage.id
+    }))];
     this.selectedStageId = stage.id;
     this.selectedMaterialId = '';
+    this.closeStageEditor();
+  }
+
+  onStageEditorNameInput(value: string): void {
+    if (!this.stageEditorDraft) return;
+    this.stageEditorDraft.technologyStageId = '';
+    this.stageEditorDraft.technologyStageCode = '';
+    this.stageEditorDraft.technologyStageName = value;
+  }
+
+  get canSaveStageEditor(): boolean {
+    const stage = this.stageEditorDraft;
+    const nextStageNumbers = this.parseStageEditorNextStageNumbers();
+    return !!stage && !!stage.technologyStageName.trim() && !!stage.technologyStageDepartmentId && stage.stageNumber > 0 && !!nextStageNumbers
+      && !this.draft?.stages.some(item => item.stageNumber === stage.stageNumber)
+      && nextStageNumbers.every(number => this.draft?.stages.some(item => item.stageNumber === number));
+  }
+
+  private parseStageEditorNextStageNumbers(): number[] | undefined {
+    const value = this.stageEditorNextStageNumbers.trim();
+    if (!value || value === '0') return [];
+    if (!/^\d+(\s*,\s*\d+)*$/.test(value)) return undefined;
+    const numbers = value.split(',').map(item => Number(item.trim()));
+    return numbers.every(number => number > 0) && new Set(numbers).size === numbers.length ? numbers : undefined;
   }
 
   selectStage(stage: CatalogTechnologyStage): void {
@@ -299,11 +417,28 @@ export class TechnologiesComponent implements OnInit {
     this.selectedMaterialId = stage.materials.length ? stage.materials[0].id : '';
   }
 
+  selectStageById(stageId: string): void {
+    const stage = this.draft?.stages.find(x => x.id === stageId);
+    if (stage) this.selectStage(stage);
+  }
+
+  nextStageNumbers(stage: CatalogTechnologyStage): string {
+    if (!this.draft) return '';
+
+    return this.draft.stageTransitions
+      .filter(x => x.fromCatalogTechnologyStageId === stage.id)
+      .map(x => this.draft!.stages.find(stageItem => stageItem.id === x.toCatalogTechnologyStageId))
+      .filter((stageItem): stageItem is CatalogTechnologyStage => !!stageItem)
+      .map(stageItem => stageItem.stageNumber)
+      .sort((left, right) => left - right)
+      .join(', ');
+  }
+
   removeStage(stage: CatalogTechnologyStage): void {
     if (!this.draft || (this.draft.stages.length <= 1 && this.draft.status !== 'InDevelopment')) return;
     const removedIndex = this.draft.stages.findIndex(x => x.id === stage.id);
-    this.draft.stages = this.draft.stages.filter(x => x.id !== stage.id).map((x, index) => ({ ...x, lineNo: index + 1 }));
-    this.draft.stageLinks = this.draft.stageLinks.filter(x => x.fromStageId !== stage.id && x.toStageId !== stage.id);
+    this.draft.stages = this.draft.stages.filter(x => x.id !== stage.id);
+    this.draft.stageTransitions = this.draft.stageTransitions.filter(x => x.fromCatalogTechnologyStageId !== stage.id && x.toCatalogTechnologyStageId !== stage.id);
     const nextIndex = Math.min(Math.max(removedIndex, 0), this.draft.stages.length - 1);
     this.selectedStageId = this.draft.stages[nextIndex]?.id ?? '';
     this.selectedMaterialId = '';
@@ -316,7 +451,7 @@ export class TechnologiesComponent implements OnInit {
     if (index < 0 || targetIndex < 0 || targetIndex >= this.draft.stages.length) return;
     const stages = [...this.draft.stages];
     [stages[index], stages[targetIndex]] = [stages[targetIndex], stages[index]];
-    this.draft.stages = stages.map((item, lineIndex) => ({ ...item, lineNo: lineIndex + 1 }));
+    this.draft.stages = stages.map((item, lineIndex) => ({ ...item, stageNumber: (lineIndex + 1) * 10 }));
   }
 
   isFirstStage(stage: CatalogTechnologyStage): boolean {
@@ -328,21 +463,14 @@ export class TechnologiesComponent implements OnInit {
   }
 
   isStageIncomplete(stage: CatalogTechnologyStage): boolean {
-    return !stage.name.trim() || stage.lineNo < 1;
+    return !stage.technologyStageName.trim() || stage.stageNumber < 1;
   }
 
-  isStageCodeDuplicate(stage: CatalogTechnologyStage): boolean {
-    if (!this.draft || !stage.code.trim()) return false;
-    const code = stage.code.trim().toLocaleUpperCase();
-    return this.draft.stages.filter(item => item.code.trim().toLocaleUpperCase() === code).length > 1;
-  }
-
-  applyTemplate(stage: CatalogTechnologyStage): void {
-    const template = this.templates.find(x => x.id === stage.stageTemplateId);
-    if (!template) return;
-    stage.code = template.code;
-    stage.name = template.name;
-    stage.description = template.description;
+  onTechnologyStageChange(stage: CatalogTechnologyStage): void {
+    const master = this.technologyStages.find(x => x.id === stage.technologyStageId);
+    if (!master) return;
+    stage.technologyStageCode = master.code;
+    stage.technologyStageName = master.name;
   }
 
   addMaterial(stage: CatalogTechnologyStage): void {
@@ -422,7 +550,7 @@ export class TechnologiesComponent implements OnInit {
       id: this.newId(),
       code: '',
       name: '',
-      departmentId: stage.departmentId,
+      departmentId: stage.technologyStageDepartmentId,
       departmentName: null,
       equipmentId: stage.equipmentId,
       equipmentName: null,
@@ -440,18 +568,16 @@ export class TechnologiesComponent implements OnInit {
 
   addLink(): void {
     if (!this.draft || this.draft.stages.length < 2) return;
-    this.draft.stageLinks = [...this.draft.stageLinks, {
+    this.draft.stageTransitions = [...this.draft.stageTransitions, {
       id: this.newId(),
-      fromStageId: this.draft.stages[0].id,
-      toStageId: this.draft.stages[1].id,
-      linkType: 'FinishToStart',
-      lagMinutes: 0
+      fromCatalogTechnologyStageId: this.draft.stages[0].id,
+      toCatalogTechnologyStageId: this.draft.stages[1].id
     }];
   }
 
   removeLink(id: string): void {
     if (!this.draft) return;
-    this.draft.stageLinks = this.draft.stageLinks.filter(x => x.id !== id);
+    this.draft.stageTransitions = this.draft.stageTransitions.filter(x => x.id !== id);
   }
 
   itemName(id: string): string {
@@ -460,20 +586,19 @@ export class TechnologiesComponent implements OnInit {
 
   unitName(id: string): string { return this.units.find(x => x.id === id)?.displayName ?? ''; }
   storageName(id: string | null): string { return id ? this.storages.find(x => x.id === id)?.name ?? '' : ''; }
-  stageName(id: string): string { return this.draft?.stages.find(x => x.id === id)?.name ?? ''; }
+  stageName(id: string): string { return this.draft?.stages.find(x => x.id === id)?.technologyStageName ?? ''; }
   targetLabel(item: CatalogTechnologySummary): string { return item.catalogItemName ?? `${item.catalogItemClassCode} - ${item.catalogItemClassName}`; }
 
   private newStage(): CatalogTechnologyStage {
     return {
       id: this.newId(),
-      stageTemplateId: null,
-      stageTemplateName: null,
-      code: 'STAGE-1',
-      name: '',
-      lineNo: 1,
+      technologyStageId: '',
+      technologyStageCode: '',
+      technologyStageName: '',
+      stageNumber: 10,
       plannedDurationMinutes: null,
-      departmentId: null,
-      departmentName: null,
+      technologyStageDepartmentId: null,
+      technologyStageDepartmentName: null,
       equipmentId: null,
       equipmentName: null,
       description: null,
@@ -483,17 +608,9 @@ export class TechnologiesComponent implements OnInit {
     };
   }
 
-  private hasDuplicateStageCodes(): boolean {
-    if (!this.draft) return false;
-    const codes = this.draft.stages.map(stage => stage.code.trim().toLocaleUpperCase()).filter(Boolean);
-    return new Set(codes).size !== codes.length;
-  }
-
-  private nextStageCode(): string {
-    const existing = new Set(this.draft?.stages.map(stage => stage.code.trim().toLocaleUpperCase()).filter(Boolean) ?? []);
-    let number = (this.draft?.stages.length ?? 0) + 1;
-    while (existing.has(`STAGE-${number}`)) number += 1;
-    return `STAGE-${number}`;
+  private nextStageNumber(): number {
+    const numbers = this.draft?.stages.map(x => x.stageNumber) ?? [];
+    return numbers.length ? Math.max(...numbers) + 10 : 10;
   }
 
   private errorMessage(error: unknown): string {
@@ -515,8 +632,9 @@ export class TechnologiesComponent implements OnInit {
       description: draft.description || null,
       stages: draft.stages.map(stage => ({
         ...stage,
+        technologyStageId: stage.technologyStageId || null,
         plannedDurationMinutes: stage.plannedDurationMinutes ?? null,
-        departmentId: stage.departmentId || null,
+        technologyStageDepartmentId: stage.technologyStageDepartmentId || null,
         equipmentId: stage.equipmentId || null,
         description: stage.description || null,
         materials: stage.materials.map(material => ({
@@ -561,10 +679,10 @@ export class TechnologiesComponent implements OnInit {
       stage.outputs.forEach(output => output.id = this.newId());
       stage.operations.forEach(operation => operation.id = this.newId());
     }
-    draft.stageLinks.forEach(link => {
+    draft.stageTransitions.forEach(link => {
       link.id = this.newId();
-      link.fromStageId = stageMap.get(link.fromStageId) ?? link.fromStageId;
-      link.toStageId = stageMap.get(link.toStageId) ?? link.toStageId;
+      link.fromCatalogTechnologyStageId = stageMap.get(link.fromCatalogTechnologyStageId) ?? link.fromCatalogTechnologyStageId;
+      link.toCatalogTechnologyStageId = stageMap.get(link.toCatalogTechnologyStageId) ?? link.toCatalogTechnologyStageId;
     });
   }
 

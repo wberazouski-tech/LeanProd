@@ -62,6 +62,19 @@ public sealed class CatalogTechnologiesController(ICatalogTechnologyService serv
         bool activeOnly = false, CancellationToken ct = default) =>
         Ok(await service.GetStageTemplatesAsync(activeOnly, ct));
 
+    [HttpGet("technology-stages")]
+    public async Task<ActionResult<IReadOnlyCollection<TechnologyStageDetails>>> TechnologyStages(
+        bool activeOnly = true, CancellationToken ct = default) =>
+        Ok(await service.GetTechnologyStagesAsync(activeOnly, ct));
+
+    [HttpGet("stage-duplicates")]
+    public async Task<ActionResult<bool>> HasStageDuplicate(
+        string name, Guid departmentId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return Problem(statusCode: 400, title: "Stage name is required.");
+        return Ok(await service.HasTechnologyStageDuplicateAsync(name, departmentId, ct));
+    }
+
     [HttpPost("stage-templates"), Authorize(Policy = Permissions.MasterDataManage)]
     public async Task<ActionResult<TechnologyStageTemplateDetails>> CreateStageTemplate(
         SaveTechnologyStageTemplateRequest request, CancellationToken ct) =>
@@ -77,18 +90,18 @@ public sealed class CatalogTechnologiesController(ICatalogTechnologyService serv
         request.VersionNo, request.ValidFrom, request.ValidTo, request.IsDefault,
         request.Status ?? CatalogTechnologyStatus.InDevelopment,
         request.Description, request.Stages.Select(StageCommand).ToArray(),
-        request.StageLinks.Select(LinkCommand).ToArray(), request.RowVersion);
+        request.StageTransitions.Select(TransitionCommand).ToArray(), request.RowVersion);
 
     private static SaveCatalogTechnologyStageCommand StageCommand(
         SaveCatalogTechnologyStageRequest request) => new(
-        request.Id, request.StageTemplateId, request.Code, request.Name, request.LineNo,
-        request.PlannedDurationMinutes, request.DepartmentId, request.EquipmentId,
+        request.Id, request.TechnologyStageId, request.TechnologyStageCode, request.TechnologyStageName, request.StageNumber,
+        request.PlannedDurationMinutes, request.TechnologyStageDepartmentId, request.EquipmentId,
         request.Description, request.Materials.Select(MaterialCommand).ToArray(),
         request.Outputs.Select(OutputCommand).ToArray(), request.Operations.Select(OperationCommand).ToArray());
 
-    private static SaveCatalogTechnologyStageLinkCommand LinkCommand(
-        SaveCatalogTechnologyStageLinkRequest request) => new(
-        request.Id, request.FromStageId, request.ToStageId, request.LinkType, request.LagMinutes);
+    private static SaveCatalogTechnologyStageTransitionCommand TransitionCommand(
+        SaveCatalogTechnologyStageTransitionRequest request) => new(
+        request.Id, request.FromCatalogTechnologyStageId, request.ToCatalogTechnologyStageId);
 
     private static SaveCatalogTechnologyMaterialCommand MaterialCommand(
         SaveCatalogTechnologyMaterialRequest request) => new(

@@ -71,6 +71,16 @@ This is a reviewed data-preserving migration. New installations receive the same
 - `20260826213319_AddWorkforceAndBrigades` adds employees, brigades and membership history.
 - `20260828231256_AddCatalogTechnologies` adds technologies, stage templates, stages, dependency links, materials and routes, outputs and operations.
 
+### Technology-stage normalization
+
+Migration `20260905194916_NormalizeTechnologyStagesAndTransitions` normalizes reusable production stages into `TechnologyStages`, preserves `CatalogTechnologyStages` as technology-specific usages, and replaces dependency links with `CatalogTechnologyStageTransitions`. It was applied to the local SQL Server database on 2026-09-05.
+
+The migration is a data migration, not a rename: it backfills stage numbers as `LineNo * 10`, preserves child materials/outputs/operations on their existing usage rows, and discards legacy dependency type and lag because the new transition model has no such fields. The generated deployment SQL is `artifacts/NormalizeTechnologyStagesAndTransitions.sql`; it must still be reviewed and validated against a copy of every non-local SQL Server database before deployment.
+
+### Stage department ownership
+
+Migration `MoveStageDepartmentToTechnologyStage` moves `DepartmentId` from `CatalogTechnologyStages` to the reusable `TechnologyStages` directory. A legacy reusable stage used by more than one department is split into department-specific directory rows before the old column is removed; the technology-stage usages and all their materials, outputs and operations remain intact.
+
 Moving technology CLR types from `MasterData` to `Technologies` is a code-ownership refactor only. Table names and relational mappings remain stable, so it must not create a schema migration. `dotnet ef migrations has-pending-model-changes` should report no changes after such a move.
 
 ## Mapping conventions

@@ -41,8 +41,25 @@ dialog h3 { grid-column: 1/-1; } dialog textarea { min-width: 0 !important; } di
 .filters { background: linear-gradient(180deg,#fff,#fafbfd); border-color: #d2dae3; border-radius: 5px; gap: .5rem; margin-bottom: .75rem; padding: .55rem .65rem; }
 .filters > button[type="button"]:first-child { background: linear-gradient(180deg,#36a6ee,#087dca); border-color: #0875bc; color: #fff; }
 .filters > button[type="button"]:first-child:hover:not(:disabled) { background: linear-gradient(180deg,#2699df,#066eb3); border-color: #0668a9; }
-.editor { border-color: #d2dae3; border-radius: 5px; box-shadow: none; margin-top: .75rem; padding: .75rem; }
+.editor { border-color: #d2dae3; border-radius: 5px; box-shadow: none; margin-top: .15rem; padding: .15rem; }
 .editor form { gap: .6rem; }
-.compact-data-table th,.compact-data-table td,.departments-table th,.departments-table td { line-height: 1.25; padding: .3rem .45rem; }
+.compact-data-table th,.compact-data-table td,.departments-table th,.departments-table td { line-height: 1.25; padding: .15rem .15rem; }
 .sort-header { font-size: .7rem; min-height: 23px; }
 .table-total { font-size: .76rem; margin-top: .45rem; }
+
+/* Common master-data list table: Equipment, Items and Technologies. */
+.master-data-table-wrap { min-width: 0; overflow: auto; }
+.master-data-table { table-layout: fixed; }
+.master-data-table th,
+.master-data-table td { line-height: 1.25; padding: .05rem .15rem; vertical-align: middle; }
+.master-data-table tbody tr { cursor: pointer; }
+.master-data-table tbody tr.selected-row,
+.master-data-table tbody tr.selected-row:hover { background: #dceeff; box-shadow: inset 3px 0 0 var(--primary); }
+.master-data-table tbody tr.selected-row td { color: #173b78; font-weight: 600; }
+
+/* Compact detail tables within master-data editors. */
+.dense-table { overflow: auto; }
+.dense-table table { border-collapse: collapse; min-width: 100%; width: max-content; }
+.dense-table th,
+.dense-table td { border: 1px solid #d6e0ee; padding: .1rem; }
+.dense-table th { background: #eef4fb; text-align: left; }
