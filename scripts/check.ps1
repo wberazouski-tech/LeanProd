@@ -15,7 +15,7 @@ function Invoke-Check {
 if ($Integration -and $Scope -eq 'Frontend') { throw '-Integration requires Backend or All scope.' }
 Push-Location $root
 try {
-    & (Join-Path $PSScriptRoot 'check-skills.ps1')
+    # Local agent skills are checked separately with scripts/check-skills.ps1.
     if ($Scope -in @('All', 'Backend')) {
         if ($Integration) { Invoke-Check docker @('info', '--format', '{{.OSType}}') }
         Invoke-Check dotnet @('tool', 'restore')
