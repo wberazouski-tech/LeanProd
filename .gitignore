@@ -495,5 +495,7 @@ artifacts/
 
 # Local agent skills and configuration
 /.agents/
-/.github/skills/
-/.github/agents/
+/.github/
+
+# Local .NET tool manifest
+/.config/

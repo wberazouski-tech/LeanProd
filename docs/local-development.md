@@ -43,6 +43,15 @@ Do not commit or share the secrets file. A new local database does not contain b
 
 ## Restore dependencies and apply future migrations
 
+The `.config/` directory is local and ignored by Git. After a fresh clone, create the local tool manifest once before running checks or migration scripts:
+
+```powershell
+dotnet new tool-manifest
+dotnet tool install dotnet-ef --version 8.0.11
+```
+
+For an existing local manifest, use `dotnet tool restore`.
+
 ```powershell
 dotnet tool restore
 dotnet restore LeanProd.sln
@@ -59,7 +68,7 @@ dotnet test tests/LeanProd.Domain.UnitTests/LeanProd.Domain.UnitTests.csproj -c 
 npm.cmd --prefix lean-prod-web run build
 ```
 
-SQL Server Testcontainers integration tests require Docker and remain available through CI, as described in [containers-and-ci.md](containers-and-ci.md).
+SQL Server Testcontainers integration tests require Docker. Run `scripts\check.cmd -Integration` locally; GitHub CI is no longer configured in the repository. See [containers-and-ci.md](containers-and-ci.md).
 
 ## HTTPS on another laptop
 

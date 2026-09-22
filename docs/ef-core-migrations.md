@@ -8,6 +8,8 @@ SQL Server is the production database provider. SQLite is intended only for isol
 
 ## Local setup
 
+After a fresh clone, first create the ignored local tool manifest as described in [local-development.md](local-development.md#restore-dependencies-and-apply-future-migrations). The migration scripts require local `dotnet-ef` 8.0.11.
+
 Keep the SQL Server connection string in .NET User Secrets:
 
 ```powershell

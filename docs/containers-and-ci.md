@@ -76,13 +76,13 @@ The `LeanProd.Api.IntegrationTests` project uses Testcontainers to start a dispo
 dotnet test tests/LeanProd.Api.IntegrationTests/LeanProd.Api.IntegrationTests.csproj
 ```
 
-For now these tests run in GitHub CI, where Docker is available. They are not part of the normal local Windows workflow. Test credentials exist only in the test process/container and are not deployment credentials.
+Run these tests locally with Docker using `scripts\check.cmd -Integration`. The repository no longer includes a GitHub Actions workflow. Test credentials exist only in the test process/container and are not deployment credentials.
 
 A future local mode may use the existing SQL Server instance with a strictly separate `LeanProd_IntegrationTests` database. It is intentionally not implemented yet: there is no current deployment need, and tests must never run against the development `LeanProd` database.
 
 ## CI gates
 
-`.github/workflows/ci.yml` runs:
+The `.github/` directory is local and ignored by Git. Its workflow is not published, so pushes and pull requests no longer trigger these GitHub Actions checks. The retained local workflow describes:
 
 1. Backend restore, `dotnet format` verification, warnings-as-errors build, EF pending-model validation, and SQL Server Testcontainers integration tests.
 2. Frontend deterministic install, ESLint, headless unit tests, and production build.
