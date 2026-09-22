@@ -27,3 +27,5 @@ tr.planned { background: #fff8dc; }
 .filters button:hover:not(:disabled),.actions button:hover:not(:disabled),.types-header button:hover:not(:disabled),.status-button:hover:not(:disabled) { background:#edf4f9!important;border-color:#8da7bf!important; }
 @media(max-width:1100px){.equipment-workspace{grid-template-columns:1fr}.equipment-types{max-height:320px;order:-1}}
 @media(max-width:640px){.dialog-form{grid-template-columns:1fr}.dialog-actions{grid-column:1}}
+
+.equipment-editor>.master-data-request{background:#fff;border:1px solid var(--border);padding:1rem;border-radius:5px}.equipment-editor label{margin:0;min-width:0}.equipment-toolbar,.panel-actions{display:flex;flex-wrap:wrap;gap:.5rem;padding:.65rem 0}.equipment-toolbar{margin-bottom:.75rem;border-bottom:1px solid var(--border)}.equipment-editor .equipment-details{overflow:auto}.leave-dialog{max-width:560px}

@@ -10,19 +10,19 @@ public static class RolePermissionMatrix
             [
                 Permissions.MasterDataView, Permissions.MasterDataManage,
                 Permissions.OrganizationView, Permissions.OrganizationManage,
-                Permissions.WorkforceView, Permissions.WorkforceManage,
+                Permissions.WorkforceView, Permissions.WorkSchedulesView, Permissions.WorkSchedulesManage, Permissions.WorkforceManage,
                 Permissions.ReportsView
             ],
             [RoleNames.EquipmentOperator] =
             [
-                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.WorkSchedulesView,
                 Permissions.ShiftReportsView,
                 Permissions.ShiftReportsCreate, Permissions.ShiftReportsEditOwn,
                 Permissions.ShiftReportsSubmit, Permissions.ReportsView
             ],
             [RoleNames.ShiftReportEditor] =
             [
-                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.WorkSchedulesView,
                 Permissions.ShiftReportsView,
                 Permissions.ShiftReportsCreate, Permissions.ShiftReportsEditOwn,
                 Permissions.ShiftReportsEditAny, Permissions.ShiftReportsSubmit,
@@ -30,12 +30,12 @@ public static class RolePermissionMatrix
             ],
             [RoleNames.QualityRegistrar] =
             [
-                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.QualityView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.WorkSchedulesView, Permissions.QualityView,
                 Permissions.QualityManage, Permissions.ReportsView
             ],
             [RoleNames.Viewer] =
             [
-                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.ShiftReportsView,
+                Permissions.MasterDataView, Permissions.OrganizationView, Permissions.WorkforceView, Permissions.WorkSchedulesView, Permissions.ShiftReportsView,
                 Permissions.QualityView, Permissions.ReportsView
             ]
         };
@@ -50,3 +50,5 @@ public static class RolePermissionMatrix
     public static bool HasPermission(IEnumerable<string> roles, string permission) =>
         roles.Any(role => Matrix.TryGetValue(role, out var permissions) && permissions.Contains(permission));
 }
+
+

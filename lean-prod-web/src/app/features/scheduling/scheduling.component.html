@@ -1,0 +1,159 @@
+<section class="page" [attr.aria-busy]="locked">
+  <header><h1>{{ 'scheduling.title' | transloco }}</h1><p class="hint">{{ 'scheduling.description' | transloco }}</p></header>
+  @if (messageKey) { <p class="page-state page-state-success" role="status">{{ messageKey | transloco }}</p> }
+  @if (errorKey) { <p class="error" role="alert">{{ errorKey | transloco }}</p> }
+  @if (busy) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }
+  @if (loading || detailLoading) { <p role="status">{{ 'pageState.loading' | transloco }}</p> }
+  @if (loadError) {
+    <div class="error" role="alert">{{ 'scheduling.loadFailed' | transloco }} <button type="button" (click)="reload()" >{{ 'scheduling.retry' | transloco }}</button></div>
+  }
+  @if (!canManage) { <p class="hint">{{ 'scheduling.readOnly' | transloco }}</p> }
+  <nav class="tabs" [attr.aria-label]="'scheduling.sections' | transloco">
+    <button type="button" (click)="tab='schedules'; clearFeedback()" [class.active]="tab==='schedules'" [attr.aria-current]="tab==='schedules' ? 'page' : null" [disabled]="locked">{{ 'scheduling.schedules' | transloco }}</button>
+    <button type="button" (click)="tab='shifts'; clearFeedback()" [class.active]="tab==='shifts'" [attr.aria-current]="tab==='shifts' ? 'page' : null" [disabled]="locked">{{ 'scheduling.shifts' | transloco }}</button>
+    <button type="button" (click)="tab='calendar'; clearFeedback()" [class.active]="tab==='calendar'" [attr.aria-current]="tab==='calendar' ? 'page' : null" [disabled]="locked">{{ 'scheduling.calendar' | transloco }}</button>
+  </nav>
+  @if (!loading && !loadError && empty) { <p role="status">{{ 'common.noResults' | transloco }}</p> }
+  @if (tab === 'schedules') {
+    <div class="layout">
+      <aside [attr.aria-label]="'scheduling.schedules' | transloco">
+        @for (x of schedules; track x.id) {
+          <button type="button" class="item" [class.selected]="schedule.id === x.id" [attr.aria-pressed]="schedule.id === x.id" [disabled]="locked" (click)="selectSchedule(x.id)">
+            <strong>{{ x.code }}</strong><span>{{ x.name }}</span>
+            <small>{{ ('scheduling.kinds.' + x.kind) | transloco }} · {{ ('scheduling.statuses.' + x.status) | transloco }} · {{ x.cycleLengthDays }} {{ 'scheduling.days' | transloco }}</small>
+          </button>
+        }
+        @if (canManage) { <button type="button" (click)="createSchedule()" [disabled]="locked">{{ 'scheduling.newSchedule' | transloco }}</button> }
+      </aside>
+      <form #scheduleForm="ngForm" class="editor" (ngSubmit)="saveSchedule(scheduleForm)">
+        <fieldset class="editor-fields" [disabled]="!canManage || locked">
+          <legend>{{ 'scheduling.scheduleDetails' | transloco }}</legend>
+          <div class="grid">
+            <label>{{ 'scheduling.code' | transloco }}<input #field0="ngModel" type="text" name="sc" [(ngModel)]="schedule.code" required pattern=".*\S.*"><app-form-field-error [control]="field0.control" /></label>
+            <label>{{ 'scheduling.name' | transloco }}<input #field1="ngModel" type="text" name="sn" [(ngModel)]="schedule.name" required pattern=".*\S.*"><app-form-field-error [control]="field1.control" /></label>
+            <label>{{ 'scheduling.kind' | transloco }}<select name="sk" [(ngModel)]="schedule.kind"><option value="Main">{{ 'scheduling.kinds.Main' | transloco }}</option><option value="Optional">{{ 'scheduling.kinds.Optional' | transloco }}</option></select></label>
+            <label>{{ 'scheduling.status' | transloco }}<select name="ss" [(ngModel)]="schedule.status"><option value="Draft">{{ 'scheduling.statuses.Draft' | transloco }}</option><option value="Active">{{ 'scheduling.statuses.Active' | transloco }}</option><option value="Archived">{{ 'scheduling.statuses.Archived' | transloco }}</option></select></label>
+            <label>{{ 'scheduling.timeZone' | transloco }}<input #field2="ngModel" type="text" name="stz" [(ngModel)]="schedule.timeZoneId" required><app-form-field-error [control]="field2.control" /></label>
+            <label>{{ 'scheduling.anchor' | transloco }}<input #field3="ngModel" type="date" name="sa" [(ngModel)]="schedule.cycleAnchorDate" required><app-form-field-error [control]="field3.control" /></label>
+            <label>{{ 'scheduling.cycle' | transloco }}<select name="sct" [(ngModel)]="schedule.cycleType" (change)="cycleChanged()">
+              <option value="Daily">{{ 'scheduling.cycles.Daily' | transloco }}</option><option value="Weekly">{{ 'scheduling.cycles.Weekly' | transloco }}</option><option value="Custom">{{ 'scheduling.cycles.Custom' | transloco }}</option>
+            </select></label>
+            @if (schedule.cycleType === 'Custom') { <label>{{ 'scheduling.days' | transloco }}<input #field4="ngModel" type="number" name="scl" [(ngModel)]="schedule.cycleLengthDays" required min="1" max="366" step="1" (change)="rebuildDays()"><app-form-field-error [control]="field4.control" /></label> }
+          </div>
+          <label>{{ 'scheduling.notes' | transloco }}<textarea name="sd" [(ngModel)]="schedule.description"></textarea></label>
+          <fieldset class="templates"><legend>{{ 'scheduling.templates' | transloco }}</legend>
+            <label class="check"><input type="checkbox" name="usePreHolidayTemplate" [(ngModel)]="schedule.usePreHolidayTemplate" (change)="syncTemplate('PreHoliday', schedule.usePreHolidayTemplate)">{{ 'scheduling.dayTypes.PreHoliday' | transloco }}</label>
+<label class="check"><input type="checkbox" name="useHolidayTemplate" [(ngModel)]="schedule.useHolidayTemplate" (change)="syncTemplate('Holiday', schedule.useHolidayTemplate)">{{ 'scheduling.dayTypes.Holiday' | transloco }}</label>
+<label class="check"><input type="checkbox" name="useSaturdayTemplate" [(ngModel)]="schedule.useSaturdayTemplate" (change)="syncTemplate('Saturday', schedule.useSaturdayTemplate)">{{ 'scheduling.dayTypes.Saturday' | transloco }}</label>
+<label class="check"><input type="checkbox" name="useSundayTemplate" [(ngModel)]="schedule.useSundayTemplate" (change)="syncTemplate('Sunday', schedule.useSundayTemplate)">{{ 'scheduling.dayTypes.Sunday' | transloco }}</label>
+          </fieldset>
+          @if (schedule.kind === 'Optional' || schedule.departmentIds.length) {
+            <section class="department-assignment" aria-labelledby="department-assignment-title">
+              <div class="assignment-header"><h2 id="department-assignment-title">{{ 'scheduling.departments' | transloco }}</h2>
+                @if (canManage) { <button type="button" class="icon-button" [disabled]="locked || schedule.kind !== 'Optional' || schedule.status !== 'Active'" (click)="departmentPickerOpen = !departmentPickerOpen" [attr.aria-label]="'scheduling.addDepartment' | transloco" [title]="'scheduling.addDepartment' | transloco">+</button> }
+              </div>
+              @if (departmentPickerOpen) {
+                <label class="department-picker">{{ 'scheduling.addDepartment' | transloco }}<select (change)="assignDepartment($any($event.target).value); departmentPickerOpen = false" [disabled]="locked">
+                  <option value="">{{ 'scheduling.chooseDepartment' | transloco }}</option>
+                  @for (d of availableDepartments; track d.id) { <option [value]="d.id">{{ d.code }} — {{ d.name }}</option> }
+                </select></label>
+              }
+              @if (assignedDepartments.length) {
+                <ul class="assigned-departments">
+                  @for (d of assignedDepartments; track d.id) { <li><span>{{ d.code }} — {{ d.name }}</span><button type="button" class="icon-button" [disabled]="locked" (click)="removeDepartment(d.id)" [attr.aria-label]="'scheduling.removeDepartment' | transloco" [title]="'scheduling.removeDepartment' | transloco">−</button></li> }
+                </ul>
+              } @else { <p class="hint">{{ 'scheduling.noDepartments' | transloco }}</p> }
+              <p class="hint">{{ 'scheduling.assignmentHint' | transloco }}</p>
+            </section>
+          }
+          <h2>{{ 'scheduling.intervals' | transloco }}</h2>
+          @if (!activeShifts.length) { <p class="hint">{{ 'scheduling.noShifts' | transloco }}</p> }
+          <div class="days">
+            @for (day of schedule.days; track day.typeOfDay + '-' + day.dayNumber) {
+              <article>
+                <div class="day-head">
+                  <h3>{{ ('scheduling.dayTypes.' + day.typeOfDay) | transloco }} @if (day.typeOfDay === 'Workday') { {{ day.dayNumber }} }</h3>
+                  @if (canManage) { <button type="button" (click)="addInterval(day)" [disabled]="locked || !activeShifts.length">{{ 'scheduling.addInterval' | transloco }}</button> }
+                </div>
+                @if (!day.intervals.length) { <p class="hint">{{ 'scheduling.nonWorkingDay' | transloco }}</p> }
+                @for (i of day.intervals; track $index) {
+                  <div class="interval">
+                    <label>{{ 'scheduling.shift' | transloco }}<select [name]="'shift'+day.typeOfDay+day.dayNumber+$index" [(ngModel)]="i.workShiftId" required>
+                      <option value="">{{ 'scheduling.chooseShift' | transloco }}</option>
+                      @for (s of shifts; track s.id) { <option [value]="s.id" [disabled]="!s.isActive">{{ s.name }} @if (!s.isActive) { ({{ 'admin.inactive' | transloco }}) }</option> }
+                    </select></label>
+                    <label>{{ 'scheduling.start' | transloco }}<input #field5="ngModel" type="time" required [name]="'start'+day.typeOfDay+day.dayNumber+$index" [(ngModel)]="i.startTime"><app-form-field-error [control]="field5.control" /></label>
+                    <label>{{ 'scheduling.end' | transloco }}<input #field6="ngModel" type="time" required [name]="'end'+day.typeOfDay+day.dayNumber+$index" [(ngModel)]="i.endTime"><app-form-field-error [control]="field6.control" /></label>
+                    <label class="check"><input type="checkbox" [name]="'night'+day.typeOfDay+day.dayNumber+$index" [(ngModel)]="i.crossesMidnight">{{ 'scheduling.midnight' | transloco }}</label>
+                    <span class="numeric-value">{{ minutes(i) }} {{ 'scheduling.minutes' | transloco }}</span>
+                    @if (canManage) { <button type="button" class="icon-button" (click)="removeInterval(day, $index)" [attr.aria-label]="'scheduling.removeInterval' | transloco">×</button> }
+                  </div>
+                }
+                @if (intervalError(day)) { <p class="validation" role="status">{{ intervalError(day) | transloco }}</p> }
+              </article>
+            }
+          </div>
+          @if (canManage) {
+  @if (scheduleError) { <p class="validation" role="status">{{ scheduleError | transloco }}</p> }
+  <footer><button type="submit" [disabled]="locked || scheduleForm.invalid || !!scheduleError">{{ 'scheduling.saveSchedule' | transloco }}</button></footer>
+}</fieldset></form></div>
+  }
+  @if (tab === 'shifts') {
+    <div class="layout">
+      <aside [attr.aria-label]="'scheduling.shifts' | transloco">
+        @if (canManage) { <button type="button" (click)="createShift()" [disabled]="locked">{{ 'scheduling.newShift' | transloco }}</button> }
+        @for (x of shifts; track x.id) {
+          <button type="button" class="item" [class.selected]="shift.id === x.id" [attr.aria-pressed]="shift.id === x.id" [disabled]="locked" (click)="selectShift(x)">
+            <strong>{{ x.code }}</strong><span>{{ x.name }}</span><small>{{ (x.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</small>
+          </button>
+        }
+      </aside>
+      <form #shiftForm="ngForm" class="editor" (ngSubmit)="saveShift(shiftForm)">
+        <fieldset class="editor-fields" [disabled]="!canManage || locked"><legend>{{ 'scheduling.shiftDetails' | transloco }}</legend>
+          <label>{{ 'scheduling.code' | transloco }}<input #field7="ngModel" type="text" name="shc" [(ngModel)]="shift.code" required pattern=".*\S.*"><app-form-field-error [control]="field7.control" /></label>
+          <label>{{ 'scheduling.name' | transloco }}<input #field8="ngModel" type="text" name="shn" [(ngModel)]="shift.name" required pattern=".*\S.*"><app-form-field-error [control]="field8.control" /></label>
+          <label>{{ 'scheduling.notes' | transloco }}<textarea name="shd" [(ngModel)]="shift.description"></textarea></label>
+          <label class="check"><input type="checkbox" name="sha" [(ngModel)]="shift.isActive" >{{ 'scheduling.active' | transloco }}</label>
+          @if (canManage) {
+  @if (shiftError) { <p class="validation" role="status">{{ shiftError | transloco }}</p> }
+  <footer><button type="submit" [disabled]="locked || shiftForm.invalid || !!shiftError">{{ 'scheduling.saveShift' | transloco }}</button></footer>
+}</fieldset></form></div>
+  }
+  @if (tab === 'calendar') {
+    <div class="layout">
+      <aside [attr.aria-label]="'scheduling.calendar' | transloco">
+        @if (canManage) { <button type="button" (click)="createCalendar()" [disabled]="locked">{{ 'scheduling.newCalendar' | transloco }}</button> }
+        @for (x of calendars; track x.id) {
+          <button type="button" class="item" [class.selected]="calendar.id === x.id" [attr.aria-pressed]="calendar.id === x.id" [disabled]="locked" (click)="selectCalendar(x)">
+            <strong>{{ x.code }}</strong><span>{{ x.name }}</span><small>{{ x.countryCode }} · {{ x.days.length }} {{ 'scheduling.exceptionsCount' | transloco }}</small>
+          </button>
+        }
+      </aside>
+      <form #calendarForm="ngForm" class="editor" (ngSubmit)="saveCalendar(calendarForm)">
+        <fieldset class="editor-fields" [disabled]="!canManage || locked"><legend>{{ 'scheduling.calendarDetails' | transloco }}</legend>
+          <div class="grid">
+            <label>{{ 'scheduling.code' | transloco }}<input #field9="ngModel" type="text" name="cc" [(ngModel)]="calendar.code" required pattern=".*\S.*"><app-form-field-error [control]="field9.control" /></label>
+            <label>{{ 'scheduling.name' | transloco }}<input #field10="ngModel" type="text" name="cn" [(ngModel)]="calendar.name" required pattern=".*\S.*"><app-form-field-error [control]="field10.control" /></label>
+            <label>{{ 'scheduling.country' | transloco }}<input #field11="ngModel" type="text" name="country" [(ngModel)]="calendar.countryCode" required minlength="2" maxlength="2"><app-form-field-error [control]="field11.control" /></label>
+            <label>{{ 'scheduling.region' | transloco }}<input #field12="ngModel" type="text" name="region" [(ngModel)]="calendar.regionCode" ><app-form-field-error [control]="field12.control" /></label>
+            <label>{{ 'scheduling.timeZone' | transloco }}<input #field13="ngModel" type="text" name="ctz" [(ngModel)]="calendar.timeZoneId" required><app-form-field-error [control]="field13.control" /></label>
+          </div>
+          <div class="templates"><label class="check"><input type="checkbox" name="cm" [(ngModel)]="calendar.isMain" >{{ 'scheduling.mainCalendar' | transloco }}</label><label class="check"><input type="checkbox" name="ca" [(ngModel)]="calendar.isActive" >{{ 'scheduling.active' | transloco }}</label></div>
+          <div class="day-head"><h2>{{ 'scheduling.exceptions' | transloco }}</h2>@if (canManage) { <button type="button" (click)="addCalendarDay()" >{{ 'scheduling.addDay' | transloco }}</button> }</div>
+          @for (d of calendar.days; track n; let n = $index) {
+            <div class="calendar-row">
+              <label>{{ 'scheduling.date' | transloco }}<input #field14="ngModel" type="date" required [name]="'date'+n" [(ngModel)]="d.date"><app-form-field-error [control]="field14.control" /></label>
+              <label>{{ 'scheduling.dayType' | transloco }}<select [name]="'dtype'+n" [(ngModel)]="d.dayType">
+                @for (type of calendarTypes; track type) { <option [value]="type">{{ ('scheduling.calendarTypes.' + type) | transloco }}</option> }
+              </select></label>
+              <label>{{ 'scheduling.dayName' | transloco }}<input #field15="ngModel" required [name]="'dname'+n" [(ngModel)]="d.name"><app-form-field-error [control]="field15.control" /></label>
+              <label>{{ 'scheduling.transferredFrom' | transloco }}<input #field16="ngModel" type="date" [name]="'from'+n" [(ngModel)]="d.transferredFromDate"><app-form-field-error [control]="field16.control" /></label>
+              @if (canManage) { <button type="button" class="icon-button" (click)="removeCalendarDay(n)" [attr.aria-label]="'scheduling.removeDay' | transloco">×</button> }
+            </div>
+          }
+          @if (canManage) {
+  @if (calendarError) { <p class="validation" role="status">{{ calendarError | transloco }}</p> }
+  <footer><button type="submit" [disabled]="locked || calendarForm.invalid || !!calendarError">{{ 'scheduling.saveCalendar' | transloco }}</button></footer>
+}</fieldset></form></div>
+  }
+</section>

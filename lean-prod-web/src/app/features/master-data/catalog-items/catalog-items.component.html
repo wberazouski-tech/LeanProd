@@ -1,36 +1,58 @@
+<fieldset class="master-data-request" [disabled]="requests.saving() || isSaving">
 <nav class="catalog-tabs" [attr.aria-label]="'catalogItems.section' | transloco">
-  <a routerLink="/catalog/products" routerLinkActive="active">{{ 'catalogItemTypes.Product' | transloco }}</a>
-  <a routerLink="/catalog/works" routerLinkActive="active">{{ 'catalogItemTypes.Work' | transloco }}</a>
-  <a routerLink="/catalog/primary-materials" routerLinkActive="active">{{ 'catalogItemTypes.PrimaryMaterial' | transloco
+  @if (!editorOpen || type === 'Product') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/products" routerLinkActive="active">{{ 'catalogItemTypes.Product' | transloco }}</a>
+  }
+  @if (!editorOpen || type === 'Work') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/works" routerLinkActive="active">{{ 'catalogItemTypes.Work' | transloco }}</a>
+  }
+  @if (!editorOpen || type === 'PrimaryMaterial') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/primary-materials" routerLinkActive="active">{{ 'catalogItemTypes.PrimaryMaterial' | transloco
     }}</a>
-  <a routerLink="/catalog/auxiliary-materials" routerLinkActive="active">{{ 'catalogItemTypes.AuxiliaryMaterial' |
+  }
+  @if (!editorOpen || type === 'AuxiliaryMaterial') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/auxiliary-materials" routerLinkActive="active">{{ 'catalogItemTypes.AuxiliaryMaterial' |
     transloco }}</a>
-  <a routerLink="/catalog/semi-finished-products" routerLinkActive="active">{{ 'catalogItemTypes.SemiFinishedProduct' |
+  }
+  @if (!editorOpen || type === 'SemiFinishedProduct') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/semi-finished-products" routerLinkActive="active">{{ 'catalogItemTypes.SemiFinishedProduct' |
     transloco }}</a>
-  <a routerLink="/catalog/packaging" routerLinkActive="active">{{ 'catalogItemTypes.Packaging' | transloco }}</a>
-  <a routerLink="/catalog/tooling-and-tools" routerLinkActive="active">{{ 'catalogItemTypes.ToolingAndTools' | transloco
+  }
+  @if (!editorOpen || type === 'Packaging') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/packaging" routerLinkActive="active">{{ 'catalogItemTypes.Packaging' | transloco }}</a>
+  }
+  @if (!editorOpen || type === 'ToolingAndTools') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/tooling-and-tools" routerLinkActive="active">{{ 'catalogItemTypes.ToolingAndTools' | transloco
     }}</a>
-  <a routerLink="/catalog/spare-parts" routerLinkActive="active">{{ 'catalogItemTypes.SparePart' | transloco }}</a>
-  <a routerLink="/catalog/purchased-services" routerLinkActive="active">{{ 'catalogItemTypes.PurchasedService' |
+  }
+  @if (!editorOpen || type === 'SparePart') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/spare-parts" routerLinkActive="active">{{ 'catalogItemTypes.SparePart' | transloco }}</a>
+  }
+  @if (!editorOpen || type === 'PurchasedService') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/purchased-services" routerLinkActive="active">{{ 'catalogItemTypes.PurchasedService' |
     transloco }}</a>
-  <a routerLink="/catalog/waste" routerLinkActive="active">{{ 'catalogItemTypes.Waste' | transloco }}</a>
+  }
+  @if (!editorOpen || type === 'Waste') {
+  <a (click)="onCatalogTab($event)" routerLink="/catalog/waste" routerLinkActive="active">{{ 'catalogItemTypes.Waste' | transloco }}</a>
+  }
 </nav>
 
+@if (!editorOpen) {
 <div class="catalog-workspace">
   <section class="items-pane">
     <form class="filters catalog-toolbar" [formGroup]="filters" (ngSubmit)="load()">
-      <input formControlName="search" [placeholder]="'catalogItems.search' | transloco" />
+      <input formControlName="search" [placeholder]="'catalogItems.search' | transloco" /><app-form-field-error [control]="filters.controls.search" />
       <select formControlName="isActive">
         <option value="">{{ 'admin.allStatuses' | transloco }}</option>
         <option value="true">{{ 'admin.activePlural' | transloco }}</option>
         <option value="false">{{ 'admin.inactivePlural' | transloco }}</option>
-      </select>
+      </select><app-form-field-error [control]="filters.controls.isActive" />
       <button>{{ 'admin.find' | transloco }}</button>
       @if (canManage) { <button type="button" (click)="create()">{{ 'catalogItems.add' | transloco }}</button>
       }<app-table-actions [visible]="canManage" [selected]="!!selected" (editRequested)="editSelected()"
         (copyRequested)="copySelected()" />
     </form>
-    <app-page-state [state]="state" />
+    <app-page-state [state]="state" (retry)="load()" />
 
     <div class="master-data-table-wrap catalog-items-table">
       <table class="master-data-table" [style.width.px]="catalogTableWidth" [style.min-width.px]="catalogTableWidth">
@@ -87,7 +109,7 @@
         </thead>
         <tbody>
           @for (item of sortedItems; track item.id) {
-          <tr (click)="select(item)" [class.selected-row]="selected?.id === item.id"
+          <tr appKeyboardRow (click)="select(item)" [class.selected-row]="selected?.id === item.id"
             [class.dragging-row]="draggedItem?.id === item.id" [attr.draggable]="canManage ? 'true' : null"
             (dragstart)="startItemDrag(item, $event)" (dragend)="endItemDrag()">
             <td>{{ item.workingName }}</td>
@@ -117,10 +139,10 @@
       <button type="button" (click)="createClass(false)">{{ 'catalogItemClasses.addClass' | transloco }}</button>
       }
     </div>
-    <app-page-state [state]="classState" />
+    <app-page-state [state]="classState" (retry)="loadClasses()" /><div class="load-more"><span>{{ 'masterDataReview.loaded' | transloco }}: {{ classes.length }} / {{ classTotal }}</span>@if (classes.length < classTotal) { <button type="button" [disabled]="classState === 'loading'" (click)="loadClasses(true)">{{ 'masterDataReview.loadMore' | transloco }}</button> }</div>
     <div class="class-tree">
       @for (item of sortedClasses; track item.id) {
-      <div class="class-node" (click)="selectClass(item)" [class.selected-row]="selectedClass?.id === item.id"
+      <div appKeyboardRow class="class-node" (click)="selectClass(item)" [class.selected-row]="selectedClass?.id === item.id"
         [class.inactive-node]="!item.isActive" [class.drop-target]="dropTargetClassId === item.id"
         [class.drop-blocked]="draggedItem && !canDropOnClass(item)" [attr.aria-selected]="selectedClass?.id === item.id"
         (dragover)="dragOverClass(item, $event)" (dragleave)="leaveClassDropTarget(item)"
@@ -149,6 +171,7 @@
 
 @if (selected && !editorOpen) {
 <section class="selected-details catalog-details">
+  <a [routerLink]="['/catalog/items', selected.id, 'properties']" [queryParams]="{ back: propertiesBackUrl }">{{ 'itemProperties.valuesAndBatches' | transloco }}</a>
   <dl>
     <div>
       <dt>{{ 'masterData.description' | transloco }}</dt>
@@ -158,57 +181,57 @@
 </section>
 }
 
+}
 @if (canManage && editorOpen) {
-<div class="modal-layer" (click)="closeEditor()">
-  <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
-    <section class="editor">
-      <h2>{{ (selected ? 'catalogItems.edit' : 'catalogItems.add') | transloco }}</h2>
-      <form [formGroup]="form" (ngSubmit)="save()">
-        <label>{{ 'catalogItems.workingName' | transloco }}<input formControlName="workingName" /></label>
-        <label>{{ 'catalogItems.article' | transloco }}<input formControlName="articleNumber" /></label>
-        <label class="wide">{{ 'catalogItems.fullName' | transloco }}<input formControlName="fullName" /></label>
+<section class="item-editor">
+      <h1>{{ selected ? form.controls.workingName.value : ('catalogItems.add' | transloco) }}{{ hasUnsavedChanges ? ' *' : '' }}</h1>
+      <div class="item-editor-toolbar">
+        @if (selected) { <a [routerLink]="['/catalog/items', selected.id, 'properties']" [queryParams]="{ back: propertiesBackUrl }">{{ 'itemProperties.valuesAndBatches' | transloco }}</a> }        <button type="submit" form="item-editor-form" [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
+        <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
+        @if (selected?.isActive) { <button type="button" [disabled]="hasUnsavedChanges" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
+          }}</button> }
+        @else if (selected) { <button type="button" [disabled]="hasUnsavedChanges" (click)="setActive(true)">{{ 'admin.activate' | transloco
+          }}</button> }
+</div>
+      <form id="item-editor-form" [formGroup]="form" (ngSubmit)="save()">
+        <label>{{ 'catalogItems.workingName' | transloco }}<input formControlName="workingName" /><app-form-field-error [control]="form.controls.workingName" /></label>
+        <label>{{ 'catalogItems.article' | transloco }}<input formControlName="articleNumber" /><app-form-field-error [control]="form.controls.articleNumber" /></label>
+        <label class="wide">{{ 'catalogItems.fullName' | transloco }}<input formControlName="fullName" /><app-form-field-error [control]="form.controls.fullName" /></label>
         <label>{{ 'catalogItems.baseUnit' | transloco }}<select formControlName="baseUnitOfMeasureId">
             <option value="">—</option>@for (unit of units; track unit.id) { <option [value]="unit.id">{{
               unit.displayName }}{{ unit.symbol ? ' (' + unit.symbol + ')' : '' }}</option> }
-          </select></label>
+          </select><app-form-field-error [control]="form.controls.baseUnitOfMeasureId" /></label>
         <label>{{ 'catalogItemClasses.class' | transloco }}<select formControlName="catalogItemClassId">
             <option value="">—</option>@for (item of classOptions; track item.id) { <option [value]="item.id">{{
               displayClass(item) }}</option> }
-          </select></label>
-        <label>{{ 'catalogItems.cost' | transloco }}<input type="number" formControlName="cost" min="0" step="0.01"
-            (input)="limitCostScale($event)" /></label>
+          </select><app-form-field-error [control]="form.controls.catalogItemClassId" /></label>
+        <label>{{ 'catalogItems.cost' | transloco }}<input type="text" inputmode="decimal" formControlName="cost"
+             /><app-form-field-error [control]="form.controls.cost" /></label>
         <label class="wide">{{ 'masterData.description' | transloco }}<textarea
-            formControlName="description"></textarea></label>
-        <button [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
-        <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
-        @if (selected?.isActive) { <button type="button" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
-          }}</button> }
-        @else if (selected) { <button type="button" (click)="setActive(true)">{{ 'admin.activate' | transloco
-          }}</button> }
+            formControlName="description"></textarea><app-form-field-error [control]="form.controls.description" /></label>
       </form>
-      <p>{{ message }}</p>
+      @if (message) { <p role="status">{{ message }}</p> }
     </section>
-  </dialog>
-</div>
+
 }
 
 @if (canManage && classEditorOpen) {
 <div class="modal-layer" (click)="closeClassEditor()">
-  <dialog open class="catalog-dialog" (click)="$event.stopPropagation()">
+  <dialog appModal (appModalClosed)="closeClassEditor()" class="catalog-dialog" (click)="$event.stopPropagation()">
     <section class="editor">
       <h2>{{ (selectedClass ? 'catalogItemClasses.edit' : (classForm.controls.isGroup.value ?
         'catalogItemClasses.addGroup' : 'catalogItemClasses.addClass')) | transloco }}</h2>
       <form [formGroup]="classForm" (ngSubmit)="saveClass()">
-        <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" /></label>
-        <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" /></label>
+        <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" /><app-form-field-error [control]="classForm.controls.code" /></label>
+        <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" /><app-form-field-error [control]="classForm.controls.name" /></label>
         <label>{{ 'catalogItemClasses.parentGroup' | transloco }}<select formControlName="parentId">
             <option value="">—</option>@for (item of parentClassOptions; track item.id) { <option [value]="item.id">{{
               displayClass(item) }}</option> }
-          </select></label>
+          </select><app-form-field-error [control]="classForm.controls.parentId" /></label>
         <label>{{ 'catalogItemClasses.nodeType' | transloco }}<select formControlName="isGroup">
             <option [ngValue]="true">{{ 'catalogItemClasses.group' | transloco }}</option>
             <option [ngValue]="false">{{ 'catalogItemClasses.class' | transloco }}</option>
-          </select></label>
+          </select><app-form-field-error [control]="classForm.controls.isGroup" /></label>
         <button [disabled]="classForm.invalid">{{ 'common.save' | transloco }}</button>
         <button type="button" (click)="closeClassEditor()">{{ 'common.close' | transloco }}</button>
         @if (selectedClass?.isActive) { <button type="button" (click)="setClassActive(false)">{{ 'admin.deactivate' |
@@ -220,4 +243,27 @@
     </section>
   </dialog>
 </div>
+}
+
+
+@if (!editorOpen) {
+<div class="load-more"><span>{{ 'masterDataReview.loaded' | transloco }}: {{ items.length }} / {{ total }}</span>@if (items.length < total) { <button type="button" [disabled]="state === 'loading'" (click)="load(true)">{{ 'masterDataReview.loadMore' | transloco }}</button> }<small>{{ 'masterDataReview.loadedOnly' | transloco }}</small></div>
+}
+</fieldset>
+@if (requests.saving()) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }
+
+@if (leaveDialogOpen) {
+  <dialog appModal (appModalClosed)="finishLeave(false)" class="leave-dialog" aria-labelledby="leave-title">
+    <h2 id="leave-title">{{ 'itemLeave.title' | transloco }}</h2>
+    <p>{{ 'itemLeave.message' | transloco }}</p>
+    @if (message) { <p class="error" role="alert">{{ message }}</p> }
+    @if (isSaving) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }
+    <div class="panel-actions">
+      @if (canManage) {
+        <button type="button" [disabled]="isSaving || requests.saving()" (click)="save(true)">{{ 'itemLeave.save' | transloco }}</button>
+      }
+      <button type="button" [disabled]="isSaving || requests.saving()" (click)="finishLeave(true)">{{ 'itemLeave.discard' | transloco }}</button>
+      <button type="button" [disabled]="isSaving || requests.saving()" (click)="finishLeave(false)">{{ 'itemLeave.stay' | transloco }}</button>
+    </div>
+  </dialog>
 }

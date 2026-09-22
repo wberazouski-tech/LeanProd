@@ -1,3 +1,7 @@
+-- This fixture may only modify an explicitly isolated demo database.
+IF DB_NAME() <> N'LeanProd_Demo' AND DB_NAME() NOT LIKE N'LeanProd[_]Demo[_]%'
+    THROW 51000, 'Demo seed is restricted to LeanProd_Demo or LeanProd_Demo_<name>.', 1;
+
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 SET ANSI_NULLS ON;
@@ -222,11 +226,12 @@ INSERT @Items VALUES
 
 INSERT CatalogItems
     (Id, WorkingName, FullName, ArticleNumber, Type, BaseUnitOfMeasureId,
-     Description, IsActive, CreatedAtUtc)
+     CatalogItemClassId, Description, IsActive, CreatedAtUtc)
 SELECT NEWID(), i.WorkingName, i.FullName, i.ArticleNumber, i.Type, u.Id,
-       i.Description, 1, @Now
+       c.Id, i.Description, 1, @Now
 FROM @Items i
 JOIN UnitOfMeasures u ON u.LetterCode = i.UnitLetterCode
+JOIN CatalogItemClasses c ON c.Type = i.Type AND c.Code = 'GENERAL' AND c.IsGroup = 0 AND c.IsActive = 1
 WHERE NOT EXISTS (
     SELECT 1 FROM CatalogItems x
     WHERE x.Type = i.Type AND x.ArticleNumber = i.ArticleNumber);

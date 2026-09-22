@@ -1,3 +1,4 @@
+import { MasterDataUiModule } from '../shared/master-data-ui.module';
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,19 +11,38 @@ import { AddressListComponent } from '../addresses/address-list.component';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 import { TableActionsComponent } from '../../../core/ui/table-actions.component';
 
-@Component({ selector: 'app-departments', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent, TableActionsComponent], templateUrl: './departments.component.html', styleUrl: '../master-data.css' })
+@Component({ selector: 'app-departments', standalone: true, imports: [MasterDataUiModule, CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent, TableActionsComponent], templateUrl: './departments.component.html', styleUrl: '../master-data.css' })
 export class DepartmentsComponent implements OnInit {
-  private readonly api = inject(MasterDataService); private readonly fb = inject(FormBuilder); private readonly t = inject(TranslocoService); private readonly auth = inject(AuthService);
-  items: (DepartmentSummary & { depth: number })[] = []; options: OptionItem[] = []; selected?: DepartmentDetails; total = 0; message = ''; editorOpen = false; state: PageState = 'loading';
+  page = 1;
+  private listRequest = 0;
+
+  readonly requests = inject(MasterDataService);
+  private readonly api = this.requests; private readonly fb = inject(FormBuilder); private readonly t = inject(TranslocoService); private readonly auth = inject(AuthService);
+  items: (DepartmentSummary & { depth: number })[] = []; options: OptionItem[] = []; workScheduleOptions: OptionItem[] = []; selected?: DepartmentDetails; total = 0; message = ''; editorOpen = false; state: PageState = 'loading';
   readonly expandedIds = new Set<string>();
   sortKey: 'code' | 'name' | 'isActive' = 'code'; sortDirection: 'asc' | 'desc' = 'asc'; resizingColumn?: 'code' | 'name' | 'status' | 'actions'; resizeStartX = 0; resizeStartWidth = 0;
   columnWidths: Record<'code' | 'name' | 'status' | 'actions', number> = { code: 150, name: 360, status: 150, actions: 58 };
   readonly canManage = this.auth.hasPermission(Permissions.masterDataManage);
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '' });
-  readonly form = this.fb.nonNullable.group({ code: ['', Validators.maxLength(4)], name: ['', Validators.required], description: '', parentDepartmentId: '' });
+  readonly form = this.fb.nonNullable.group({ code: ['', Validators.maxLength(4)], name: ['', Validators.required], description: '', parentDepartmentId: '', workScheduleId: '' });
   ngOnInit(): void { this.load(); this.loadOptions(); }
-  load(): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.departments(1, f.search.trim(), f.isActive, 5000).subscribe({ next: x => { this.items = this.asTree(x.items); this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
-  loadOptions(): void { this.api.departmentOptions().subscribe(x => this.options = x); }
+  load(more = false): void {
+    if (more && this.state === 'loading') return;
+    const requestId = ++this.listRequest;
+    const requestedPage = more ? this.page + 1 : 1;
+    this.state = 'loading';
+    const f = this.filters.getRawValue();
+    this.api.departments(requestedPage, f.search.trim(), f.isActive, 5000).subscribe({
+      next: x => {
+        if (requestId !== this.listRequest) return;
+        this.items = this.asTree(more ? [...this.items, ...x.items] : x.items);
+        this.page = requestedPage; this.total = x.totalCount;
+        this.state = this.items.length ? 'ready' : 'empty';
+      },
+      error: () => { if (requestId === this.listRequest) this.state = 'error'; }
+    });
+  }
+  loadOptions(): void { this.api.departmentOptions().subscribe(x => this.options = x); this.api.workScheduleOptions().subscribe(x => this.workScheduleOptions = x); }
   get sortedItems(): (DepartmentSummary & { depth: number })[] {
     const ids = new Set(this.items.map(item => item.id));
     const children = new Map<string | null, (DepartmentSummary & { depth: number })[]>();
@@ -49,14 +69,14 @@ export class DepartmentsComponent implements OnInit {
   startResize(column: 'code' | 'name' | 'status' | 'actions', event: MouseEvent): void { event.preventDefault(); event.stopPropagation(); this.resizingColumn = column; this.resizeStartX = event.clientX; this.resizeStartWidth = this.columnWidths[column]; }
   @HostListener('document:mousemove', ['$event']) resize(event: MouseEvent): void { if (!this.resizingColumn) return; this.columnWidths[this.resizingColumn] = Math.max(58, this.resizeStartWidth + event.clientX - this.resizeStartX); }
   @HostListener('document:mouseup') stopResize(): void { this.resizingColumn = undefined; }
-  select(item: DepartmentSummary): void { this.loadDepartment(item.id, false); }
-  edit(item: DepartmentSummary, event: Event): void { event.stopPropagation(); this.loadDepartment(item.id, true); }
-  editSelected(): void { if (this.selected) this.loadDepartment(this.selected.id, true); }
-  copySelected(): void { if (!this.selected) return; const x = this.selected; this.selected = undefined; this.form.reset({ code: '', name: x.name, description: x.description ?? '', parentDepartmentId: x.parentDepartmentId ?? '' }); this.editorOpen = true; }
-  create(): void { this.selected = undefined; this.form.reset({ code: '', name: '', description: '', parentDepartmentId: '' }); this.editorOpen = true; }
-  closeEditor(): void { this.editorOpen = false; }
-  save(): void { if (this.form.invalid) return; this.state = 'saving'; const v = this.form.getRawValue(); const body = { ...v, parentDepartmentId: v.parentDepartmentId || null, rowVersion: this.selected?.rowVersion ?? null }; this.api.saveDepartment(this.selected?.id, body).subscribe({ next: x => { this.selected = x; this.message = this.t.translate('masterData.saved'); this.editorOpen = false; this.state = 'success'; this.load(); this.loadOptions(); }, error: () => this.state = 'error' }); }
-  setActive(active: boolean): void { if (!this.selected) return; this.api.setDepartmentActive(this.selected.id, active).subscribe(() => { this.message = this.t.translate(active ? 'masterData.activated' : 'masterData.deactivated'); this.load(); this.loadOptions(); this.selected = { ...this.selected!, isActive: active }; }); }
+  select(item: DepartmentSummary): void { if (this.requests.saving()) return; this.loadDepartment(item.id, false); }
+  edit(item: DepartmentSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); this.loadDepartment(item.id, true); }
+  editSelected(): void { if (this.requests.saving()) return; if (this.selected) this.loadDepartment(this.selected.id, true); }
+  copySelected(): void { if (this.requests.saving()) return; if (!this.selected) return; const x = this.selected; this.selected = undefined; this.form.reset({ code: '', name: x.name, description: x.description ?? '', parentDepartmentId: x.parentDepartmentId ?? '', workScheduleId: x.workScheduleId ?? '' }); this.editorOpen = true; }
+  create(): void { if (this.requests.saving()) return; this.selected = undefined; this.form.reset({ code: '', name: '', description: '', parentDepartmentId: '', workScheduleId: '' }); this.editorOpen = true; }
+  closeEditor(): void { if (this.requests.saving()) return; this.editorOpen = false; }
+  save(): void { if (!this.canManage || this.requests.saving()) return; if (this.form.invalid) { this.form.markAllAsTouched(); return; } this.state = 'saving'; const v = this.form.getRawValue(); const body = { ...v, parentDepartmentId: v.parentDepartmentId || null, workScheduleId: v.workScheduleId || null, rowVersion: this.selected?.rowVersion ?? null }; this.api.saveDepartment(this.selected?.id, body).subscribe({ next: x => { this.selected = x; this.message = this.t.translate('masterData.saved'); this.editorOpen = false; this.state = 'success'; this.load(); this.loadOptions(); }, error: () => this.state = 'error' }); }
+  setActive(active: boolean): void { if (!this.canManage || this.requests.saving()) return; if (!this.selected) return; this.api.setDepartmentActive(this.selected.id, active).subscribe(() => { this.message = this.t.translate(active ? 'masterData.activated' : 'masterData.deactivated'); this.load(); this.loadOptions(); this.selected = { ...this.selected!, isActive: active }; }); }
   private asTree(source: DepartmentSummary[]): (DepartmentSummary & { depth: number })[] { const result: (DepartmentSummary & { depth: number })[] = []; const ids = new Set(source.map(x => x.id)); const children = new Map<string | null, DepartmentSummary[]>(); for (const item of source) { const parent = item.parentDepartmentId && ids.has(item.parentDepartmentId) ? item.parentDepartmentId : null; children.set(parent, [...(children.get(parent) ?? []), item]); } const add = (parent: string | null, depth: number): void => { for (const item of (children.get(parent) ?? []).sort((a, b) => a.code.localeCompare(b.code))) { result.push({ ...item, depth }); add(item.id, depth + 1); } }; add(null, 0); return result; }
-  private loadDepartment(id: string, openEditor: boolean): void { this.api.department(id).subscribe(x => { this.selected = x; this.form.reset({ code: x.code, name: x.name, description: x.description ?? '', parentDepartmentId: x.parentDepartmentId ?? '' }); this.editorOpen = openEditor && this.canManage; }); }
+  private loadDepartment(id: string, openEditor: boolean): void { this.api.department(id).subscribe(x => { this.selected = x; this.form.reset({ code: x.code, name: x.name, description: x.description ?? '', parentDepartmentId: x.parentDepartmentId ?? '', workScheduleId: x.workScheduleId ?? '' }); this.editorOpen = openEditor && this.canManage; }); }
 }

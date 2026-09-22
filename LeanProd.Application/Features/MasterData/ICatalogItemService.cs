@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LeanProd.Domain.MasterData;
 
 namespace LeanProd.Application.Features.MasterData;
@@ -15,12 +16,14 @@ public interface ICatalogItemService
 public sealed record CatalogItemSummary(Guid Id, string WorkingName, string? FullName,
     string? ArticleNumber, CatalogItemType Type, Guid BaseUnitOfMeasureId,
     string BaseUnitName, string? BaseUnitSymbol, Guid CatalogItemClassId,
-    string CatalogItemClassCode, string CatalogItemClassName, decimal Cost, bool IsActive);
+    string CatalogItemClassCode, string CatalogItemClassName,
+    [property: JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)] decimal Cost, bool IsActive);
 
 public sealed record CatalogItemDetails(Guid Id, string WorkingName, string? FullName,
     string? ArticleNumber, CatalogItemType Type, Guid BaseUnitOfMeasureId,
     string BaseUnitName, string? BaseUnitSymbol, Guid CatalogItemClassId,
-    string CatalogItemClassCode, string CatalogItemClassName, decimal Cost,
+    string CatalogItemClassCode, string CatalogItemClassName,
+    [property: JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)] decimal Cost,
     string? Description, bool IsActive, string RowVersion);
 
 public sealed record SaveCatalogItemCommand(string WorkingName, string? FullName,

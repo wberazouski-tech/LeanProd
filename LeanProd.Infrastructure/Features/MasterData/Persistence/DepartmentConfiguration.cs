@@ -15,5 +15,7 @@ internal sealed class DepartmentConfiguration : IEntityTypeConfiguration<Departm
         builder.HasIndex(x => x.Code).IsUnique(); builder.HasIndex(x => x.IsActive);
         builder.HasOne(x => x.ParentDepartment).WithMany(x => x.Children)
             .HasForeignKey(x => x.ParentDepartmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.WorkSchedule).WithMany(x => x.Departments)
+            .HasForeignKey(x => x.WorkScheduleId).OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,8 +1,8 @@
 ---
 name: erp-developer
-description: "Design, implement, debug, or review ERP and manufacturing features with business-process integrity. Use for ASP.NET Core, C#, Angular, EF Core, MySQL,  inventory, procurement, sales, warehouse, production, quality, accounting documents, integrations, synchronization, migrations, auditability, authorization, or reporting work."
+description: "Design, implement, debug, or review ERP and manufacturing features with business-process integrity. Use for ASP.NET Core, C#, Angular, EF Core, SQL Server,  inventory, procurement, sales, warehouse, production, quality, accounting documents, integrations, synchronization, migrations, auditability, authorization, or reporting work."
 argument-hint: "ERP feature, workflow, integration, or data change to implement or review"
-compatibility: "Requires an ERP codebase; this workspace uses .NET 8, Angular, EF Core, and MySQL."
+compatibility: "Requires an ERP codebase; this workspace uses .NET 8, Angular, EF Core, and SQL Server."
 ---
 
 # ERP Developer

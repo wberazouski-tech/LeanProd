@@ -1,10 +1,11 @@
+import { MasterDataUiModule } from '../shared/master-data-ui.module';
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { Subject, takeUntil } from 'rxjs';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions';
 import { CatalogItemClassDetails, CatalogItemClassOption, CatalogItemClassSummary, CatalogItemDetails, CatalogItemSummary, CatalogItemType, UnitSummary } from '../master-data.models';
@@ -16,13 +17,56 @@ import { TableActionsComponent } from '../../../core/ui/table-actions.component'
 
 @Component({
   selector: 'app-catalog-items', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, RouterLink, RouterLinkActive, PageStateComponent, MoneyFormatPipe, TableActionsComponent],
+  imports: [MasterDataUiModule, CommonModule, ReactiveFormsModule, TranslocoPipe, RouterLink, RouterLinkActive, PageStateComponent, MoneyFormatPipe, TableActionsComponent],
   templateUrl: './catalog-items.component.html',
   styleUrls: ['../master-data.css', './catalog-items.component.css']
 })
 export class CatalogItemsComponent implements OnInit, OnDestroy {
-  private readonly api = inject(MasterDataService);
+  leaveDialogOpen = false;
+  isSaving = false;
+  private formBaseline = '';
+  private itemRequest = 0;
+  private leavePromise?: Promise<boolean>;
+  private resolveLeave?: (leave: boolean) => void;
+
+  get hasUnsavedChanges(): boolean {
+    return this.editorOpen && JSON.stringify(this.form.getRawValue()) !== this.formBaseline;
+  }
+
+  requestLeave(): boolean | Promise<boolean> {
+    if (this.isSaving || this.requests.saving()) return false;
+    if (this.leavePromise) return this.leavePromise;
+    if (!this.hasUnsavedChanges) return true;
+    this.leaveDialogOpen = true;
+    this.leavePromise = new Promise<boolean>(resolve => this.resolveLeave = resolve);
+    return this.leavePromise;
+  }
+
+  finishLeave(leave: boolean): void {
+    if (this.isSaving || this.requests.saving()) return;
+    this.leaveDialogOpen = false;
+    const resolve = this.resolveLeave;
+    this.leavePromise = undefined;
+    this.resolveLeave = undefined;
+    resolve?.(leave);
+  }
+
+  onCatalogTab(event: MouseEvent): void {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const target = event.currentTarget as HTMLAnchorElement;
+    if (target.pathname !== this.router.url.split(/[?#]/)[0]) return;
+    event.preventDefault();
+    void this.closeEditor();
+  }
+
+  get propertiesBackUrl(): string { return this.router.url.split('?')[0]; }
+  page = 1;
+  private listRequest = 0;
+
+  readonly requests = inject(MasterDataService);
+  private readonly api = this.requests;
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly t = inject(TranslocoService);
   private readonly auth = inject(AuthService);
@@ -37,6 +81,8 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   selectedClass?: CatalogItemClassDetails;
   total = 0;
   classTotal = 0;
+  classPage = 1;
+  private classRequest = 0;
   editorOpen = false;
   classEditorOpen = false;
   message = ''; state: PageState = 'loading';
@@ -75,7 +121,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
     articleNumber: ['', Validators.maxLength(100)],
     baseUnitOfMeasureId: ['', Validators.required],
     catalogItemClassId: ['', Validators.required],
-    cost: [0, [Validators.required, Validators.min(0), Validators.max(9999999999999999.99), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+    cost: ['0.00', [Validators.required, Validators.pattern(/^(0|[1-9]\d{0,15})(\.\d{1,2})?$/)]],
     description: ['', Validators.maxLength(1000)]
   });
   readonly classForm = this.fb.nonNullable.group({
@@ -102,8 +148,33 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void { this.destroyed.next(); this.destroyed.complete(); }
-  load(): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.catalogItems(this.type, f.search.trim(), f.isActive).subscribe({ next: x => { this.items = x.items; this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
-  loadClasses(): void { this.classState = 'loading'; const f = this.classFilters.getRawValue(); this.api.catalogItemClasses(this.type, f.search.trim(), f.isActive, f.isGroup).subscribe({ next: x => { this.classes = buildCatalogClassTree(x.items); this.classTotal = x.totalCount; this.classState = x.items.length ? 'ready' : 'empty'; }, error: () => this.classState = 'error' }); }
+  load(more = false): void {
+    if (more && this.state === 'loading') return;
+    const requestId = ++this.listRequest;
+    const requestedPage = more ? this.page + 1 : 1;
+    this.state = 'loading';
+    const f = this.filters.getRawValue();
+    this.api.catalogItems(this.type, f.search.trim(), f.isActive, requestedPage).subscribe({
+      next: x => {
+        if (requestId !== this.listRequest) return;
+        this.items = more ? [...this.items, ...x.items] : x.items;
+        this.page = requestedPage; this.total = x.totalCount;
+        this.state = this.items.length ? 'ready' : 'empty';
+      },
+      error: () => { if (requestId === this.listRequest) this.state = 'error'; }
+    });
+  }
+  loadClasses(more = false): void {
+    if (more && this.classState === 'loading') return;
+    const requestId = ++this.classRequest;
+    const page = more ? this.classPage + 1 : 1;
+    this.classState = 'loading';
+    const f = this.classFilters.getRawValue();
+    this.api.catalogItemClasses(this.type, f.search.trim(), f.isActive, f.isGroup, page).subscribe({
+      next: x => { if (requestId !== this.classRequest) return; this.classes = buildCatalogClassTree(more ? [...this.classes, ...x.items] : x.items); this.classPage = page; this.classTotal = x.totalCount; this.classState = this.classes.length ? 'ready' : 'empty'; },
+      error: () => { if (requestId === this.classRequest) this.classState = 'error'; }
+    });
+  }
   get sortedItems(): CatalogItemSummary[] { return this.filteredItems.sort((a, b) => this.compareItems(a, b)); }
   get sortedClasses(): (CatalogItemClassSummary & { depth: number })[] {
     const ids = new Set(this.classes.map(item => item.id));
@@ -139,23 +210,23 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   hasClassChildren(item: CatalogItemClassSummary): boolean { return this.classes.some(child => child.parentId === item.id); }
   isClassExpanded(item: CatalogItemClassSummary): boolean { return this.expandedClassIds.has(item.id); }
   toggleClassExpanded(item: CatalogItemClassSummary, event: Event): void { event.stopPropagation(); if (this.expandedClassIds.has(item.id)) this.expandedClassIds.delete(item.id); else this.expandedClassIds.add(item.id); }
-  selectClass(item: CatalogItemClassSummary): void { this.api.catalogItemClass(item.id).subscribe(x => { this.selectedClass = x; this.classForm.reset({ code: x.code, name: x.name, isGroup: x.isGroup, parentId: x.parentId ?? '' }); this.classEditorOpen = false; }); }
-  editClass(item: CatalogItemClassSummary, event: Event): void { event.stopPropagation(); this.api.catalogItemClass(item.id).subscribe(x => { this.selectedClass = x; this.classForm.reset({ code: x.code, name: x.name, isGroup: x.isGroup, parentId: x.parentId ?? '' }); this.classEditorOpen = true; }); }
-  createClass(isGroup: boolean): void { const parentId = this.selectedClass?.isGroup ? this.selectedClass.id : ''; this.selectedClass = undefined; this.classMessage = ''; this.classForm.reset({ code: '', name: '', isGroup, parentId }); this.classEditorOpen = true; }
-  closeClassEditor(): void { this.classEditorOpen = false; }
+  selectClass(item: CatalogItemClassSummary): void { if (this.requests.saving()) return; this.api.catalogItemClass(item.id).subscribe(x => { this.selectedClass = x; this.classForm.reset({ code: x.code, name: x.name, isGroup: x.isGroup, parentId: x.parentId ?? '' }); this.classEditorOpen = false; }); }
+  editClass(item: CatalogItemClassSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); this.api.catalogItemClass(item.id).subscribe(x => { this.selectedClass = x; this.classForm.reset({ code: x.code, name: x.name, isGroup: x.isGroup, parentId: x.parentId ?? '' }); this.classEditorOpen = true; }); }
+  createClass(isGroup: boolean): void { if (this.requests.saving()) return; const parentId = this.selectedClass?.isGroup ? this.selectedClass.id : ''; this.selectedClass = undefined; this.classMessage = ''; this.classForm.reset({ code: '', name: '', isGroup, parentId }); this.classEditorOpen = true; }
+  closeClassEditor(): void { if (this.requests.saving()) return; this.classEditorOpen = false; }
   clearClassSelection(): void { this.selectedClass = undefined; this.classEditorOpen = false; }
-  saveClass(): void {
+  saveClass(): void { if (!this.canManage || this.requests.saving()) return;
     if (this.classForm.invalid) return;
     this.classState = 'saving';
     const value = this.classForm.getRawValue();
     const body = { ...value, type: this.type, parentId: value.parentId || null, rowVersion: this.selectedClass?.rowVersion ?? null };
     this.api.saveCatalogItemClass(this.selectedClass?.id, body).subscribe({ next: x => { this.selectedClass = x; this.classMessage = this.t.translate('masterData.saved'); this.classEditorOpen = false; this.classState = 'success'; this.loadClasses(); this.loadClassSelectionOptions(); this.load(); }, error: () => this.classState = 'error' });
   }
-  setClassActive(active: boolean): void { if (!this.selectedClass) return; this.api.setCatalogItemClassActive(this.selectedClass.id, active).subscribe(() => { this.selectedClass = { ...this.selectedClass!, isActive: active }; this.classEditorOpen = false; this.loadClasses(); this.loadClassSelectionOptions(); }); }
-  select(item: CatalogItemSummary): void { this.loadItem(item.id, false); }
-  edit(item: CatalogItemSummary, event: Event): void { event.stopPropagation(); this.loadItem(item.id, true); }
-  editSelected(): void { if (this.selected) this.loadItem(this.selected.id, true); }
-  copySelected(): void { if (!this.selected) return; const x = this.selected; this.selected = undefined; this.message = ''; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.editorOpen = true; }
+  setClassActive(active: boolean): void { if (!this.canManage || this.requests.saving()) return; if (!this.selectedClass) return; this.api.setCatalogItemClassActive(this.selectedClass.id, active).subscribe(() => { this.selectedClass = { ...this.selectedClass!, isActive: active }; this.classEditorOpen = false; this.loadClasses(); this.loadClassSelectionOptions(); }); }
+  select(item: CatalogItemSummary): void { if (this.requests.saving()) return; this.loadItem(item.id, false); }
+  edit(item: CatalogItemSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); this.loadItem(item.id, true); }
+  editSelected(): void { if (this.requests.saving()) return; if (this.selected) this.loadItem(this.selected.id, true); }
+  copySelected(): void { if (this.requests.saving()) return; ++this.itemRequest; if (!this.selected) return; const x = this.selected; this.selected = undefined; this.message = ''; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.formBaseline = ''; this.editorOpen = true; }
   startItemDrag(item: CatalogItemSummary, event: DragEvent): void { if (!this.canManage) return; this.draggedItem = item; event.dataTransfer?.setData('text/plain', item.id); if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'; }
   endItemDrag(): void { this.draggedItem = undefined; this.dropTargetClassId = undefined; }
   canDropOnClass(item: CatalogItemClassSummary): boolean { return !!this.draggedItem && !item.isGroup && item.isActive && this.draggedItem.catalogItemClassId !== item.id; }
@@ -166,7 +237,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
     this.dropTargetClassId = item.id;
   }
   leaveClassDropTarget(item: CatalogItemClassSummary): void { if (this.dropTargetClassId === item.id) this.dropTargetClassId = undefined; }
-  dropItemOnClass(item: CatalogItemClassSummary, event: DragEvent): void {
+  dropItemOnClass(item: CatalogItemClassSummary, event: DragEvent): void { if (!this.canManage || this.requests.saving()) return;
     event.preventDefault();
     event.stopPropagation();
     if (!this.canDropOnClass(item) || !this.draggedItem) return;
@@ -184,33 +255,63 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
       error: () => { this.draggedItem = undefined; this.state = 'error'; }
     });
   }
-  create(): void { this.selected = undefined; this.message = ''; this.form.reset({ workingName: '', fullName: '', articleNumber: '', baseUnitOfMeasureId: '', catalogItemClassId: this.selectedClass && !this.selectedClass.isGroup ? this.selectedClass.id : '', cost: 0, description: '' }); this.editorOpen = true; }
-  closeEditor(): void { this.editorOpen = false; }
+  create(): void { if (this.requests.saving()) return; ++this.itemRequest; this.selected = undefined; this.message = ''; this.form.reset({ workingName: '', fullName: '', articleNumber: '', baseUnitOfMeasureId: '', catalogItemClassId: this.selectedClass && !this.selectedClass.isGroup ? this.selectedClass.id : '', cost: '0.00', description: '' }); this.formBaseline = JSON.stringify(this.form.getRawValue()); this.editorOpen = true; }
+  async closeEditor(): Promise<void> { if (!await this.requestLeave()) return; ++this.itemRequest; this.editorOpen = false; this.message = ''; }
   limitCostScale(event: Event): void {
     const input = event.target as HTMLInputElement;
     const [integerPart, decimalPart] = input.value.split('.');
     if (decimalPart === undefined || decimalPart.length <= 2) return;
     const value = `${integerPart}.${decimalPart.slice(0, 2)}`;
     input.value = value;
-    this.form.controls.cost.setValue(Number(value), { emitEvent: false });
+    this.form.controls.cost.setValue(value, { emitEvent: false });
   }
-  save(): void {
-    if (this.form.invalid) return;
+  async save(leave = false): Promise<void> {
+    if (!this.canManage || this.requests.saving() || this.isSaving) return;
+    if (this.form.invalid) { this.form.markAllAsTouched(); this.message = this.t.translate('itemLeave.invalid'); return; }
     const value = this.form.getRawValue();
     const body = { ...value, type: this.type, fullName: value.fullName.trim() || null, articleNumber: value.articleNumber.trim() || null, description: value.description.trim() || null, rowVersion: this.selected?.rowVersion ?? null };
-    this.state = 'saving'; this.api.saveCatalogItem(this.selected?.id, body).subscribe({ next: x => { this.selected = x; this.message = this.t.translate('masterData.saved'); this.editorOpen = false; this.state = 'success'; this.load(); }, error: () => this.state = 'error' });
+    this.isSaving = true;
+    this.message = '';
+    try {
+      const item = await firstValueFrom(this.api.saveCatalogItem(this.selected?.id, body));
+      this.selected = item;
+      this.resetItemForm(item);
+      this.message = this.t.translate('masterData.saved');
+      this.isSaving = false;
+      this.load();
+      if (leave) this.finishLeave(true);
+    } catch {
+      this.isSaving = false;
+      this.message = this.t.translate('pageState.error');
+    }
   }
-  setActive(active: boolean): void { if (!this.selected) return; this.api.setCatalogItemActive(this.selected.id, active).subscribe(() => { this.selected = { ...this.selected!, isActive: active }; this.editorOpen = false; this.load(); }); }
+  private resetItemForm(x: CatalogItemDetails): void {
+    this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: x.articleNumber ?? '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' });
+    this.formBaseline = JSON.stringify(this.form.getRawValue());
+  }
+  setActive(active: boolean): void { if (!this.canManage || this.requests.saving()) return; if (!this.selected || this.hasUnsavedChanges) return; this.api.setCatalogItemActive(this.selected.id, active).subscribe(() => { this.selected = { ...this.selected!, isActive: active }; this.editorOpen = false; this.load(); }); }
   displayUnit(item: CatalogItemSummary): string { return item.baseUnitSymbol ? `${item.baseUnitName} (${item.baseUnitSymbol})` : item.baseUnitName; }
   displayClass(item: { code: string; name: string } | CatalogItemSummary): string { return 'catalogItemClassCode' in item ? `${item.catalogItemClassCode} — ${item.catalogItemClassName}` : `${item.code} — ${item.name}`; }
 
   private get filteredItems(): CatalogItemSummary[] { if (!this.selectedClass || (!this.selectedClass.parentId && !this.selectedClass.isGroup)) return [...this.items]; const ids = this.selectedClass.isGroup ? this.descendantClassIds(this.selectedClass.id) : new Set([this.selectedClass.id]); return this.items.filter(x => ids.has(x.catalogItemClassId)); }
   private compareItems(a: CatalogItemSummary, b: CatalogItemSummary): number { const left = this.sortValue(a); const right = this.sortValue(b); const result = typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right)); return (this.sortDirection === 'asc' ? result : -result) || (a.articleNumber ?? '').localeCompare(b.articleNumber ?? '') || a.workingName.localeCompare(b.workingName); }
-  private sortValue(item: CatalogItemSummary): string | number { if (this.sortKey === 'cost') return item.cost; if (this.sortKey === 'isActive') return Number(item.isActive); if (this.sortKey === 'baseUnitName') return this.displayUnit(item).toLocaleLowerCase(); return (item[this.sortKey] ?? '').toLocaleLowerCase(); }
+  private sortValue(item: CatalogItemSummary): string | number { if (this.sortKey === 'cost') return item.cost.split('.')[0].padStart(16, '0') + '.' + (item.cost.split('.')[1] ?? '').padEnd(2, '0'); if (this.sortKey === 'isActive') return Number(item.isActive); if (this.sortKey === 'baseUnitName') return this.displayUnit(item).toLocaleLowerCase(); return (item[this.sortKey] ?? '').toLocaleLowerCase(); }
   private compareClasses(a: CatalogItemClassSummary, b: CatalogItemClassSummary): number { const left = this.classSortValue(a); const right = this.classSortValue(b); const result = typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right)); return (this.classSortDirection === 'asc' ? result : -result) || a.code.localeCompare(b.code); }
   private classSortValue(item: CatalogItemClassSummary): string | number { if (this.classSortKey === 'isActive') return Number(item.isActive); if (this.classSortKey === 'isGroup') return Number(item.isGroup); return item[this.classSortKey].toLocaleLowerCase(); }
   private descendantClassIds(id: string): Set<string> { return descendantLeafIds(this.classes, id); }
   private loadClassSelectionOptions(): void { this.api.catalogItemClassOptions(this.type).subscribe(x => this.classSelectionOptions = x.sort((a, b) => a.code.localeCompare(b.code))); }
   private loadUnits(): void { this.api.unitOptions(this.t.getActiveLang()).subscribe(x => this.units = x.filter(unit => unit.isActive)); }
-  private loadItem(id: string, openEditor: boolean): void { this.api.catalogItem(id).subscribe(x => { this.selected = x; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: x.articleNumber ?? '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.editorOpen = openEditor && this.canManage; }); }
+  private loadItem(id: string, openEditor: boolean): void {
+    const request = ++this.itemRequest;
+    this.api.catalogItem(id).pipe(takeUntil(this.destroyed)).subscribe({
+      next: x => {
+        if (request !== this.itemRequest) return;
+        this.selected = x;
+        this.resetItemForm(x);
+        this.message = '';
+        this.editorOpen = openEditor && this.canManage;
+      },
+      error: () => this.message = this.t.translate('pageState.error')
+    });
+  }
 }

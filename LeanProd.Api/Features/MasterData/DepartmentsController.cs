@@ -24,6 +24,8 @@ public sealed class DepartmentsController(IDepartmentService service, IAddressSe
     }
     [HttpGet("options")]
     public async Task<ActionResult<IReadOnlyCollection<OptionItem>>> Options(CancellationToken ct) => Ok(await service.GetDepartmentOptionsAsync(ct));
+    [HttpGet("work-schedule-options")]
+    public async Task<ActionResult<IReadOnlyCollection<OptionItem>>> WorkScheduleOptions(CancellationToken ct) => Ok(await service.GetWorkScheduleOptionsAsync(ct));
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<DepartmentDetails>> Get(Guid id, CancellationToken ct) { var value = await service.GetDepartmentAsync(id, ct); return value is null ? NotFound() : Ok(value); }
     [HttpPost, Authorize(Policy = Permissions.MasterDataManage)]
@@ -39,5 +41,5 @@ public sealed class DepartmentsController(IDepartmentService service, IAddressSe
     public async Task<ActionResult<IReadOnlyCollection<AddressDetails>>> Addresses(Guid id, CancellationToken ct) => Ok(await addresses.GetAsync(new(AddressOwnerType.Department, id), ct));
     [HttpPost("{id:guid}/addresses"), Authorize(Policy = Permissions.MasterDataManage)]
     public async Task<ActionResult<AddressDetails>> CreateAddress(Guid id, SaveAddressRequest x, CancellationToken ct) => Map(await addresses.CreateAsync(new(AddressOwnerType.Department, id), OrganizationController.Command(x), ct));
-    private static SaveDepartmentCommand Command(SaveDepartmentRequest x) => new(x.Code, x.Name, x.Description, x.ParentDepartmentId, x.RowVersion);
+    private static SaveDepartmentCommand Command(SaveDepartmentRequest x) => new(x.Code, x.Name, x.Description, x.ParentDepartmentId, x.WorkScheduleId, x.RowVersion);
 }

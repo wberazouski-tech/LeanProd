@@ -1,3 +1,5 @@
+<fieldset class="master-data-request" [disabled]="requests.saving()">
+<app-page-state [state]="state" (retry)="load()" />
 <section class="editor">
   @if (!compact) { <h2>{{ "addresses.title" | transloco }}</h2> }
   @if (canManage && !compact) {
@@ -70,7 +72,7 @@
   }
   @if (showEditor) {
     <div class="modal-layer" (click)="showEditor = false">
-    <dialog open class="address-dialog" (click)="$event.stopPropagation()">
+    <dialog appModal (appModalClosed)="showEditor = false" class="address-dialog" (click)="$event.stopPropagation()">
       <form [formGroup]="form" (ngSubmit)="save()">
         <h3>
           {{ (editing ? "addresses.edit" : "addresses.add") | transloco }}
@@ -83,22 +85,22 @@
                 {{ "addressTypes." + type | transloco }}
               </option>
             }
-          </select></label
+          </select><app-form-field-error [control]="form.controls.addressType" /></label
         ><label
           >{{ "addresses.country" | transloco
-          }}<input formControlName="countryCode" maxlength="2" /></label
+          }}<input formControlName="countryCode" maxlength="2" /><app-form-field-error [control]="form.controls.countryCode" /></label
         ><label
           >{{ "addresses.locality" | transloco
-          }}<input formControlName="locality" /></label
+          }}<input formControlName="locality" /><app-form-field-error [control]="form.controls.locality" /></label
         ><label
           >{{ "addresses.postalCode" | transloco
-          }}<input formControlName="postalCode" /></label
+          }}<input formControlName="postalCode" /><app-form-field-error [control]="form.controls.postalCode" /></label
         ><label
           >{{ "addresses.line" | transloco
-          }}<textarea formControlName="addressLine"></textarea></label
-        ><label>GLN<input formControlName="gln" maxlength="13" /></label
+          }}<textarea formControlName="addressLine"></textarea><app-form-field-error [control]="form.controls.addressLine" /></label
+        ><label>GLN<input formControlName="gln" maxlength="13" /><app-form-field-error [control]="form.controls.gln" /></label
         ><label
-          ><input type="checkbox" formControlName="isPrimary" />
+          ><input type="checkbox" formControlName="isPrimary" /><app-form-field-error [control]="form.controls.isPrimary" />
           {{ "addresses.primary" | transloco }}</label
         ><button [disabled]="form.invalid">
           {{ "common.save" | transloco }}</button
@@ -110,3 +112,6 @@
     </div>
   }
 </section>
+
+</fieldset>
+@if (requests.saving()) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }

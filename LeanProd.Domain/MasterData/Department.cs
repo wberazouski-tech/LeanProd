@@ -1,6 +1,7 @@
 using LeanProd.Domain.Common;
 using LeanProd.Domain.Organizations;
 using LeanProd.Domain.Workforce;
+using LeanProd.Domain.Scheduling;
 
 namespace LeanProd.Domain.MasterData;
 
@@ -18,5 +19,7 @@ public sealed class Department : AuditableEntity
     public List<Address> Addresses { get; set; } = [];
     public List<Employee> Employees { get; set; } = [];
     public List<Brigade> Brigades { get; set; } = [];
+    public Guid? WorkScheduleId { get; set; }
+    public WorkSchedule? WorkSchedule { get; set; }
     public bool IsActive { get; set; } = true;
 }

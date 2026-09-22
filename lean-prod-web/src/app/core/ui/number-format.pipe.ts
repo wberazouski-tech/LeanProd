@@ -14,6 +14,10 @@ function formatFixed(value: number | string | null | undefined, fractionDigits: 
 @Pipe({ name: 'moneyFormat', standalone: true })
 export class MoneyFormatPipe implements PipeTransform {
   transform(value: number | string | null | undefined): string {
+    if (typeof value === 'string' && /^-?\d+(\.\d{1,2})?$/.test(value)) {
+      const [whole, fraction = ''] = value.split('.');
+      return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + '.' + fraction.padEnd(2, '0');
+    }
     return formatFixed(value, 2);
   }
 }

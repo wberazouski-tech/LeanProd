@@ -19,6 +19,8 @@ public static class Permissions
     public const string ReportsView = "Reports.View";
     public const string PeriodsClose = "Periods.Close";
     public const string AuditView = "Audit.View";
+    public const string WorkSchedulesView = "WorkSchedules.View";
+    public const string WorkSchedulesManage = "WorkSchedules.Manage";
 
     public static readonly HashSet<string> All =
     [
@@ -26,6 +28,8 @@ public static class Permissions
         WorkforceView, WorkforceManage,
         ShiftReportsView, ShiftReportsCreate, ShiftReportsEditOwn,
         ShiftReportsEditAny, ShiftReportsSubmit, QualityView, QualityManage,
-        ReportsView, PeriodsClose, AuditView
+        ReportsView, PeriodsClose, AuditView, WorkSchedulesView, WorkSchedulesManage
     ];
 }
+
+

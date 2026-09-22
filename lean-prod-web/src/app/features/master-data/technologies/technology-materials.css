@@ -1,0 +1,49 @@
+
+/* Compact technology identity and material workspace; shares the ERP palette. */
+.technology-page{gap:.75rem}
+.editor-header-first-line{grid-template-columns:minmax(110px,.7fr) minmax(220px,3fr) minmax(150px,1fr) auto;align-items:end;margin-bottom:.65rem}
+.editor-header-first-line label{display:flex;flex-direction:column;gap:.25rem;margin:0;min-width:0}
+.editor-header-first-line input,.editor-header-first-line select{width:100%;min-width:0}
+.editor-header-first-line .check-label{flex-direction:row;align-items:center;padding-bottom:.3rem}
+.editor-header-first-line input[type=checkbox]{width:16px;min-height:16px}
+.identity-details{grid-template-columns:minmax(150px,1fr) minmax(220px,2fr) repeat(2,minmax(140px,1fr));align-items:end}
+.identity-details label,.editor-header label{margin:0}
+.identity-details .create-target{grid-column:auto}
+.technology-editor .primary-action,.master-toolbar .primary-action{background:var(--primary);border-color:var(--primary);color:#fff}
+.technology-editor .primary-action:hover:not(:disabled),.master-toolbar .primary-action:hover:not(:disabled){background:var(--primary-dark)}
+.technology-tabs{padding:.25rem 0 0;gap:.4rem}
+.technology-tabs button{min-height:38px}
+.material-stage-selector{flex-direction:row;align-items:center;flex-basis:440px;gap:.5rem;margin-right:0}
+.material-stage-selector select{flex:1;min-width:0}
+.materials-tab .stage-layout-resizer{display:none}
+.materials-tab .stage-editor{border:0;overflow:visible}
+.materials-tab .subsection{margin-top:.75rem;border-radius:5px;overflow:hidden}
+.materials-tab .panel-title{padding:.55rem .65rem;flex-wrap:wrap}
+.materials-tab .panel-title strong{display:flex;align-items:center;gap:.6rem;min-width:0}
+.count-badge{background:#e3edf7;border-radius:10px;color:#315674;font-size:.75rem;padding:.1rem .5rem}
+.route-context{color:var(--muted);font-weight:400;overflow-wrap:anywhere}
+.materials-tab table{table-layout:fixed;width:100%;min-width:900px}
+.materials-tab th{padding:.45rem .5rem;text-transform:none;font-weight:600;background:#f4f7fa}
+.materials-tab td{padding:.3rem .4rem;border-left:0;vertical-align:top}
+.materials-tab input,.materials-tab select{width:100%;min-width:0}
+.materials-table th:nth-child(1){width:25%}
+.materials-table th:nth-child(2){width:10%}
+.materials-table th:nth-child(3){width:12%}
+.materials-table th:nth-child(4){width:22%}
+.materials-table th:nth-child(5){width:23%}
+.materials-table th:last-child,.routes-table th:last-child{width:88px}
+.materials-table input[type=number],.routes-table input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+.materials-table tr.selected-row td{background:#edf6ff}
+.materials-table tr.selected-row td:first-child{box-shadow:inset 3px 0 var(--primary)}
+.routes-table th:first-child{width:44px}
+.routes-table th:nth-child(5){width:110px}
+.routes-table select+select{margin-top:.3rem}
+.materials-tab .remove-line{color:var(--danger);background:transparent;border-color:transparent}
+.materials-tab .remove-line:hover{background:#fff1f0;border-color:#fecdca}
+.materials-tab .empty-hint{padding:1rem;text-align:center}
+.technology-editor>.editor-header:last-child{margin-top:.75rem}
+.panel-actions{flex-wrap:wrap}
+@media(max-width:900px){.editor-header-first-line,.identity-details{grid-template-columns:repeat(2,minmax(0,1fr))}.material-stage-selector{flex-basis:100%;margin:0;padding:.5rem 0}.technology-tabs{flex-wrap:wrap}}
+@media(max-width:520px){.editor-header-first-line,.identity-details{grid-template-columns:1fr}.panel-actions{width:100%}}
+
+.leave-dialog{max-width:min(560px,calc(100vw - 2rem));border:1px solid var(--border);border-radius:6px;padding:1.25rem}.leave-dialog::backdrop{background:rgba(15,23,42,.45)}.leave-dialog .panel-actions{margin-top:1rem;flex-wrap:wrap}

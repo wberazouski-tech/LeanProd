@@ -114,8 +114,11 @@ public sealed class CatalogItemService(LeanProdDbContext db, TimeProvider timePr
         var validation = await ValidateItemClass(catalogItemClassId, item.Type, ct);
         if (validation is not null) return validation;
 
+        if (item.CatalogItemClassId != catalogItemClassId && await HasPropertyData(item.Id, ct))
+            return Conflict("Cannot change class while the item has property values or batches.");
         item.CatalogItemClassId = catalogItemClassId;
-        await db.SaveChangesAsync(ct);
+        try { await db.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException) { return Conflict("The item was changed by another request."); }
         return MasterDataResult<CatalogItemDetails>.Success((await GetItemAsync(item.Id, ct))!);
     }
 
@@ -147,6 +150,9 @@ public sealed class CatalogItemService(LeanProdDbContext db, TimeProvider timePr
         var itemClassValidation = await ValidateItemClass(command.CatalogItemClassId, command.Type, ct);
         if (itemClassValidation is not null) return itemClassValidation;
 
+        if (id.HasValue && await db.CatalogItems.AnyAsync(x => x.Id == id && x.CatalogItemClassId != command.CatalogItemClassId, ct)
+            && await HasPropertyData(id.Value, ct))
+            return Conflict("Cannot change class while the item has property values or batches.");
         var article = NormalizeArticle(command.ArticleNumber);
         if (article is not null && await db.CatalogItems.AnyAsync(
                 x => x.Id != id && x.Type == command.Type && x.ArticleNumber == article, ct))
@@ -169,6 +175,10 @@ public sealed class CatalogItemService(LeanProdDbContext db, TimeProvider timePr
             return Validation("Item class must belong to the selected item type.");
         return null;
     }
+
+    private async Task<bool> HasPropertyData(Guid id, CancellationToken ct) =>
+        await db.CatalogItemPropertyValues.AnyAsync(x => x.CatalogItemId == id, ct) ||
+        await db.CatalogItemBatches.AnyAsync(x => x.CatalogItemId == id, ct);
 
     private static void Apply(LeanProd.Domain.MasterData.CatalogItem item, SaveCatalogItemCommand command)
     {

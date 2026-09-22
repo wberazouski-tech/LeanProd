@@ -80,54 +80,334 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         }
     }
 
-    public async Task<MasterDataResult<CatalogTechnologyDetails>> UpdateTechnologyAsync(
-        Guid id, SaveCatalogTechnologyCommand command, CancellationToken ct)
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> UpdateTechnologyHeaderAsync(
+        Guid id, SaveCatalogTechnologyHeaderCommand command, CancellationToken ct)
     {
-        var technology = await db.CatalogTechnologies
-            .Include(x => x.StageTransitions)
-            .Include(x => x.Stages).ThenInclude(x => x.Materials).ThenInclude(x => x.RouteSteps)
-            .Include(x => x.Stages).ThenInclude(x => x.Outputs)
-            .Include(x => x.Stages).ThenInclude(x => x.Operations)
-            .SingleOrDefaultAsync(x => x.Id == id, ct);
-        if (technology is null)
-            return MasterDataResult<CatalogTechnologyDetails>.Failure(MasterDataError.NotFound, "Record was not found.");
-
-        command = await EnsureGeneratedCodesAsync(command, ct);
-        command = await ResolveTechnologyStagesAsync(command, ct);
-        var validation = await Validate(command, id, ct);
+        var technology = await db.CatalogTechnologies.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (technology is null) return NotFoundDetails();
+        var validation = await ValidateHeader(command, id, ct);
         if (validation is not null) return validation;
         if (!SetVersion(technology, command.RowVersion)) return Validation("Row version is required.");
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
-        db.CatalogTechnologyStageTransitions.RemoveRange(technology.StageTransitions);
-        db.CatalogTechnologyMaterialSupplyRouteSteps.RemoveRange(technology.Stages.SelectMany(x => x.Materials).SelectMany(x => x.RouteSteps));
-        db.CatalogTechnologyMaterials.RemoveRange(technology.Stages.SelectMany(x => x.Materials));
-        db.CatalogTechnologyStageOutputs.RemoveRange(technology.Stages.SelectMany(x => x.Outputs));
-        db.CatalogTechnologyOperations.RemoveRange(technology.Stages.SelectMany(x => x.Operations));
-        db.CatalogTechnologyStages.RemoveRange(technology.Stages);
-
         ApplyHeader(technology, command);
+        return await SaveSection(technology.Id, "The technology header was changed by another request.", ct);
+    }
 
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> SaveTechnologyStagesAsync(
+        Guid id, SaveCatalogTechnologyStagesCommand command, CancellationToken ct)
+    {
+        var technology = await db.CatalogTechnologies
+            .Include(x => x.StageTransitions)
+            .Include(x => x.Stages)
+            .SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (technology is null) return NotFoundDetails();
+
+        var validation = await ValidateStages(technology, command, ct);
+        if (validation is not null) return validation;
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            foreach (var deleted in command.DeletedStageTransitions)
+            {
+                var entity = technology.StageTransitions.Single(x => x.Id == deleted.Id);
+                if (!SetVersion(entity, deleted.RowVersion)) return Validation("Row version is required for a deleted transition.");
+                db.CatalogTechnologyStageTransitions.Remove(entity);
+            }
+
+            foreach (var input in command.StageTransitions)
+            {
+                if (input.Id is { } transitionId && technology.StageTransitions.FirstOrDefault(x => x.Id == transitionId) is { } entity)
+                {
+                    if (entity.FromCatalogTechnologyStageId == input.FromCatalogTechnologyStageId
+                        && entity.ToCatalogTechnologyStageId == input.ToCatalogTechnologyStageId) continue;
+                    if (!SetVersion(entity, input.RowVersion)) return Validation("Row version is required for a changed transition.");
+                    entity.FromCatalogTechnologyStageId = input.FromCatalogTechnologyStageId;
+                    entity.ToCatalogTechnologyStageId = input.ToCatalogTechnologyStageId;
+                }
+                else
+                {
+                    db.CatalogTechnologyStageTransitions.Add(new CatalogTechnologyStageTransition
+                    {
+                        Id = input.Id.GetValueOrDefault(Guid.NewGuid()), CatalogTechnologyId = id,
+                        FromCatalogTechnologyStageId = input.FromCatalogTechnologyStageId,
+                        ToCatalogTechnologyStageId = input.ToCatalogTechnologyStageId
+                    });
+                }
+            }
+
+            foreach (var deleted in command.DeletedStages)
+            {
+                var entity = technology.Stages.Single(x => x.Id == deleted.Id);
+                if (!SetVersion(entity, deleted.RowVersion)) return Validation("Row version is required for a deleted stage.");
+                db.CatalogTechnologyStages.Remove(entity);
+            }
+
+            var existingStageCodes = (await db.TechnologyStages.AsNoTracking().Select(x => x.Code).ToArrayAsync(ct))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var nextStageCode = await db.TechnologyStages.CountAsync(ct) + 1;
+            foreach (var input in command.Stages)
+            {
+                if (technology.Stages.FirstOrDefault(x => x.Id == input.Id) is { } entity)
+                {
+                    if (entity.StageNumber == input.StageNumber
+                        && entity.PlannedDurationMinutes == input.PlannedDurationMinutes
+                        && entity.EquipmentId == input.EquipmentId
+                        && entity.Description == Clean(input.Description)) continue;
+                    if (!SetVersion(entity, input.RowVersion)) return Validation("Row version is required for a changed stage.");
+                    entity.StageNumber = input.StageNumber;
+                    entity.PlannedDurationMinutes = input.PlannedDurationMinutes;
+                    entity.EquipmentId = input.EquipmentId;
+                    entity.Description = Clean(input.Description);
+                    continue;
+                }
+
+                var technologyStageId = input.TechnologyStageId;
+                if (technologyStageId is null || technologyStageId == Guid.Empty)
+                {
+                    var code = string.IsNullOrWhiteSpace(input.TechnologyStageCode)
+                        ? NextBatchCode(existingStageCodes, ref nextStageCode)
+                        : input.TechnologyStageCode.Trim().ToUpperInvariant();
+                    var globalStage = new TechnologyStage
+                    {
+                        Code = code, Name = input.TechnologyStageName.Trim(),
+                        Description = Clean(input.Description), DepartmentId = input.TechnologyStageDepartmentId
+                    };
+                    db.TechnologyStages.Add(globalStage);
+                    technologyStageId = globalStage.Id;
+                }
+
+                db.CatalogTechnologyStages.Add(new CatalogTechnologyStage
+                {
+                    Id = input.Id, CatalogTechnologyId = id, TechnologyStageId = technologyStageId.Value,
+                    StageNumber = input.StageNumber, PlannedDurationMinutes = input.PlannedDurationMinutes,
+                    EquipmentId = input.EquipmentId, Description = Clean(input.Description)
+                });
+            }
+
             await db.SaveChangesAsync(ct);
-            technology.StageTransitions = [];
-            technology.Stages = [];
-            ApplyChildren(technology, command);
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
-            return MasterDataResult<CatalogTechnologyDetails>.Success((await GetTechnologyAsync(technology.Id, ct))!);
+            await transaction.CommitAsync(ct);
+            return SuccessDetails((await GetTechnologyAsync(id, ct))!);
         }
         catch (DbUpdateConcurrencyException)
         {
-            await tx.RollbackAsync(ct);
-            return Conflict("The technology was changed by another request.");
+            await transaction.RollbackAsync(ct);
+            return Conflict("The stages or transitions were changed by another request.");
         }
         catch (DbUpdateException)
         {
-            await tx.RollbackAsync(ct);
-            return Conflict("A technology with this code already exists or contains duplicate rows.");
+            await transaction.RollbackAsync(ct);
+            return Conflict("Stages contain duplicate numbers, transitions, or invalid references.");
         }
+    }
+
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> AddNewTechnologyStageAsync(
+        Guid id, AddNewCatalogTechnologyStageCommand command, CancellationToken ct)
+    {
+        var technology = await db.CatalogTechnologies.Include(x => x.Stages).Include(x => x.StageTransitions)
+            .SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (technology is null) return NotFoundDetails();
+        var input = command.Stage;
+        if (technology.Stages.Any(x => x.Id == input.Id || x.StageNumber == input.StageNumber))
+            return Validation("Stage id and stage number must be unique inside the technology.");
+        if (string.IsNullOrWhiteSpace(input.TechnologyStageName)) return Validation("Stage name is required.");
+        if (input.TechnologyStageDepartmentId is null
+            || !await db.Departments.AnyAsync(x => x.Id == input.TechnologyStageDepartmentId && x.IsActive, ct))
+            return Validation("Stage department must be active.");
+        if (input.PlannedDurationMinutes < 0) return Validation("Stage duration cannot be negative.");
+
+        var stageIds = technology.Stages.Select(x => x.Id).Append(input.Id).ToHashSet();
+        var allTransitions = technology.StageTransitions.Select(x => new SaveCatalogTechnologyStageTransitionCommand(
+                x.Id, x.FromCatalogTechnologyStageId, x.ToCatalogTechnologyStageId, null))
+            .Concat(command.StageTransitions).ToArray();
+        var graphError = ValidateStageGraph(allTransitions, stageIds);
+        if (graphError is not null) return Validation(graphError);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var existingCodes = (await db.TechnologyStages.AsNoTracking().Select(x => x.Code).ToArrayAsync(ct))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var nextCode = await db.TechnologyStages.CountAsync(ct) + 1;
+            var code = string.IsNullOrWhiteSpace(input.TechnologyStageCode)
+                ? NextBatchCode(existingCodes, ref nextCode)
+                : input.TechnologyStageCode.Trim().ToUpperInvariant();
+            var globalStage = new TechnologyStage
+            {
+                Code = code, Name = input.TechnologyStageName.Trim(), Description = Clean(input.Description),
+                DepartmentId = input.TechnologyStageDepartmentId
+            };
+            db.TechnologyStages.Add(globalStage);
+            db.CatalogTechnologyStages.Add(new CatalogTechnologyStage
+            {
+                Id = input.Id, CatalogTechnologyId = id, TechnologyStageId = globalStage.Id,
+                StageNumber = input.StageNumber, PlannedDurationMinutes = input.PlannedDurationMinutes,
+                EquipmentId = input.EquipmentId, Description = Clean(input.Description)
+            });
+            db.CatalogTechnologyStageTransitions.AddRange(command.StageTransitions.Select(x => new CatalogTechnologyStageTransition
+            {
+                Id = x.Id.GetValueOrDefault(Guid.NewGuid()), CatalogTechnologyId = id,
+                FromCatalogTechnologyStageId = x.FromCatalogTechnologyStageId,
+                ToCatalogTechnologyStageId = x.ToCatalogTechnologyStageId
+            }));
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return SuccessDetails((await GetTechnologyAsync(id, ct))!);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return Conflict("The new stage could not be created or attached to the technology.");
+        }
+    }
+
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> AddExistingTechnologyStageAsync(
+        Guid id, SaveCatalogTechnologyStageRowCommand input, CancellationToken ct)
+    {
+        if (!await db.CatalogTechnologies.AnyAsync(x => x.Id == id, ct)) return NotFoundDetails();
+        if (input.TechnologyStageId is null || input.TechnologyStageId == Guid.Empty)
+            return Validation("Technology stage is required.");
+        if (await db.CatalogTechnologyStages.AnyAsync(x => x.CatalogTechnologyId == id
+            && (x.Id == input.Id || x.StageNumber == input.StageNumber), ct))
+            return Validation("Stage id and stage number must be unique inside the technology.");
+        if (!await db.TechnologyStages.AnyAsync(x => x.Id == input.TechnologyStageId && x.IsActive, ct))
+            return Validation("Technology stage must be active.");
+        db.CatalogTechnologyStages.Add(new CatalogTechnologyStage
+        {
+            Id = input.Id, CatalogTechnologyId = id, TechnologyStageId = input.TechnologyStageId.Value,
+            StageNumber = input.StageNumber, PlannedDurationMinutes = input.PlannedDurationMinutes,
+            EquipmentId = input.EquipmentId, Description = Clean(input.Description)
+        });
+        return await SaveSection(id, "The selected stage could not be attached.", ct);
+    }
+
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> SaveStageMaterialsAsync(
+        Guid technologyId, Guid stageId, SaveCatalogTechnologyMaterialsCommand command, CancellationToken ct)
+    {
+        var stage = await db.CatalogTechnologyStages.Include(x => x.Materials).ThenInclude(x => x.RouteSteps)
+            .SingleOrDefaultAsync(x => x.Id == stageId && x.CatalogTechnologyId == technologyId, ct);
+        if (stage is null) return NotFoundDetails();
+        var validation = await ValidateMaterials(stage, command, ct);
+        if (validation is not null) return validation;
+
+        foreach (var deleted in command.DeletedRouteSteps)
+        {
+            var route = stage.Materials.SelectMany(x => x.RouteSteps).Single(x => x.Id == deleted.Id);
+            if (!SetVersion(route, deleted.RowVersion)) return Validation("Row version is required for a deleted route step.");
+            db.CatalogTechnologyMaterialSupplyRouteSteps.Remove(route);
+        }
+        foreach (var deleted in command.DeletedMaterials)
+        {
+            var material = stage.Materials.Single(x => x.Id == deleted.Id);
+            if (!SetVersion(material, deleted.RowVersion)) return Validation("Row version is required for a deleted material.");
+            db.CatalogTechnologyMaterials.Remove(material);
+        }
+
+        foreach (var input in command.Materials)
+        {
+            var material = stage.Materials.FirstOrDefault(x => x.Id == input.Id);
+            if (material is null)
+            {
+                material = Material(input);
+                material.TechnologyStageId = stageId;
+                db.CatalogTechnologyMaterials.Add(material);
+            }
+            else
+            {
+                if (MaterialChanged(material, input))
+                {
+                    if (!SetVersion(material, input.RowVersion)) return Validation("Row version is required for a changed material.");
+                    ApplyMaterial(material, input);
+                }
+                foreach (var routeInput in input.RouteSteps)
+                {
+                    var route = material.RouteSteps.FirstOrDefault(x => x.Id == routeInput.Id);
+                    if (route is null)
+                    {
+                        route = RouteStep(routeInput);
+                        route.TechnologyMaterialId = material.Id;
+                        db.CatalogTechnologyMaterialSupplyRouteSteps.Add(route);
+                    }
+                    else if (RouteChanged(route, routeInput))
+                    {
+                        if (!SetVersion(route, routeInput.RowVersion)) return Validation("Row version is required for a changed route step.");
+                        ApplyRoute(route, routeInput);
+                    }
+                }
+            }
+        }
+        return await SaveSection(technologyId, "Materials or routes were changed by another request.", ct);
+    }
+
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> SaveStageOutputsAsync(
+        Guid technologyId, Guid stageId, SaveCatalogTechnologyOutputsCommand command, CancellationToken ct)
+    {
+        var stage = await db.CatalogTechnologyStages.Include(x => x.Outputs)
+            .SingleOrDefaultAsync(x => x.Id == stageId && x.CatalogTechnologyId == technologyId, ct);
+        if (stage is null) return NotFoundDetails();
+        var deletedValidation = ValidateDeletedRows(stage.Outputs, command.Outputs.Select(x => x.Id),
+            command.DeletedOutputs, x => x.Id, "output");
+        if (deletedValidation is not null) return deletedValidation;
+        var validation = await ValidateOutputs(command, ct);
+        if (validation is not null) return validation;
+        foreach (var deleted in command.DeletedOutputs)
+        {
+            var output = stage.Outputs.Single(x => x.Id == deleted.Id);
+            if (!SetVersion(output, deleted.RowVersion)) return Validation("Row version is required for a deleted output.");
+            db.CatalogTechnologyStageOutputs.Remove(output);
+        }
+        foreach (var input in command.Outputs)
+        {
+            var output = stage.Outputs.FirstOrDefault(x => x.Id == input.Id);
+            if (output is null)
+            {
+                output = Output(input); output.TechnologyStageId = stageId; db.CatalogTechnologyStageOutputs.Add(output);
+            }
+            else if (OutputChanged(output, input))
+            {
+                if (!SetVersion(output, input.RowVersion)) return Validation("Row version is required for a changed output.");
+                ApplyOutput(output, input);
+            }
+        }
+        return await SaveSection(technologyId, "Outputs were changed by another request.", ct);
+    }
+
+    public async Task<MasterDataResult<CatalogTechnologyDetails>> SaveStageOperationsAsync(
+        Guid technologyId, Guid stageId, SaveCatalogTechnologyOperationsCommand command, CancellationToken ct)
+    {
+        var stage = await db.CatalogTechnologyStages.Include(x => x.Operations)
+            .SingleOrDefaultAsync(x => x.Id == stageId && x.CatalogTechnologyId == technologyId, ct);
+        if (stage is null) return NotFoundDetails();
+        var deletedValidation = ValidateDeletedRows(stage.Operations, command.Operations.Select(x => x.Id),
+            command.DeletedOperations, x => x.Id, "operation");
+        if (deletedValidation is not null) return deletedValidation;
+        var validation = await ValidateOperations(command, ct);
+        if (validation is not null) return validation;
+        foreach (var deleted in command.DeletedOperations)
+        {
+            var operation = stage.Operations.Single(x => x.Id == deleted.Id);
+            if (!SetVersion(operation, deleted.RowVersion)) return Validation("Row version is required for a deleted operation.");
+            db.CatalogTechnologyOperations.Remove(operation);
+        }
+        var existingCodes = (await db.CatalogTechnologyOperations.AsNoTracking().Select(x => x.Code).ToArrayAsync(ct))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var nextCode = await db.CatalogTechnologyOperations.CountAsync(ct) + 1;
+        foreach (var inputValue in command.Operations)
+        {
+            var input = string.IsNullOrWhiteSpace(inputValue.Code)
+                ? inputValue with { Code = NextBatchCode(existingCodes, ref nextCode) }
+                : inputValue;
+            var operation = stage.Operations.FirstOrDefault(x => x.Id == input.Id);
+            if (operation is null)
+            {
+                operation = Operation(input); operation.TechnologyStageId = stageId; db.CatalogTechnologyOperations.Add(operation);
+            }
+            else if (OperationChanged(operation, input))
+            {
+                if (!SetVersion(operation, input.RowVersion)) return Validation("Row version is required for a changed operation.");
+                ApplyOperation(operation, input);
+            }
+        }
+        return await SaveSection(technologyId, "Operations were changed by another request.", ct);
     }
 
     public async Task<MasterDataResult<bool>> SetTechnologyActiveAsync(Guid id, bool active, CancellationToken ct)
@@ -339,6 +619,12 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         if (command.IsDefault && command.CatalogItemClassId is not null
             && await db.CatalogTechnologies.AnyAsync(x => x.Id != id && x.CatalogItemClassId == command.CatalogItemClassId && x.IsDefault && x.IsActive, ct))
             return Conflict("Only one active default technology is allowed for one class.");
+        if (command.IsDefault && command.CatalogItemId is not null
+            && await db.CatalogTechnologies.AnyAsync(x => x.Id != id && x.CatalogItemId == command.CatalogItemId && x.IsDefault && x.IsActive, ct))
+            return Conflict("Only one active default technology is allowed for one item.");
+        if (command.IsDefault && command.CatalogItemClassId is not null
+            && await db.CatalogTechnologies.AnyAsync(x => x.Id != id && x.CatalogItemClassId == command.CatalogItemClassId && x.IsDefault && x.IsActive, ct))
+            return Conflict("Only one active default technology is allowed for one class.");
 
         if (command.CatalogItemId is not null
             && !await db.CatalogItems.AnyAsync(x => x.Id == command.CatalogItemId && x.Type == CatalogItemType.Product && x.IsActive, ct))
@@ -458,7 +744,176 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         return stageIds.Any(HasCycle) ? "Stage graph cannot contain cycles." : null;
     }
 
+    private async Task<MasterDataResult<CatalogTechnologyDetails>?> ValidateHeader(
+        SaveCatalogTechnologyHeaderCommand command, Guid id, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(command.Code)) return Validation("Code is required.");
+        if (string.IsNullOrWhiteSpace(command.Name)) return Validation("Name is required.");
+        if (command.Code.Trim().Length > 50) return Validation("Code cannot exceed 50 characters.");
+        if (command.Name.Trim().Length > 200) return Validation("Name cannot exceed 200 characters.");
+        if (command.VersionNo < 1) return Validation("Version number must be positive.");
+        if (!Enum.IsDefined(command.Status)) return Validation("Technology status is invalid.");
+        if (command.ValidFrom is not null && command.ValidTo is not null && command.ValidTo < command.ValidFrom)
+            return Validation("Valid to cannot be earlier than valid from.");
+        if ((command.CatalogItemId is null) == (command.CatalogItemClassId is null))
+            return Validation("Technology must target either one catalog item or one catalog item class.");
+        if (command.Status != CatalogTechnologyStatus.InDevelopment
+            && !await db.CatalogTechnologyStages.AnyAsync(x => x.CatalogTechnologyId == id, ct))
+            return Validation("At least one technology stage is required outside In development status.");
+        if (await db.CatalogTechnologies.AnyAsync(x => x.Id != id && x.Code == command.Code.Trim().ToUpperInvariant(), ct))
+            return Conflict("A technology with this code already exists.");
+        if (command.CatalogItemId is not null
+            && !await db.CatalogItems.AnyAsync(x => x.Id == command.CatalogItemId && x.Type == CatalogItemType.Product && x.IsActive, ct))
+            return Validation("Technology item target must be an active product.");
+        if (command.CatalogItemClassId is not null
+            && !await db.CatalogItemClasses.AnyAsync(x => x.Id == command.CatalogItemClassId && x.Type == CatalogItemType.Product && !x.IsGroup && x.IsActive, ct))
+            return Validation("Technology class target must be an active product class.");
+        return null;
+    }
+
+    private async Task<MasterDataResult<CatalogTechnologyDetails>?> ValidateStages(
+        CatalogTechnology technology, SaveCatalogTechnologyStagesCommand command, CancellationToken ct)
+    {
+        var stageIds = command.Stages.Select(x => x.Id).ToHashSet();
+        if (stageIds.Count != command.Stages.Count) return Validation("Stage ids must be unique.");
+        if (command.Stages.Select(x => x.StageNumber).Distinct().Count() != command.Stages.Count)
+            return Validation("Stage numbers must be unique.");
+        if (technology.Status != CatalogTechnologyStatus.InDevelopment && command.Stages.Count == 0)
+            return Validation("At least one technology stage is required outside In development status.");
+
+        var currentStageIds = technology.Stages.Select(x => x.Id).ToHashSet();
+        var deletedStageIds = command.DeletedStages.Select(x => x.Id).ToHashSet();
+        if (command.DeletedStages.Count != deletedStageIds.Count || deletedStageIds.Any(x => !currentStageIds.Contains(x)))
+            return Validation("Deleted stages are invalid.");
+        if (currentStageIds.Except(stageIds).Except(deletedStageIds).Any())
+            return Validation("Every removed stage must include its row version.");
+
+        var currentTransitionIds = technology.StageTransitions.Select(x => x.Id).ToHashSet();
+        var submittedTransitionIds = command.StageTransitions.Where(x => x.Id is not null).Select(x => x.Id!.Value).ToHashSet();
+        var deletedTransitionIds = command.DeletedStageTransitions.Select(x => x.Id).ToHashSet();
+        if (command.DeletedStageTransitions.Count != deletedTransitionIds.Count
+            || deletedTransitionIds.Any(x => !currentTransitionIds.Contains(x)))
+            return Validation("Deleted transitions are invalid.");
+        if (currentTransitionIds.Except(submittedTransitionIds).Except(deletedTransitionIds).Any())
+            return Validation("Every removed transition must include its row version.");
+
+        foreach (var stage in command.Stages)
+        {
+            if (stage.StageNumber < 1) return Validation("Stage number must be positive.");
+            if (string.IsNullOrWhiteSpace(stage.TechnologyStageName)) return Validation("Stage name is required.");
+            if (stage.PlannedDurationMinutes < 0) return Validation("Stage duration cannot be negative.");
+            if (stage.TechnologyStageDepartmentId is null
+                || !await db.Departments.AnyAsync(x => x.Id == stage.TechnologyStageDepartmentId && x.IsActive, ct))
+                return Validation("Stage department must be active.");
+            if (stage.EquipmentId is not null
+                && !await db.Equipment.AnyAsync(x => x.Id == stage.EquipmentId && x.IsActive, ct))
+                return Validation("Stage equipment must be active.");
+            if (stage.TechnologyStageId is { } globalId && globalId != Guid.Empty
+                && !await db.TechnologyStages.AnyAsync(x => x.Id == globalId && x.IsActive, ct))
+                return Validation("Technology stage must be active.");
+        }
+        var graphError = ValidateStageGraph(command.StageTransitions, stageIds);
+        return graphError is null ? null : Validation(graphError);
+    }
+
+    private async Task<MasterDataResult<CatalogTechnologyDetails>?> ValidateMaterials(
+        CatalogTechnologyStage stage, SaveCatalogTechnologyMaterialsCommand command, CancellationToken ct)
+    {
+        var currentMaterials = stage.Materials.Select(x => x.Id).ToHashSet();
+        var submittedMaterials = command.Materials.Where(x => x.Id is not null).Select(x => x.Id!.Value).ToHashSet();
+        var deletedMaterials = command.DeletedMaterials.Select(x => x.Id).ToHashSet();
+        if (currentMaterials.Except(submittedMaterials).Except(deletedMaterials).Any()
+            || deletedMaterials.Any(x => !currentMaterials.Contains(x)))
+            return Validation("Every removed material must include its row version.");
+
+        var currentRoutes = stage.Materials.SelectMany(x => x.RouteSteps).Select(x => x.Id).ToHashSet();
+        var submittedRoutes = command.Materials.SelectMany(x => x.RouteSteps).Where(x => x.Id is not null).Select(x => x.Id!.Value).ToHashSet();
+        var routesOfDeletedMaterials = stage.Materials.Where(x => deletedMaterials.Contains(x.Id)).SelectMany(x => x.RouteSteps).Select(x => x.Id).ToHashSet();
+        var deletedRoutes = command.DeletedRouteSteps.Select(x => x.Id).ToHashSet();
+        if (currentRoutes.Except(submittedRoutes).Except(deletedRoutes).Except(routesOfDeletedMaterials).Any()
+            || deletedRoutes.Any(x => !currentRoutes.Contains(x)))
+            return Validation("Every removed route step must include its row version.");
+
+        foreach (var material in command.Materials)
+        {
+            if (material.Quantity <= 0) return Validation("Material quantity must be positive.");
+            if (material.ScrapPercent is < 0 or > 100) return Validation("Material scrap percent must be between 0 and 100.");
+            if (!Enum.IsDefined(material.ConsumptionTrackingMode)) return Validation("Material consumption tracking mode is invalid.");
+            if (!await db.CatalogItems.AnyAsync(x => x.Id == material.CatalogItemId && x.IsActive, ct))
+                return Validation("Material item must be active.");
+            if (!await db.UnitOfMeasures.AnyAsync(x => x.Id == material.UnitOfMeasureId && x.IsActive, ct))
+                return Validation("Material unit must be active.");
+            foreach (var route in material.RouteSteps)
+            {
+                if (route.LineNo < 1 || route.LeadTimeMinutes < 0) return Validation("Route values are invalid.");
+                if ((route.ToStorageLocationId is null) != route.IsConsumptionPoint)
+                    return Validation("Route step must have either target storage or consumption point.");
+            }
+        }
+        return null;
+    }
+
+    private async Task<MasterDataResult<CatalogTechnologyDetails>?> ValidateOutputs(
+        SaveCatalogTechnologyOutputsCommand command, CancellationToken ct)
+    {
+        foreach (var output in command.Outputs)
+        {
+            if (output.Quantity <= 0) return Validation("Output quantity must be positive.");
+            if (!await db.CatalogItems.AnyAsync(x => x.Id == output.CatalogItemId && x.IsActive, ct))
+                return Validation("Output item must be active.");
+            if (!await db.UnitOfMeasures.AnyAsync(x => x.Id == output.UnitOfMeasureId && x.IsActive, ct))
+                return Validation("Output unit must be active.");
+            if (!await db.StorageLocations.AnyAsync(x => x.Id == output.ReceiptStorageLocationId && x.IsActive, ct))
+                return Validation("Output receipt storage location must be active.");
+        }
+        return null;
+    }
+
+    private MasterDataResult<CatalogTechnologyDetails>? ValidateDeletedRows<T>(
+        IEnumerable<T> current, IEnumerable<Guid?> submittedIds,
+        IReadOnlyCollection<DeleteCatalogTechnologyRowCommand> deleted, Func<T, Guid> idSelector,
+        string rowName)
+    {
+        var currentIds = current.Select(idSelector).ToHashSet();
+        var submitted = submittedIds.Where(x => x is not null).Select(x => x!.Value).ToHashSet();
+        var deletedIds = deleted.Select(x => x.Id).ToHashSet();
+        return deleted.Count != deletedIds.Count || deletedIds.Any(x => !currentIds.Contains(x))
+            || currentIds.Except(submitted).Except(deletedIds).Any()
+            ? Validation($"Every removed {rowName} must include its row version.")
+            : null;
+    }
+
+    private async Task<MasterDataResult<CatalogTechnologyDetails>?> ValidateOperations(
+        SaveCatalogTechnologyOperationsCommand command, CancellationToken ct)
+    {
+        foreach (var operation in command.Operations)
+        {
+            if (string.IsNullOrWhiteSpace(operation.Name)) return Validation("Operation name is required.");
+            if (operation.SetupMinutes < 0 || operation.RunMinutes < 0 || operation.LaborMinutes < 0)
+                return Validation("Operation minutes cannot be negative.");
+            if (operation.Workers <= 0) return Validation("Operation workers must be positive.");
+            if (operation.DepartmentId is not null
+                && !await db.Departments.AnyAsync(x => x.Id == operation.DepartmentId && x.IsActive, ct))
+                return Validation("Operation department must be active.");
+        }
+        return null;
+    }
+
     private static void ApplyHeader(CatalogTechnology technology, SaveCatalogTechnologyCommand command)
+    {
+        technology.Code = command.Code.Trim().ToUpperInvariant();
+        technology.Name = command.Name.Trim();
+        technology.CatalogItemId = command.CatalogItemId;
+        technology.CatalogItemClassId = command.CatalogItemClassId;
+        technology.VersionNo = command.VersionNo;
+        technology.ValidFrom = command.ValidFrom;
+        technology.ValidTo = command.ValidTo;
+        technology.IsDefault = command.IsDefault;
+        technology.Status = command.Status;
+        technology.Description = Clean(command.Description);
+    }
+
+    private static void ApplyHeader(CatalogTechnology technology, SaveCatalogTechnologyHeaderCommand command)
     {
         technology.Code = command.Code.Trim().ToUpperInvariant();
         technology.Name = command.Name.Trim();
@@ -557,6 +1012,97 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         Note = Clean(input.Note)
     };
 
+    private static bool MaterialChanged(CatalogTechnologyMaterial entity, SaveCatalogTechnologyMaterialCommand input) =>
+        entity.CatalogItemId != input.CatalogItemId || entity.UnitOfMeasureId != input.UnitOfMeasureId
+        || entity.Quantity != input.Quantity || entity.ConsumptionTrackingMode != input.ConsumptionTrackingMode
+        || entity.DefaultSourceStorageLocationId != input.DefaultSourceStorageLocationId
+        || entity.ScrapPercent != input.ScrapPercent || entity.IsOptional != input.IsOptional
+        || entity.Note != Clean(input.Note);
+
+    private static void ApplyMaterial(CatalogTechnologyMaterial entity, SaveCatalogTechnologyMaterialCommand input)
+    {
+        entity.CatalogItemId = input.CatalogItemId;
+        entity.UnitOfMeasureId = input.UnitOfMeasureId;
+        entity.Quantity = input.Quantity;
+        entity.ConsumptionTrackingMode = input.ConsumptionTrackingMode;
+        entity.DefaultSourceStorageLocationId = input.DefaultSourceStorageLocationId;
+        entity.ScrapPercent = input.ScrapPercent;
+        entity.IsOptional = input.IsOptional;
+        entity.Note = Clean(input.Note);
+    }
+
+    private static bool RouteChanged(CatalogTechnologyMaterialSupplyRouteStep entity,
+        SaveCatalogTechnologyMaterialSupplyRouteStepCommand input) =>
+        entity.LineNo != input.LineNo || entity.FromStorageLocationId != input.FromStorageLocationId
+        || entity.ToStorageLocationId != input.ToStorageLocationId || entity.IsConsumptionPoint != input.IsConsumptionPoint
+        || entity.MovementKind != input.MovementKind || entity.LeadTimeMinutes != input.LeadTimeMinutes
+        || entity.Note != Clean(input.Note);
+
+    private static void ApplyRoute(CatalogTechnologyMaterialSupplyRouteStep entity,
+        SaveCatalogTechnologyMaterialSupplyRouteStepCommand input)
+    {
+        entity.LineNo = input.LineNo;
+        entity.FromStorageLocationId = input.FromStorageLocationId;
+        entity.ToStorageLocationId = input.ToStorageLocationId;
+        entity.IsConsumptionPoint = input.IsConsumptionPoint;
+        entity.MovementKind = input.MovementKind;
+        entity.LeadTimeMinutes = input.LeadTimeMinutes;
+        entity.Note = Clean(input.Note);
+    }
+
+    private static bool OutputChanged(CatalogTechnologyStageOutput entity, SaveCatalogTechnologyStageOutputCommand input) =>
+        entity.CatalogItemId != input.CatalogItemId || entity.UnitOfMeasureId != input.UnitOfMeasureId
+        || entity.Quantity != input.Quantity || entity.ReceiptStorageLocationId != input.ReceiptStorageLocationId
+        || entity.IsPrimary != input.IsPrimary || entity.Note != Clean(input.Note);
+
+    private static void ApplyOutput(CatalogTechnologyStageOutput entity, SaveCatalogTechnologyStageOutputCommand input)
+    {
+        entity.CatalogItemId = input.CatalogItemId;
+        entity.UnitOfMeasureId = input.UnitOfMeasureId;
+        entity.Quantity = input.Quantity;
+        entity.ReceiptStorageLocationId = input.ReceiptStorageLocationId;
+        entity.IsPrimary = input.IsPrimary;
+        entity.Note = Clean(input.Note);
+    }
+
+    private static bool OperationChanged(CatalogTechnologyOperation entity, SaveCatalogTechnologyOperationCommand input) =>
+        entity.Code != input.Code.Trim().ToUpperInvariant() || entity.Name != input.Name.Trim()
+        || entity.DepartmentId != input.DepartmentId || entity.EquipmentId != input.EquipmentId
+        || entity.SetupMinutes != input.SetupMinutes || entity.RunMinutes != input.RunMinutes
+        || entity.LaborMinutes != input.LaborMinutes || entity.Workers != input.Workers
+        || entity.Note != Clean(input.Note);
+
+    private static void ApplyOperation(CatalogTechnologyOperation entity, SaveCatalogTechnologyOperationCommand input)
+    {
+        entity.Code = input.Code.Trim().ToUpperInvariant();
+        entity.Name = input.Name.Trim();
+        entity.DepartmentId = input.DepartmentId;
+        entity.EquipmentId = input.EquipmentId;
+        entity.SetupMinutes = input.SetupMinutes;
+        entity.RunMinutes = input.RunMinutes;
+        entity.LaborMinutes = input.LaborMinutes;
+        entity.Workers = input.Workers;
+        entity.Note = Clean(input.Note);
+    }
+
+    private async Task<MasterDataResult<CatalogTechnologyDetails>> SaveSection(
+        Guid technologyId, string concurrencyMessage, CancellationToken ct)
+    {
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return SuccessDetails((await GetTechnologyAsync(technologyId, ct))!);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(concurrencyMessage);
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("The section contains duplicate rows or invalid references.");
+        }
+    }
+
     private static CatalogTechnologyDetails Details(CatalogTechnology x) => new(
         x.Id, x.Code, x.Name,
         x.CatalogItemId, x.CatalogItem?.WorkingName,
@@ -572,30 +1118,35 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
         x.Equipment?.Name, x.Description,
         x.Materials.OrderBy(m => m.CatalogItem.WorkingName).Select(MaterialDto).ToArray(),
         x.Outputs.OrderBy(o => o.CatalogItem.WorkingName).Select(OutputDto).ToArray(),
-        x.Operations.OrderBy(o => o.Code).Select(OperationDto).ToArray());
+        x.Operations.OrderBy(o => o.Code).Select(OperationDto).ToArray(),
+        Convert.ToBase64String(x.RowVersion));
 
     private static CatalogTechnologyStageTransitionDto Transition(CatalogTechnologyStageTransition x) =>
-        new(x.Id, x.FromCatalogTechnologyStageId, x.ToCatalogTechnologyStageId);
+        new(x.Id, x.FromCatalogTechnologyStageId, x.ToCatalogTechnologyStageId,
+            Convert.ToBase64String(x.RowVersion));
 
     private static CatalogTechnologyMaterialDto MaterialDto(CatalogTechnologyMaterial x) => new(
         x.Id, x.CatalogItemId, x.CatalogItem.WorkingName, x.UnitOfMeasureId, x.UnitOfMeasure.Name,
         x.Quantity, x.ConsumptionTrackingMode, x.DefaultSourceStorageLocationId,
         x.DefaultSourceStorageLocation?.Name, x.ScrapPercent, x.IsOptional, x.Note,
-        x.RouteSteps.OrderBy(r => r.LineNo).Select(RouteStepDto).ToArray());
+        x.RouteSteps.OrderBy(r => r.LineNo).Select(RouteStepDto).ToArray(),
+        Convert.ToBase64String(x.RowVersion));
 
     private static CatalogTechnologyStageOutputDto OutputDto(CatalogTechnologyStageOutput x) => new(
         x.Id, x.CatalogItemId, x.CatalogItem.WorkingName, x.UnitOfMeasureId, x.UnitOfMeasure.Name,
-        x.Quantity, x.ReceiptStorageLocationId, x.ReceiptStorageLocation.Name, x.IsPrimary, x.Note);
+        x.Quantity, x.ReceiptStorageLocationId, x.ReceiptStorageLocation.Name, x.IsPrimary, x.Note,
+        Convert.ToBase64String(x.RowVersion));
 
     private static CatalogTechnologyOperationDto OperationDto(CatalogTechnologyOperation x) => new(
         x.Id, x.Code, x.Name, x.DepartmentId, x.Department?.Name, x.EquipmentId, x.Equipment?.Name,
-        x.SetupMinutes, x.RunMinutes, x.LaborMinutes, x.Workers, x.Note);
+        x.SetupMinutes, x.RunMinutes, x.LaborMinutes, x.Workers, x.Note,
+        Convert.ToBase64String(x.RowVersion));
 
     private static CatalogTechnologyMaterialSupplyRouteStepDto RouteStepDto(
         CatalogTechnologyMaterialSupplyRouteStep x) => new(
         x.Id, x.LineNo, x.FromStorageLocationId, x.FromStorageLocation.Name,
         x.ToStorageLocationId, x.ToStorageLocation?.Name, x.IsConsumptionPoint,
-        x.MovementKind, x.LeadTimeMinutes, x.Note);
+        x.MovementKind, x.LeadTimeMinutes, x.Note, Convert.ToBase64String(x.RowVersion));
 
     private bool SetVersion(AuditableEntity entity, string? version)
     {
@@ -609,6 +1160,10 @@ public sealed class CatalogTechnologyService(LeanProdDbContext db) : ICatalogTec
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static MasterDataResult<CatalogTechnologyDetails> SuccessDetails(CatalogTechnologyDetails value) =>
+        MasterDataResult<CatalogTechnologyDetails>.Success(value);
+    private static MasterDataResult<CatalogTechnologyDetails> NotFoundDetails() =>
+        MasterDataResult<CatalogTechnologyDetails>.Failure(MasterDataError.NotFound, "Record was not found.");
     private static MasterDataResult<CatalogTechnologyDetails> Validation(string message) =>
         MasterDataResult<CatalogTechnologyDetails>.Failure(MasterDataError.Validation, message);
     private static MasterDataResult<CatalogTechnologyDetails> Conflict(string message) =>

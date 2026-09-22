@@ -1,0 +1,11 @@
+:host { display: block; }
+.property-content { border: 0; padding: 0; min-width: 0; }
+.property-heading { margin-bottom: 1.5rem; }
+.property-toolbar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.property-field { display: flex; flex-direction: column; gap: .4rem; }
+.property-field small { color: #526176; }
+.property-message { padding: .8rem; background: #edf3fa; border-left: 3px solid #3068ad; overflow-wrap: anywhere; }
+.editor { margin: 1.5rem 0; }
+.checkbox { display: flex; align-items: center; gap: .5rem; }
+.checkbox input { width: auto; }
+table { margin-top: 1rem; }

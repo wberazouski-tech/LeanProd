@@ -1,9 +1,11 @@
+<fieldset class="master-data-request" [disabled]="requests.saving()">
+@if (!editorOpen) {
 <h1>{{ "masterData.departments" | transloco }}</h1>
 <form class="filters" [formGroup]="filters" (ngSubmit)="load()">
   <input
     formControlName="search"
     [placeholder]="'masterData.search' | transloco"
-  /><select formControlName="isActive">
+  /><app-form-field-error [control]="filters.controls.search" /><select formControlName="isActive">
     <option value="">{{ "admin.allStatuses" | transloco }}</option>
     <option value="true">{{ "admin.activePlural" | transloco }}</option>
     <option value="false">
@@ -17,7 +19,7 @@
   }
   <app-table-actions [visible]="canManage" [selected]="!!selected" (editRequested)="editSelected()" (copyRequested)="copySelected()" />
 </form>
-<app-page-state [state]="state" />
+<app-page-state [state]="state" (retry)="load()" />
 <div class="tree-table departments-table">
 <table>
   <colgroup><col [style.width.px]="columnWidths.code" /><col [style.width.px]="columnWidths.name" /><col [style.width.px]="columnWidths.status" />@if (canManage) { <col [style.width.px]="columnWidths.actions" /> }</colgroup>
@@ -32,7 +34,7 @@
   <tbody>
     @if (state === 'empty') { <tr><td [attr.colspan]="canManage ? 4 : 3">{{ "common.noResults" | transloco }}</td></tr> }
     @for (item of sortedItems; track item.id) {
-      <tr (click)="select(item)" [class.selected-row]="selected?.id === item.id" [attr.aria-selected]="selected?.id === item.id">
+      <tr appKeyboardRow (click)="select(item)" [class.selected-row]="selected?.id === item.id" [attr.aria-selected]="selected?.id === item.id">
         <td><button type="button" class="tree-toggle" [class.is-leaf]="!hasChildren(item)" [attr.aria-label]="(isExpanded(item) ? 'masterData.collapse' : 'masterData.expand') | transloco" [attr.aria-expanded]="hasChildren(item) ? isExpanded(item) : null" (click)="toggleExpanded(item, $event)"><span aria-hidden="true">{{ hasChildren(item) ? (isExpanded(item) ? '▾' : '▸') : '' }}</span></button><span class="tree-code" [style.--tree-depth]="item.depth">{{ item.code }}</span></td>
         <td>{{ item.name }}</td>
         <td>
@@ -47,7 +49,7 @@
 <p>{{ "admin.total" | transloco }}: {{ total }}</p>
 @if (canManage && editorOpen) {
   <div class="modal-layer" (click)="closeEditor()">
-  <dialog open class="department-dialog">
+  <dialog appModal (appModalClosed)="closeEditor()" class="department-dialog">
   <section class="editor" (click)="$event.stopPropagation()">
     <h2>
       {{
@@ -58,9 +60,9 @@
     <form [formGroup]="form" (ngSubmit)="save()">
       <label
         >{{ "masterData.code" | transloco
-        }}<input formControlName="code" minlength="4" maxlength="4" /></label
+        }}<input formControlName="code" minlength="4" maxlength="4" /><app-form-field-error [control]="form.controls.code" /></label
       ><label
-        >{{ "admin.name" | transloco }}<input formControlName="name" /></label
+        >{{ "admin.name" | transloco }}<input formControlName="name" /><app-form-field-error [control]="form.controls.name" /></label
       ><label
         >{{ "masterData.parentDepartment" | transloco
         }}<select formControlName="parentDepartmentId">
@@ -72,10 +74,10 @@
               </option>
             }
           }
-        </select></label
+        </select><app-form-field-error [control]="form.controls.parentDepartmentId" /></label
       ><label
         >{{ "masterData.description" | transloco
-        }}<textarea formControlName="description"></textarea></label
+        }}<textarea formControlName="description"></textarea><app-form-field-error [control]="form.controls.description" /></label
       ><button [disabled]="form.invalid">
         {{ "common.save" | transloco }}
       </button>
@@ -101,3 +103,41 @@
     <app-address-list owner="department" [ownerId]="selected.id" [canManage]="canManage" [compact]="true" />
   </section>
 }
+
+
+<div class="load-more"><span>{{ 'masterDataReview.loaded' | transloco }}: {{ items.length }} / {{ total }}</span>@if (items.length < total) { <button type="button" [disabled]="state === 'loading'" (click)="load(true)">{{ 'masterDataReview.loadMore' | transloco }}</button> }<small>{{ 'masterDataReview.loadedOnly' | transloco }}</small></div>
+}
+@if (canManage && editorOpen) {
+<section class="editor department-editor">
+  <div class="department-editor-toolbar">
+    <h1>{{ selected ? form.controls.name.value : ('masterData.newDepartment' | transloco) }}</h1>
+    <div>
+      <button type="submit" form="department-editor-form" [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
+      <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
+      @if (selected?.isActive) {
+        <button type="button" [disabled]="form.dirty" (click)="setActive(false)">{{ 'admin.deactivate' | transloco }}</button>
+      } @else if (selected) {
+        <button type="button" [disabled]="form.dirty" (click)="setActive(true)">{{ 'admin.activate' | transloco }}</button>
+      }
+    </div>
+  </div>
+  <form id="department-editor-form" [formGroup]="form" (ngSubmit)="save()">
+    <label>{{ 'masterData.code' | transloco }}<input formControlName="code" minlength="4" maxlength="4" /><app-form-field-error [control]="form.controls.code" /></label>
+    <label>{{ 'admin.name' | transloco }}<input formControlName="name" /><app-form-field-error [control]="form.controls.name" /></label>
+    <label>{{ 'masterData.parentDepartment' | transloco }}<select formControlName="parentDepartmentId">
+      <option value="">—</option>
+      @for (option of options; track option.id) {
+        @if (option.id !== selected?.id) { <option [value]="option.id">{{ option.code }} — {{ option.name }}</option> }
+      }
+    </select><app-form-field-error [control]="form.controls.parentDepartmentId" /></label>
+    <label class="work-schedule-field">{{ 'masterData.workSchedule' | transloco }}<select formControlName="workScheduleId">
+      <option value="">{{ 'masterData.companyWorkSchedule' | transloco }}</option>
+      @for (option of workScheduleOptions; track option.id) { <option [value]="option.id">{{ option.code }} — {{ option.name }}</option> }
+    </select><app-form-field-error [control]="form.controls.workScheduleId" /></label>
+    <label class="wide">{{ 'masterData.description' | transloco }}<textarea formControlName="description"></textarea><app-form-field-error [control]="form.controls.description" /></label>
+  </form>
+  @if (message) { <p role="status">{{ message }}</p> }
+</section>
+}
+</fieldset>
+@if (requests.saving()) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }

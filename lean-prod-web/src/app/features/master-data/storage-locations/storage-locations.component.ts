@@ -1,3 +1,4 @@
+import { MasterDataUiModule } from '../shared/master-data-ui.module';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,16 +12,35 @@ import { AddressListComponent } from '../addresses/address-list.component';
 import { PageState, PageStateComponent } from '../../../core/ui/page-state.component';
 import { TableActionsComponent } from '../../../core/ui/table-actions.component';
 
-@Component({ selector: 'app-storage-locations', standalone: true, imports: [CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent, TableActionsComponent], templateUrl: './storage-locations.component.html', styleUrl: '../master-data.css' })
+@Component({ selector: 'app-storage-locations', standalone: true, imports: [MasterDataUiModule, CommonModule, ReactiveFormsModule, TranslocoPipe, AddressListComponent, PageStateComponent, TableActionsComponent], templateUrl: './storage-locations.component.html', styleUrl: '../master-data.css' })
 export class StorageLocationsComponent implements OnInit {
-  private readonly api = inject(MasterDataService); private readonly fb = inject(FormBuilder); private readonly t = inject(TranslocoService); private readonly auth = inject(AuthService);
+  page = 1;
+  private listRequest = 0;
+
+  readonly requests = inject(MasterDataService);
+  private readonly api = this.requests; private readonly fb = inject(FormBuilder); private readonly t = inject(TranslocoService); private readonly auth = inject(AuthService);
   items: (StorageSummary & { depth: number })[] = []; departments: OptionItem[] = []; parents: OptionItem[] = []; kinds: CatalogItem[] = []; types: CatalogItem[] = []; selected?: StorageDetails; total = 0; message = ''; editorOpen = false; state: PageState = 'loading';
   sortKey: 'code' | 'name' | 'departmentName' | 'kindCode' | 'typeCodes' | 'isActive' = 'code'; sortDirection: 'asc' | 'desc' = 'asc';
   readonly canManage = this.auth.hasPermission(Permissions.masterDataManage);
   readonly filters = this.fb.nonNullable.group({ search: '', isActive: '' });
   readonly form = this.fb.nonNullable.group({ code: ['', Validators.maxLength(4)], name: ['', Validators.required], description: '', departmentId: ['', Validators.required], kindId: ['', Validators.required], parentStorageLocationId: '', typeIds: this.fb.nonNullable.control<string[]>([]) });
   ngOnInit(): void { this.load(); this.loadOptions(); }
-  load(): void { this.state = 'loading'; const f = this.filters.getRawValue(); this.api.storages(1, f.search.trim(), f.isActive, 5000).subscribe({ next: x => { this.items = this.asTree(x.items); this.total = x.totalCount; this.state = x.items.length ? 'ready' : 'empty'; }, error: () => this.state = 'error' }); }
+  load(more = false): void {
+    if (more && this.state === 'loading') return;
+    const requestId = ++this.listRequest;
+    const requestedPage = more ? this.page + 1 : 1;
+    this.state = 'loading';
+    const f = this.filters.getRawValue();
+    this.api.storages(requestedPage, f.search.trim(), f.isActive, 5000).subscribe({
+      next: x => {
+        if (requestId !== this.listRequest) return;
+        this.items = this.asTree(more ? [...this.items, ...x.items] : x.items);
+        this.page = requestedPage; this.total = x.totalCount;
+        this.state = this.items.length ? 'ready' : 'empty';
+      },
+      error: () => { if (requestId === this.listRequest) this.state = 'error'; }
+    });
+  }
   loadOptions(): void { forkJoin({ departments: this.api.departmentOptions(), parents: this.api.storageOptions(), kinds: this.api.kinds(), types: this.api.types() }).subscribe(x => { this.departments = x.departments; this.parents = x.parents; this.kinds = x.kinds; this.types = x.types; }); }
   get sortedItems(): (StorageSummary & { depth: number })[] {
     const ids = new Set(this.items.map(item => item.id));
@@ -41,15 +61,15 @@ export class StorageLocationsComponent implements OnInit {
     return result;
   }
   sortBy(key: 'code' | 'name' | 'departmentName' | 'kindCode' | 'typeCodes' | 'isActive'): void { if (this.sortKey === key) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; else { this.sortKey = key; this.sortDirection = 'asc'; } }
-  select(item: StorageSummary): void { this.loadStorage(item.id, false); }
-  edit(item: StorageSummary, event: Event): void { event.stopPropagation(); this.loadStorage(item.id, true); }
-  editSelected(): void { if (this.selected) this.loadStorage(this.selected.id, true); }
-  copySelected(): void { if (!this.selected) return; const x = this.selected; this.selected = undefined; this.form.reset({ code: '', name: x.name, description: x.description ?? '', departmentId: x.departmentId, kindId: x.kindId, parentStorageLocationId: x.parentStorageLocationId ?? '', typeIds: [...x.typeIds] }); this.editorOpen = true; }
-  create(): void { this.selected = undefined; this.form.reset({ code: '', name: '', description: '', departmentId: '', kindId: '', parentStorageLocationId: '', typeIds: [] }); this.editorOpen = true; }
-  closeEditor(): void { this.editorOpen = false; }
+  select(item: StorageSummary): void { if (this.requests.saving()) return; this.loadStorage(item.id, false); }
+  edit(item: StorageSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); this.loadStorage(item.id, true); }
+  editSelected(): void { if (this.requests.saving()) return; if (this.selected) this.loadStorage(this.selected.id, true); }
+  copySelected(): void { if (this.requests.saving()) return; if (!this.selected) return; const x = this.selected; this.selected = undefined; this.form.reset({ code: '', name: x.name, description: x.description ?? '', departmentId: x.departmentId, kindId: x.kindId, parentStorageLocationId: x.parentStorageLocationId ?? '', typeIds: [...x.typeIds] }); this.editorOpen = true; }
+  create(): void { if (this.requests.saving()) return; this.selected = undefined; this.form.reset({ code: '', name: '', description: '', departmentId: '', kindId: '', parentStorageLocationId: '', typeIds: [] }); this.editorOpen = true; }
+  closeEditor(): void { if (this.requests.saving()) return; this.editorOpen = false; }
   toggleType(id: string, checked: boolean): void { const ids = this.form.controls.typeIds.value.filter(x => x !== id); this.form.controls.typeIds.setValue(checked ? [...ids, id] : ids); }
-  save(): void { if (this.form.invalid || this.form.controls.typeIds.value.length === 0) return; this.state = 'saving'; const v = this.form.getRawValue(); const body = { ...v, parentStorageLocationId: v.parentStorageLocationId || null, rowVersion: this.selected?.rowVersion ?? null }; this.api.saveStorage(this.selected?.id, body).subscribe({ next: x => { this.selected = x; this.message = this.t.translate('masterData.saved'); this.editorOpen = false; this.state = 'success'; this.load(); this.loadOptions(); }, error: () => this.state = 'error' }); }
-  setActive(active: boolean): void { if (!this.selected) return; this.api.setStorageActive(this.selected.id, active).subscribe(() => { this.message = this.t.translate(active ? 'masterData.activated' : 'masterData.deactivated'); this.load(); this.loadOptions(); this.selected = { ...this.selected!, isActive: active }; }); }
+  save(): void { if (!this.canManage || this.requests.saving()) return; if (this.form.invalid || this.form.controls.typeIds.value.length === 0) return; this.state = 'saving'; const v = this.form.getRawValue(); const body = { ...v, parentStorageLocationId: v.parentStorageLocationId || null, rowVersion: this.selected?.rowVersion ?? null }; this.api.saveStorage(this.selected?.id, body).subscribe({ next: x => { this.selected = x; this.message = this.t.translate('masterData.saved'); this.editorOpen = false; this.state = 'success'; this.load(); this.loadOptions(); }, error: () => this.state = 'error' }); }
+  setActive(active: boolean): void { if (!this.canManage || this.requests.saving()) return; if (!this.selected) return; this.api.setStorageActive(this.selected.id, active).subscribe(() => { this.message = this.t.translate(active ? 'masterData.activated' : 'masterData.deactivated'); this.load(); this.loadOptions(); this.selected = { ...this.selected!, isActive: active }; }); }
   kind(code: string): string { return this.t.translate(`storageKinds.${code}`); }
   type(code: string): string { return this.t.translate(`storageTypes.${code}`); }
   typeList(codes: string[]): string { return codes.map(x => this.type(x)).join(', '); }

@@ -44,6 +44,6 @@ Workforce endpoints use `Workforce.View` and `Workforce.Manage`. Membership inte
 - `LeanProd.Domain/Technologies` owns the complete specification aggregate and technology enums.
 - `LeanProd.Application/Features/Technologies` defines technology queries, commands and DTOs.
 - `LeanProd.Infrastructure/Features/Technologies` implements validation, aggregate persistence and EF mappings.
-- `LeanProd.Api/Features/Technologies` exposes `/api/catalog-technologies` without changing the public contract.
+- `LeanProd.Api/Features/Technologies` exposes section-scoped `/api/catalog-technologies` operations for the header, stages/transitions, materials/routes, outputs and operations.
 
-Technologies reference products, product classes, units, departments, equipment and storage locations from `MasterData`; those references do not transfer ownership. Updating a technology replaces its child graph inside an explicit database transaction. Optimistic concurrency is enforced by `RowVersion`.
+Technologies reference products, product classes, units, departments, equipment and storage locations from `MasterData`; those references do not transfer ownership. Updates use differential `INSERT`, `UPDATE` and `DELETE` operations only in the requested section. Optimistic concurrency is enforced by the `RowVersion` of each changed or deleted row.

@@ -32,6 +32,15 @@ tbody tr { cursor: pointer; }
 .department-dialog .editor form { align-items: end; display: grid; grid-template-columns: 130px minmax(180px,1fr) minmax(180px,1fr); }
 .department-dialog .editor label:last-of-type { grid-column: 2 / -1; }
 .department-dialog .editor textarea { min-width: 0; width: 100%; }
+.department-editor { margin-top: .75rem; }
+.department-editor-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; }
+.department-editor-toolbar h1 { margin: 0; }
+.department-editor-toolbar > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.department-editor form { display: grid; grid-template-columns: minmax(130px, 180px) minmax(220px, 1fr) minmax(220px, 1fr); }
+.department-editor .work-schedule-field { min-width: 320px; }
+.department-editor .work-schedule-field select { width: 100%; }
+.department-editor form .wide { grid-column: 1 / -1; }
+.department-editor textarea { min-height: 7rem; width: 100%; }
 p { color: #667085; }
 dialog form { align-items: stretch !important; display: grid !important; grid-template-columns: repeat(2,minmax(180px,1fr)); }
 dialog h3 { grid-column: 1/-1; } dialog textarea { min-width: 0 !important; } dialog button { align-self: end; }
@@ -63,3 +72,8 @@ dialog h3 { grid-column: 1/-1; } dialog textarea { min-width: 0 !important; } di
 .dense-table th,
 .dense-table td { border: 1px solid #d6e0ee; padding: .1rem; }
 .dense-table th { background: #eef4fb; text-align: left; }
+
+.master-data-request { border: 0; padding: 0; margin: 0; min-width: 0; }
+.master-data-request dialog::backdrop { background: rgba(15,23,42,.45); }
+[appKeyboardRow]:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.load-more { display: flex; gap: .75rem; align-items: center; margin: .75rem 0; }

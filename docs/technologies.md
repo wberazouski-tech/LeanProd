@@ -35,7 +35,7 @@ An `InDevelopment` technology may be saved without stages or materials so its he
 
 A technology can be assigned to a concrete product or to a product class. For either target, the database permits at most one active default technology. `VersionNo` is positive, and `ValidTo` cannot precede `ValidFrom`.
 
-Technology updates use optimistic concurrency through `RowVersion`. The current implementation replaces the stored child graph in one explicit database transaction. Operational documents must eventually capture the selected technology version or a snapshot of its norms so later specification edits cannot rewrite production history.
+Technology updates use optimistic concurrency through a `RowVersion` on the header and on every mutable child row. Saves are differential and section-scoped: unchanged rows are not rewritten, and concurrency is checked only for rows that are updated or explicitly deleted. Operational documents must eventually capture the selected technology version or a snapshot of its norms so later specification edits cannot rewrite production history.
 
 ## Codes
 
@@ -49,7 +49,13 @@ The public route remains `/api/catalog-technologies`:
 GET    /api/catalog-technologies
 GET    /api/catalog-technologies/{id}
 POST   /api/catalog-technologies
-PUT    /api/catalog-technologies/{id}
+PUT    /api/catalog-technologies/{id}/header
+PUT    /api/catalog-technologies/{id}/stages
+POST   /api/catalog-technologies/{id}/stages/new
+POST   /api/catalog-technologies/{id}/stages/existing
+PUT    /api/catalog-technologies/{id}/stages/{stageId}/materials
+PUT    /api/catalog-technologies/{id}/stages/{stageId}/outputs
+PUT    /api/catalog-technologies/{id}/stages/{stageId}/operations
 POST   /api/catalog-technologies/{id}/activate
 POST   /api/catalog-technologies/{id}/deactivate
 GET    /api/catalog-technologies/stage-templates
@@ -77,4 +83,4 @@ Migration `MoveStageDepartmentToTechnologyStage` moves the department relationsh
 
 ## Angular status
 
-The screen remains under `lean-prod-web/src/app/features/master-data/technologies`. It displays the reusable stage in each technology-stage row, permits an explicit stage number and edits source/target transition pairs; dependency type and lag are no longer part of the routing model.
+The screen remains under `lean-prod-web/src/app/features/master-data/technologies`. It displays the reusable stage in each technology-stage row, permits an explicit stage number and edits source/target transition pairs; dependency type and lag are no longer part of the routing model. The header, stages/transitions, materials/routes, outputs and operations have independent Save actions. `Add new stage` creates the reusable `TechnologyStage` and its `CatalogTechnologyStage` usage atomically; `Add stage` only attaches a selected directory stage.

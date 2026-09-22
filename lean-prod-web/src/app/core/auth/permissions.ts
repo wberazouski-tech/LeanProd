@@ -15,7 +15,10 @@ export const Permissions = {
   qualityManage: 'Quality.Manage',
   reportsView: 'Reports.View',
   periodsClose: 'Periods.Close',
-  auditView: 'Audit.View'
+  auditView: 'Audit.View',
+  workSchedulesView: 'WorkSchedules.View',
+  workSchedulesManage: 'WorkSchedules.Manage'
 } as const;
 
 export type Permission = typeof Permissions[keyof typeof Permissions];
+

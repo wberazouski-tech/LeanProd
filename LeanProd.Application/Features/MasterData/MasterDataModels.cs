@@ -19,9 +19,9 @@ public sealed record SaveCatalogItemClassCommand(CatalogItemType Type, string Co
 
 public sealed record DepartmentSummary(Guid Id, string Code, string Name, Guid? ParentDepartmentId, string? ParentName, bool IsActive);
 public sealed record DepartmentDetails(Guid Id, string Code, string Name, string? Description,
-    Guid? ParentDepartmentId, bool IsActive, string RowVersion);
+    Guid? ParentDepartmentId, Guid? WorkScheduleId, bool IsActive, string RowVersion);
 public sealed record SaveDepartmentCommand(string Code, string Name, string? Description,
-    Guid? ParentDepartmentId, string? RowVersion);
+    Guid? ParentDepartmentId, Guid? WorkScheduleId, string? RowVersion);
 
 public sealed record StorageLocationSummary(Guid Id, string Code, string Name, Guid? ParentStorageLocationId,
     string DepartmentName, string KindCode, IReadOnlyCollection<string> TypeCodes, bool IsActive);

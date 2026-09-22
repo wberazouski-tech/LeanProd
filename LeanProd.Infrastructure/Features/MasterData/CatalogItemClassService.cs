@@ -129,6 +129,10 @@ public sealed class CatalogItemClassService(LeanProdDbContext db) : ICatalogItem
         var error = CatalogItemClassPolicy.ValidateInput(command.Type, command.Code, command.Name);
         if (error is not null) return error;
 
+        if (current is not null && (current.IsGroup != command.IsGroup || current.Type != command.Type) &&
+            await db.ItemPropertyDefinitions.AnyAsync(x => x.CatalogItemClassId == current.Id, ct))
+            return "Cannot change the type or group flag of a class with property definitions.";
+
         if (current is not null)
         {
             var hasDependants = current.IsGroup != command.IsGroup &&

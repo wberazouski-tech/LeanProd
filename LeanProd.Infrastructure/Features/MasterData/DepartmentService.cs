@@ -37,6 +37,11 @@ public sealed class DepartmentService(LeanProdDbContext db) : IDepartmentService
         await db.Departments.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Name)
             .Select(x => new OptionItem(x.Id, x.Code, x.Name)).ToArrayAsync(ct);
 
+    public async Task<IReadOnlyCollection<OptionItem>> GetWorkScheduleOptionsAsync(CancellationToken ct) =>
+        await db.WorkSchedules.AsNoTracking()
+            .Where(x => x.Kind == Domain.Scheduling.WorkScheduleKind.Optional && x.Status == Domain.Scheduling.WorkScheduleStatus.Active)
+            .OrderBy(x => x.Code).Select(x => new OptionItem(x.Id, x.Code, x.Name)).ToArrayAsync(ct);
+
     public async Task<MasterDataResult<DepartmentDetails>> CreateDepartmentAsync(
         SaveDepartmentCommand command, CancellationToken ct)
     {
@@ -52,7 +57,8 @@ public sealed class DepartmentService(LeanProdDbContext db) : IDepartmentService
             Code = NormalizeCode(command.Code),
             Name = command.Name.Trim(),
             Description = Clean(command.Description),
-            ParentDepartmentId = command.ParentDepartmentId
+            ParentDepartmentId = command.ParentDepartmentId,
+            WorkScheduleId = command.WorkScheduleId
         };
         db.Departments.Add(entity);
         try
@@ -83,6 +89,7 @@ public sealed class DepartmentService(LeanProdDbContext db) : IDepartmentService
         entity.Name = command.Name.Trim();
         entity.Description = Clean(command.Description);
         entity.ParentDepartmentId = command.ParentDepartmentId;
+        entity.WorkScheduleId = command.WorkScheduleId;
         try
         {
             await db.SaveChangesAsync(ct);
@@ -121,6 +128,11 @@ public sealed class DepartmentService(LeanProdDbContext db) : IDepartmentService
         if (command.ParentDepartmentId is not null &&
             !await db.Departments.AnyAsync(x => x.Id == command.ParentDepartmentId && x.IsActive, ct))
             return "The parent department must be active.";
+        if (command.WorkScheduleId is not null && !await db.WorkSchedules.AnyAsync(x =>
+                x.Id == command.WorkScheduleId &&
+                x.Kind == Domain.Scheduling.WorkScheduleKind.Optional &&
+                x.Status == Domain.Scheduling.WorkScheduleStatus.Active, ct))
+            return "The work schedule must be an active optional schedule.";
         var ancestors = await LoadAncestorIds(command.ParentDepartmentId, ct);
         return HierarchyPolicy.Validate(id, command.ParentDepartmentId, ancestors, "A department");
     }
@@ -149,7 +161,7 @@ public sealed class DepartmentService(LeanProdDbContext db) : IDepartmentService
     }
 
     private static DepartmentDetails Details(Department x) =>
-        new(x.Id, x.Code, x.Name, x.Description, x.ParentDepartmentId, x.IsActive,
+        new(x.Id, x.Code, x.Name, x.Description, x.ParentDepartmentId, x.WorkScheduleId, x.IsActive,
             Convert.ToBase64String(x.RowVersion));
     private static string NormalizeCode(string value) => value.Trim().ToUpperInvariant();
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

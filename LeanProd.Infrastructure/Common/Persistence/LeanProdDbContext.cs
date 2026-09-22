@@ -5,6 +5,7 @@ using LeanProd.Domain.MasterData;
 using LeanProd.Domain.Organizations;
 using LeanProd.Domain.Technologies;
 using LeanProd.Domain.Workforce;
+using LeanProd.Domain.Scheduling;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,11 @@ public sealed class LeanProdDbContext(
     public DbSet<UnitOfMeasureConversion> UnitOfMeasureConversions => Set<UnitOfMeasureConversion>();
     public DbSet<CatalogItemClass> CatalogItemClasses => Set<CatalogItemClass>();
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<ItemPropertyDefinition> ItemPropertyDefinitions => Set<ItemPropertyDefinition>();
+    public DbSet<ItemPropertyOption> ItemPropertyOptions => Set<ItemPropertyOption>();
+    public DbSet<CatalogItemPropertyValue> CatalogItemPropertyValues => Set<CatalogItemPropertyValue>();
+    public DbSet<CatalogItemBatch> CatalogItemBatches => Set<CatalogItemBatch>();
+    public DbSet<BatchPropertyValue> BatchPropertyValues => Set<BatchPropertyValue>();
     public DbSet<CatalogItemCostHistory> CatalogItemCostHistory => Set<CatalogItemCostHistory>();
     public DbSet<CatalogTechnology> CatalogTechnologies => Set<CatalogTechnology>();
     public DbSet<TechnologyStageTemplate> TechnologyStageTemplates => Set<TechnologyStageTemplate>();
@@ -46,6 +52,12 @@ public sealed class LeanProdDbContext(
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Brigade> Brigades => Set<Brigade>();
     public DbSet<BrigadeMembership> BrigadeMemberships => Set<BrigadeMembership>();
+    public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
+    public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+    public DbSet<WorkScheduleDay> WorkScheduleDays => Set<WorkScheduleDay>();
+    public DbSet<WorkScheduleInterval> WorkScheduleIntervals => Set<WorkScheduleInterval>();
+    public DbSet<ProductionCalendar> ProductionCalendars => Set<ProductionCalendar>();
+    public DbSet<ProductionCalendarDay> ProductionCalendarDays => Set<ProductionCalendarDay>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,0 +1,116 @@
+<div class="property-heading">
+  <a [routerLink]="backUrl" [queryParams]="itemId ? {} : { type: administrationType }">{{ (itemId ? 'itemProperties.back' : 'itemProperties.backSettings') | transloco }}</a>
+  <h1>{{ 'itemProperties.title' | transloco }} — {{ title }}</h1>
+</div>
+@if (message) { <p role="status" class="property-message">{{ message }}</p> }
+@if (loading) { <p role="status">{{ 'pageState.loading' | transloco }}</p> }
+@if (failed) { <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button> }
+<fieldset [disabled]="busy || loading" class="property-content">
+@if (!itemId && !failed) {
+  <p>{{ 'itemProperties.definitionHelp' | transloco }}</p>
+  @if (!classActive) { <p role="status">{{ 'itemProperties.inactiveClass' | transloco }}</p> }
+  <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button>
+  @if (canEditDefinitions) { <button type="button" (click)="editDefinition()">{{ 'itemProperties.add' | transloco }}</button> }
+  <table class="master-data-table">
+    <thead><tr><th>{{ 'masterData.code' | transloco }}</th><th>{{ 'admin.name' | transloco }}</th><th>{{ 'itemProperties.type' | transloco }}</th><th>{{ 'itemProperties.batchProperty' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th><th></th></tr></thead>
+    <tbody>@for (p of definitions; track p.id) {
+      <tr><td>{{ p.code }}</td><td>{{ p.name }}</td><td>{{ ('itemProperties.types.' + p.type) | transloco }}</td><td>{{ (p.isBatchProperty ? 'itemProperties.yes' : 'itemProperties.no') | transloco }}</td><td>{{ (p.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
+      <td>@if (canEditDefinitions) { <button type="button" (click)="editDefinition(p)">{{ 'admin.edit' | transloco }}</button> }</td></tr>
+    } @empty { <tr><td colspan="6">{{ 'itemProperties.empty' | transloco }}</td></tr> }</tbody>
+  </table>
+  @if (definitionOpen && canEditDefinitions) {
+    <section class="editor"><h2>{{ (editing ? 'admin.edit' : 'itemProperties.add') | transloco }}</h2>
+      @if (editing?.isInUse) { <p>{{ 'itemProperties.inUse' | transloco }}</p> }
+      <form [formGroup]="definitionForm" (ngSubmit)="saveDefinition()">
+        <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" required /></label>
+        <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" required /></label>
+        <label>{{ 'itemProperties.type' | transloco }}<select formControlName="type">@for (type of types; track type) { <option [value]="type">{{ ('itemProperties.types.' + type) | transloco }}</option> }</select></label>
+        @if (definitionForm.controls.type.value === 'Number' || definitionForm.controls.type.value === 'Range') {
+          <label>{{ 'itemProperties.decimals' | transloco }}<input type="number" formControlName="decimalPlaces" min="0" max="6" step="1" /></label>
+        }
+        @if (definitionForm.controls.type.value === 'Text') {
+          <label>{{ 'itemProperties.maxLength' | transloco }}<input type="number" formControlName="maxLength" min="1" max="4000" step="1" /></label>
+        }
+        @if (definitionForm.controls.type.value === 'Range') {
+          <label>{{ 'itemProperties.minimum' | transloco }}<input formControlName="minimum" inputmode="decimal" required /></label>
+          <label>{{ 'itemProperties.maximum' | transloco }}<input formControlName="maximum" inputmode="decimal" required /></label>
+        }
+        @if (definitionForm.controls.type.value === 'Choice') {
+                    @if (editing?.isInUse) {
+            <div class="wide"><span>{{ 'itemProperties.existingChoices' | transloco }}</span>
+              <ul>@for (option of editing!.options; track option.id) { <li>{{ option.label }}</li> }</ul>
+            </div>
+          }
+          <label class="wide">{{ (editing?.isInUse ? 'itemProperties.addChoices' : 'itemProperties.choices') | transloco }}<textarea formControlName="optionsText" rows="5"></textarea></label>
+        }
+        <label class="checkbox"><input type="checkbox" formControlName="isBatchProperty" />{{ 'itemProperties.batchProperty' | transloco }}</label>
+        <label class="checkbox"><input type="checkbox" formControlName="isActive" />{{ 'admin.active' | transloco }}</label>
+        <p class="wide">{{ 'itemProperties.settingsHelp' | transloco }}</p>
+        @if (definitionForm.hasError('definitionRange')) { <p class="wide" role="alert">{{ 'itemProperties.invalidDefinitionRange' | transloco }}</p> }
+        @if (definitionForm.hasError('definitionChoices')) { <p class="wide" role="alert">{{ 'itemProperties.invalidChoices' | transloco }}</p> }
+        <button type="submit" [disabled]="definitionForm.invalid || busy">{{ 'common.save' | transloco }}</button>
+        <button type="button" (click)="closeDefinition()">{{ 'common.close' | transloco }}</button>
+      </form>
+    </section>
+  }
+}
+@if (itemId && !failed) {
+  <div class="property-toolbar">
+    <button type="button" (click)="selectBatch()">{{ 'itemProperties.itemValues' | transloco }}</button>
+    @if (canEditValues) { <button type="button" (click)="editBatch()">{{ 'itemProperties.addBatch' | transloco }}</button> }
+  </div>
+  <p>{{ 'itemProperties.batchHelp' | transloco }}</p>
+  @if (!itemActive) { <p role="status">{{ 'itemProperties.inactiveItem' | transloco }}</p> }
+  @if (batchOpen && canEditValues) {
+    <section class="editor"><h2>{{ (batch ? 'admin.edit' : 'itemProperties.addBatch') | transloco }}</h2>
+      <form [formGroup]="batchForm" (ngSubmit)="saveBatch()">
+        <label>{{ 'itemProperties.batchNumber' | transloco }}<input formControlName="number" maxlength="100" required /></label>
+        <label>{{ 'itemProperties.receiptDate' | transloco }}<input type="date" formControlName="receiptDate" required /></label>
+        <label class="wide">{{ 'itemProperties.receiptReference' | transloco }}<input formControlName="receiptReference" maxlength="300" required /></label>
+        <button type="submit" [disabled]="batchForm.invalid || busy">{{ 'common.save' | transloco }}</button>
+        <button type="button" (click)="selectBatch(batch)">{{ 'common.close' | transloco }}</button>
+      </form>
+    </section>
+  }
+  @if (values && !batchOpen) {
+    <section class="editor">
+      <h2>{{ (batch ? 'itemProperties.batchValues' : 'itemProperties.itemValues') | transloco }}{{ batch ? ': ' + batch.number : '' }}</h2>
+      @if (batch) {
+        <p>{{ batch.receiptDate }} · {{ batch.receiptReference }}</p>
+        @if (canEditValues) { <button type="button" (click)="editBatch(true)">{{ 'admin.edit' | transloco }}</button> }
+      }
+      <form [formGroup]="valuesForm" (ngSubmit)="saveValues()">
+      @for (p of values.definitions; track p.id) {
+        <div class="property-field">
+          <label [for]="'value-' + p.id">{{ p.name }} @if (p.isBatchProperty) { <small>({{ 'itemProperties.batchProperty' | transloco }})</small> } @if (!p.isActive) { <small>({{ 'admin.inactive' | transloco }})</small> }</label>
+          @switch (p.type) {
+            @case ('Boolean') { <select [id]="'value-' + p.id" [formControlName]="p.id"><option value="">—</option><option value="true">{{ 'itemProperties.yes' | transloco }}</option><option value="false">{{ 'itemProperties.no' | transloco }}</option></select> }
+            @case ('Choice') { <select [id]="'value-' + p.id" [formControlName]="p.id"><option value="">—</option>@for (option of p.options; track option.id) { <option [value]="option.id">{{ option.label }}</option> }</select> }
+            @case ('Text') { <input [id]="'value-' + p.id" [formControlName]="p.id" [maxlength]="p.maxLength!" /><small>{{ 'itemProperties.maxLength' | transloco }}: {{ p.maxLength }}</small> }
+            @default { <input [id]="'value-' + p.id" [formControlName]="p.id" inputmode="decimal" />
+              @if (p.type === 'Range') {
+                <label [for]="'upper-' + p.id">{{ 'itemProperties.upper' | transloco }}</label>
+                <input [id]="'upper-' + p.id" [formControlName]="p.id + '_upper'" inputmode="decimal" />
+                <small>{{ 'itemProperties.allowedRange' | transloco }}: {{ p.minimum }} – {{ p.maximum }}</small>
+              }
+              <small>{{ 'itemProperties.decimals' | transloco }}: {{ p.decimalPlaces }}</small>
+            }
+          }
+          @if (valuesForm.controls[p.id].invalid || (p.type === 'Range' && valuesForm.controls[p.id + '_upper'].invalid)) {
+            <small role="alert">{{ 'itemProperties.invalidValue' | transloco }}</small>
+          }
+        </div>
+      } @empty { <p>{{ 'itemProperties.empty' | transloco }}</p> }
+      @if (valuesForm.hasError('range')) { <p role="alert">{{ 'itemProperties.invalidRange' | transloco }}</p> }
+      @if (canEditValues && values.definitions.length) { <button type="submit" [disabled]="valuesForm.invalid || busy || !valuesForm.dirty">{{ 'common.save' | transloco }}</button> }
+      <button type="button" (click)="selectBatch(batch)">{{ 'itemProperties.reload' | transloco }}</button>
+      </form>
+    </section>
+  }
+  <h2>{{ 'itemProperties.batches' | transloco }}</h2>
+  <table class="master-data-table"><thead><tr><th>{{ 'itemProperties.batchNumber' | transloco }}</th><th>{{ 'itemProperties.receiptDate' | transloco }}</th><th>{{ 'itemProperties.receiptReference' | transloco }}</th></tr></thead>
+    <tbody>@for (b of batches; track b.id) { <tr><td><button type="button" (click)="selectBatch(b)">{{ b.number }}</button></td><td>{{ b.receiptDate }}</td><td>{{ b.receiptReference }}</td></tr> } @empty { <tr><td colspan="3">{{ 'itemProperties.noBatches' | transloco }}</td></tr> }</tbody>
+  </table>
+  @if (batches.length < batchTotal) { <button type="button" (click)="moreBatches()">{{ 'masterDataReview.loadMore' | transloco }}</button> }
+}
+</fieldset>

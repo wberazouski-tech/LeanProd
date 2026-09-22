@@ -22,6 +22,60 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.BatchPropertyValue", b =>
+                {
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("Boolean")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Number")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.Property<Guid?>("OptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Upper")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.HasKey("BatchId", "PropertyId");
+
+                    b.HasIndex("PropertyId", "OptionId");
+
+                    b.ToTable("BatchPropertyValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BatchPropertyValues_Shape", "([Number] IS NOT NULL AND [Text] IS NULL AND [Boolean] IS NULL AND [OptionId] IS NULL AND ([Upper] IS NULL OR [Number] <= [Upper])) OR ([Text] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Boolean] IS NULL AND [OptionId] IS NULL) OR ([Boolean] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Text] IS NULL AND [OptionId] IS NULL) OR ([OptionId] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Text] IS NULL AND [Boolean] IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -90,6 +144,54 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.HasIndex("Type", "IsActive", "WorkingName");
 
                     b.ToTable("CatalogItems", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CatalogItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateOnly>("ReceiptDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReceiptReference")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogItemId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("CatalogItemBatches", (string)null);
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
@@ -196,6 +298,60 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemPropertyValue", b =>
+                {
+                    b.Property<Guid>("CatalogItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("Boolean")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Number")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.Property<Guid?>("OptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Upper")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.HasKey("CatalogItemId", "PropertyId");
+
+                    b.HasIndex("PropertyId", "OptionId");
+
+                    b.ToTable("CatalogItemPropertyValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CatalogItemPropertyValues_Shape", "([Number] IS NOT NULL AND [Text] IS NULL AND [Boolean] IS NULL AND [OptionId] IS NULL AND ([Upper] IS NULL OR [Number] <= [Upper])) OR ([Text] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Boolean] IS NULL AND [OptionId] IS NULL) OR ([Boolean] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Text] IS NULL AND [OptionId] IS NULL) OR ([OptionId] IS NOT NULL AND [Number] IS NULL AND [Upper] IS NULL AND [Text] IS NULL AND [Boolean] IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -241,6 +397,9 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Property<Guid?>("UpdatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("WorkScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -249,6 +408,8 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.HasIndex("IsActive");
 
                     b.HasIndex("ParentDepartmentId");
+
+                    b.HasIndex("WorkScheduleId");
 
                     b.ToTable("Departments", (string)null);
                 });
@@ -437,6 +598,101 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("EquipmentTypes", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.ItemPropertyDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CatalogItemClassId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("DecimalPlaces")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsBatchProperty")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaxLength")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Maximum")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.Property<decimal?>("Minimum")
+                        .HasPrecision(24, 6)
+                        .HasColumnType("decimal(24,6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogItemClassId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ItemPropertyDefinitions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ItemPropertyDefinitions_Settings", "([Type] = 'Number' AND [DecimalPlaces] BETWEEN 0 AND 6 AND [DecimalPlaces] IS NOT NULL AND [MaxLength] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL) OR ([Type] = 'Range' AND [DecimalPlaces] BETWEEN 0 AND 6 AND [DecimalPlaces] IS NOT NULL AND [MaxLength] IS NULL AND [Minimum] IS NOT NULL AND [Maximum] IS NOT NULL AND [Minimum] <= [Maximum]) OR ([Type] = 'Text' AND [MaxLength] BETWEEN 1 AND 4000 AND [MaxLength] IS NOT NULL AND [DecimalPlaces] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL) OR ([Type] IN ('Choice', 'Boolean') AND [MaxLength] IS NULL AND [DecimalPlaces] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.ItemPropertyOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId", "Label")
+                        .IsUnique();
+
+                    b.ToTable("ItemPropertyOptions", (string)null);
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.StorageLocation", b =>
@@ -919,6 +1175,385 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Organization_Singleton", "[Id] = 1");
                         });
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.ProductionCalendar", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nchar(2)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RegionCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsMain")
+                        .IsUnique()
+                        .HasFilter("[IsMain] = 1 AND [IsActive] = 1");
+
+                    b.ToTable("ProductionCalendars", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.ProductionCalendarDay", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DayType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("ProductionCalendarId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateOnly?>("TransferredFromDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductionCalendarId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("ProductionCalendarDays", (string)null);
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("CycleAnchorDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("CycleLengthDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CycleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("UseHolidayTemplate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UsePreHolidayTemplate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UseSaturdayTemplate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UseSundayTemplate")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Kind")
+                        .IsUnique()
+                        .HasFilter("[Kind] = 'Main' AND [Status] = 'Active'");
+
+                    b.ToTable("WorkSchedules", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkSchedules_CycleLength", "[CycleLengthDays] BETWEEN 1 AND 366");
+
+                            t.HasCheckConstraint("CK_WorkSchedules_CycleTypeLength", "([CycleType] = 'Daily' AND [CycleLengthDays] = 1) OR ([CycleType] = 'Weekly' AND [CycleLengthDays] = 7) OR [CycleType] = 'Custom'");
+                        });
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkScheduleDay", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DayNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TypeOfDay")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkScheduleId", "DayNumber", "TypeOfDay")
+                        .IsUnique();
+
+                    b.ToTable("WorkScheduleDays", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkScheduleDays_DayNumber", "[DayNumber] BETWEEN 0 AND 366");
+                        });
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkScheduleInterval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("CrossesMidnight")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time(0)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PaidMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time(0)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkScheduleDayId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkShiftId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkShiftId");
+
+                    b.HasIndex("WorkScheduleDayId", "WorkShiftId", "SequenceNumber")
+                        .IsUnique();
+
+                    b.ToTable("WorkScheduleIntervals", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkScheduleIntervals_PaidMinutes", "[PaidMinutes] BETWEEN 1 AND 1440");
+
+                            t.HasCheckConstraint("CK_WorkScheduleIntervals_Sequence", "[SequenceNumber] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive");
+
+                    b.ToTable("WorkShifts", (string)null);
                 });
 
             modelBuilder.Entity("LeanProd.Domain.Technologies.CatalogTechnology", b =>
@@ -2008,6 +2643,27 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.BatchPropertyValue", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItemBatch", null)
+                        .WithMany("Values")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.MasterData.ItemPropertyDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.MasterData.ItemPropertyOption", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId", "OptionId")
+                        .HasPrincipalKey("PropertyId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItem", b =>
                 {
                     b.HasOne("LeanProd.Domain.MasterData.UnitOfMeasure", "BaseUnitOfMeasure")
@@ -2025,6 +2681,15 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("BaseUnitOfMeasure");
 
                     b.Navigation("CatalogItemClass");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemBatch", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItem", null)
+                        .WithMany()
+                        .HasForeignKey("CatalogItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
@@ -2048,6 +2713,27 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("CatalogItem");
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemPropertyValue", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItem", null)
+                        .WithMany()
+                        .HasForeignKey("CatalogItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.MasterData.ItemPropertyDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.MasterData.ItemPropertyOption", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId", "OptionId")
+                        .HasPrincipalKey("PropertyId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.Department", b =>
                 {
                     b.HasOne("LeanProd.Domain.MasterData.Department", "ParentDepartment")
@@ -2055,7 +2741,14 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .HasForeignKey("ParentDepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("LeanProd.Domain.Scheduling.WorkSchedule", "WorkSchedule")
+                        .WithMany("Departments")
+                        .HasForeignKey("WorkScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("ParentDepartment");
+
+                    b.Navigation("WorkSchedule");
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.Equipment", b =>
@@ -2092,6 +2785,24 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Equipment");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.ItemPropertyDefinition", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.CatalogItemClass", null)
+                        .WithMany()
+                        .HasForeignKey("CatalogItemClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.MasterData.ItemPropertyOption", b =>
+                {
+                    b.HasOne("LeanProd.Domain.MasterData.ItemPropertyDefinition", null)
+                        .WithMany("Options")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LeanProd.Domain.MasterData.StorageLocation", b =>
@@ -2191,6 +2902,47 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("Organization");
 
                     b.Navigation("StorageLocation");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.ProductionCalendarDay", b =>
+                {
+                    b.HasOne("LeanProd.Domain.Scheduling.ProductionCalendar", "ProductionCalendar")
+                        .WithMany("Days")
+                        .HasForeignKey("ProductionCalendarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductionCalendar");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkScheduleDay", b =>
+                {
+                    b.HasOne("LeanProd.Domain.Scheduling.WorkSchedule", "WorkSchedule")
+                        .WithMany("Days")
+                        .HasForeignKey("WorkScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkSchedule");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkScheduleInterval", b =>
+                {
+                    b.HasOne("LeanProd.Domain.Scheduling.WorkScheduleDay", "WorkScheduleDay")
+                        .WithMany("Intervals")
+                        .HasForeignKey("WorkScheduleDayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeanProd.Domain.Scheduling.WorkShift", "WorkShift")
+                        .WithMany("Intervals")
+                        .HasForeignKey("WorkShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("WorkScheduleDay");
+
+                    b.Navigation("WorkShift");
                 });
 
             modelBuilder.Entity("LeanProd.Domain.Technologies.CatalogTechnology", b =>
@@ -2514,6 +3266,11 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("CostHistory");
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemBatch", b =>
+                {
+                    b.Navigation("Values");
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.CatalogItemClass", b =>
                 {
                     b.Navigation("Children");
@@ -2548,6 +3305,11 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
                     b.Navigation("Equipment");
                 });
 
+            modelBuilder.Entity("LeanProd.Domain.MasterData.ItemPropertyDefinition", b =>
+                {
+                    b.Navigation("Options");
+                });
+
             modelBuilder.Entity("LeanProd.Domain.MasterData.StorageLocation", b =>
                 {
                     b.Navigation("Addresses");
@@ -2579,6 +3341,28 @@ namespace LeanProd.Infrastructure.Common.Persistence.Migrations
             modelBuilder.Entity("LeanProd.Domain.Organizations.Organization", b =>
                 {
                     b.Navigation("Addresses");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.ProductionCalendar", b =>
+                {
+                    b.Navigation("Days");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkSchedule", b =>
+                {
+                    b.Navigation("Days");
+
+                    b.Navigation("Departments");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkScheduleDay", b =>
+                {
+                    b.Navigation("Intervals");
+                });
+
+            modelBuilder.Entity("LeanProd.Domain.Scheduling.WorkShift", b =>
+                {
+                    b.Navigation("Intervals");
                 });
 
             modelBuilder.Entity("LeanProd.Domain.Technologies.CatalogTechnology", b =>

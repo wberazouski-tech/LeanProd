@@ -20,6 +20,56 @@ public sealed record SaveCatalogTechnologyRequest(
     IReadOnlyCollection<SaveCatalogTechnologyStageTransitionRequest> StageTransitions,
     string? RowVersion);
 
+public sealed record SaveCatalogTechnologyHeaderRequest(
+    [StringLength(50)] string Code,
+    [Required, StringLength(200)] string Name,
+    Guid? CatalogItemId,
+    Guid? CatalogItemClassId,
+    int VersionNo,
+    DateOnly? ValidFrom,
+    DateOnly? ValidTo,
+    bool IsDefault,
+    [Required] CatalogTechnologyStatus? Status,
+    [StringLength(1000)] string? Description,
+    [Required] string RowVersion);
+
+public sealed record DeleteCatalogTechnologyRowRequest(Guid Id, [Required] string RowVersion);
+
+public sealed record SaveCatalogTechnologyStagesRequest(
+    IReadOnlyCollection<SaveCatalogTechnologyStageRowRequest> Stages,
+    IReadOnlyCollection<SaveCatalogTechnologyStageTransitionRequest> StageTransitions,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedStages,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedStageTransitions);
+
+public sealed record AddNewCatalogTechnologyStageRequest(
+    SaveCatalogTechnologyStageRowRequest Stage,
+    IReadOnlyCollection<SaveCatalogTechnologyStageTransitionRequest> StageTransitions);
+
+public sealed record SaveCatalogTechnologyStageRowRequest(
+    Guid Id,
+    Guid? TechnologyStageId,
+    [StringLength(50)] string TechnologyStageCode,
+    [Required, StringLength(200)] string TechnologyStageName,
+    [Range(1, int.MaxValue)] int StageNumber,
+    decimal? PlannedDurationMinutes,
+    Guid? TechnologyStageDepartmentId,
+    Guid? EquipmentId,
+    [StringLength(1000)] string? Description,
+    string? RowVersion);
+
+public sealed record SaveCatalogTechnologyMaterialsRequest(
+    IReadOnlyCollection<SaveCatalogTechnologyMaterialRequest> Materials,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedMaterials,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedRouteSteps);
+
+public sealed record SaveCatalogTechnologyOutputsRequest(
+    IReadOnlyCollection<SaveCatalogTechnologyStageOutputRequest> Outputs,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedOutputs);
+
+public sealed record SaveCatalogTechnologyOperationsRequest(
+    IReadOnlyCollection<SaveCatalogTechnologyOperationRequest> Operations,
+    IReadOnlyCollection<DeleteCatalogTechnologyRowRequest> DeletedOperations);
+
 public sealed record SaveCatalogTechnologyStageRequest(
     Guid? Id,
     Guid? TechnologyStageId,
@@ -32,12 +82,14 @@ public sealed record SaveCatalogTechnologyStageRequest(
     [StringLength(1000)] string? Description,
     IReadOnlyCollection<SaveCatalogTechnologyMaterialRequest> Materials,
     IReadOnlyCollection<SaveCatalogTechnologyStageOutputRequest> Outputs,
-    IReadOnlyCollection<SaveCatalogTechnologyOperationRequest> Operations);
+    IReadOnlyCollection<SaveCatalogTechnologyOperationRequest> Operations,
+    string? RowVersion = null);
 
 public sealed record SaveCatalogTechnologyStageTransitionRequest(
     Guid? Id,
     Guid FromCatalogTechnologyStageId,
-    Guid ToCatalogTechnologyStageId);
+    Guid ToCatalogTechnologyStageId,
+    string? RowVersion = null);
 
 public sealed record SaveCatalogTechnologyMaterialRequest(
     Guid? Id,
@@ -49,7 +101,8 @@ public sealed record SaveCatalogTechnologyMaterialRequest(
     decimal ScrapPercent,
     bool IsOptional,
     [StringLength(1000)] string? Note,
-    IReadOnlyCollection<SaveCatalogTechnologyMaterialSupplyRouteStepRequest> RouteSteps);
+    IReadOnlyCollection<SaveCatalogTechnologyMaterialSupplyRouteStepRequest> RouteSteps,
+    string? RowVersion = null);
 
 public sealed record SaveCatalogTechnologyStageOutputRequest(
     Guid? Id,
@@ -58,7 +111,8 @@ public sealed record SaveCatalogTechnologyStageOutputRequest(
     decimal Quantity,
     Guid ReceiptStorageLocationId,
     bool IsPrimary,
-    [StringLength(1000)] string? Note);
+    [StringLength(1000)] string? Note,
+    string? RowVersion = null);
 
 public sealed record SaveCatalogTechnologyOperationRequest(
     Guid? Id,
@@ -70,7 +124,8 @@ public sealed record SaveCatalogTechnologyOperationRequest(
     decimal RunMinutes,
     decimal LaborMinutes,
     decimal Workers,
-    [StringLength(1000)] string? Note);
+    [StringLength(1000)] string? Note,
+    string? RowVersion = null);
 
 public sealed record SaveCatalogTechnologyMaterialSupplyRouteStepRequest(
     Guid? Id,
@@ -80,7 +135,8 @@ public sealed record SaveCatalogTechnologyMaterialSupplyRouteStepRequest(
     bool IsConsumptionPoint,
     TechnologyMaterialMovementKind MovementKind,
     decimal LeadTimeMinutes,
-    [StringLength(1000)] string? Note);
+    [StringLength(1000)] string? Note,
+    string? RowVersion = null);
 
 public sealed record SaveTechnologyStageTemplateRequest(
     [StringLength(50)] string Code,

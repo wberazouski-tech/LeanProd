@@ -13,6 +13,8 @@ using LeanProd.Application.Features.Workforce;
 using LeanProd.Infrastructure.Features.Workforce;
 using LeanProd.Application.Features.Organizations;
 using LeanProd.Infrastructure.Features.Organizations;
+using LeanProd.Application.Features.Scheduling;
+using LeanProd.Infrastructure.Features.Scheduling;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
@@ -54,10 +56,12 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<IInternationalUnitCatalog, InternationalUnitCatalog>();
         services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
         services.AddScoped<ICatalogItemService, CatalogItemService>();
+        services.AddScoped<IItemPropertyService, ItemPropertyService>();
         services.AddScoped<ICatalogTechnologyService, CatalogTechnologyService>();
         services.AddScoped<IEquipmentService, EquipmentService>();
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IAddressService, AddressService>();
+        services.AddScoped<ISchedulingService, SchedulingService>();
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(options => options.SigningKey.Length >= 64, "JWT signing key must be at least 64 characters.")
@@ -81,3 +85,5 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 }
+
+

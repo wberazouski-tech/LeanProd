@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -11,7 +12,7 @@ public sealed record SaveCatalogItemRequest(
     LeanProd.Domain.MasterData.CatalogItemType Type,
     Guid BaseUnitOfMeasureId,
     Guid CatalogItemClassId,
-    decimal Cost,
+    [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal Cost,
     [StringLength(1000)] string? Description,
     string? RowVersion);
 
@@ -30,6 +31,7 @@ public sealed record SaveDepartmentRequest(
     [Required, StringLength(200)] string Name,
     [StringLength(1000)] string? Description,
     Guid? ParentDepartmentId,
+    Guid? WorkScheduleId,
     string? RowVersion);
 
 public sealed record SaveStorageLocationRequest(

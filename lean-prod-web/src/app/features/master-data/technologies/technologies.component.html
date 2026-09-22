@@ -1,13 +1,14 @@
+<fieldset class="master-data-request" [disabled]="requests.saving() || isSaving">
 <section class="technology-page">
   <h1>{{ editorTitle }}</h1>
   <div class="master-toolbar">
     <div class="toolbar-actions">
       @if (draft) {
       @if (canManage) {
-      <button type="button" [disabled]="!canSaveDraft()" (click)="save()">{{ 'common.save' | transloco }}</button>
-      @if (selected?.isActive) { <button type="button" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
+      <button type="button" [disabled]="!canSaveHeader() || isSaving" class="primary-action" (click)="save()">{{ 'technologies.saveHeader' | transloco }}</button>
+      @if (selected?.isActive) { <button type="button" [disabled]="hasUnsavedChanges || isSaving" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
         }}</button> }
-      @else if (selected) { <button type="button" (click)="setActive(true)">{{ 'admin.activate' | transloco }}</button>
+      @else if (selected) { <button type="button" [disabled]="hasUnsavedChanges || isSaving" (click)="setActive(true)">{{ 'admin.activate' | transloco }}</button>
       }
       }
       <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
@@ -16,8 +17,8 @@
       @if (canManage) {
       <button type="button" (click)="create()">{{ 'technologies.add' | transloco }}</button>
       }
-      <app-table-actions [visible]="canManage" [selected]="!!selected" (editRequested)="editSelected()"
-        (copyRequested)="copy()" />
+      <button type="button" [disabled]="!selectedTechnologyId" (click)="editSelected()">{{ 'common.show' | transloco }}</button><app-table-actions [visible]="canManage" [selected]="!!selectedTechnologyId" (editRequested)="editSelected()"
+        (copyRequested)="copySelectedFromList()" />
       }
     </div>
     @if (!draft) {
@@ -36,7 +37,7 @@
   <div class="technology-workspace" [class.editor-mode]="!!draft">
     @if (!draft) {
     <section class="technology-list">
-      <app-page-state [state]="state" />
+      <app-page-state [state]="state" (retry)="load()" />
       <div class="master-data-table-wrap">
         <table class="master-data-table">
           <thead>
@@ -61,7 +62,7 @@
               <td [attr.colspan]="canManage ? 5 : 4">{{ 'common.noResults' | transloco }}</td>
             </tr> }
             @for (item of sortedItems; track item.id) {
-            <tr (click)="select(item)" [class.selected-row]="selectedTechnologyId === item.id"
+            <tr appKeyboardRow (click)="select(item)" [class.selected-row]="selectedTechnologyId === item.id"
               [attr.aria-selected]="selectedTechnologyId === item.id">
               <td>{{ item.code }}</td>
               <td>{{ item.name }}</td>
@@ -86,8 +87,8 @@
     }
 
     @if (draft) {
-    <section class="technology-editor">
-      <app-page-state [state]="refsState" />
+    <section class="technology-editor">@if (canManage && !canSaveHeader()) { <p class="error" role="status">{{ 'masterDataReview.invalidTechnology' | transloco }}</p> }
+      <app-page-state [state]="refsState" (retry)="loadRefs()" />@if (refsHasMore) { <button type="button" [disabled]="refsState === 'loading'" (click)="loadRefs(true)">{{ 'masterDataReview.moreReferences' | transloco }}</button> }
         <div class="editor-header-first-line">
           <label class="technology-code-field"><span>{{ 'masterData.code' | transloco }}</span>
             <input [(ngModel)]="draft.code" maxlength="8" size="8" [disabled]="!canManage" />
@@ -108,7 +109,7 @@
             'technologies.default' | transloco }}
           </label>
         </div>
-        <div class="editor-header">
+        <div class="editor-header identity-details">
         <label class="target-field" [class.create-target]="!selected">{{ 'technologies.targetType' | transloco }}
           <select [ngModel]="targetKind()" (ngModelChange)="changeTarget($event)" [disabled]="!canManage">
             <option value="item">{{ 'technologies.itemTarget' | transloco }}</option>
@@ -160,28 +161,45 @@
         }
       </div>
 
-      <div class="technology-detail-grid" [class.materials-tab]="activeEditorTab === 'materials'">
+      <div #stageLayout class="technology-detail-grid" [class.materials-tab]="activeEditorTab === 'materials'"
+        [style.--stages-list-width]="stagePanelWidth + '%'">
         <section class="stages-panel">
           <div class="panel-title stages-toolbar">
             @if (canManage) {
-            <button type="button" (click)="openStageEditor()">{{ 'technologyStageDialog.addNew' | transloco }}</button>
-            <button type="button" (click)="openStageSelection()">{{ 'technologyStageDialog.addExisting' | transloco }}</button>
+            <button type="button" [disabled]="isSaving" (click)="openStageEditor()">{{ 'technologyStageDialog.addNew' | transloco }}</button>
+            <button type="button" [disabled]="isSaving" (click)="openStageSelection()">{{ 'technologyStageDialog.addExisting' | transloco }}</button>
             }
           </div>
           <div class="master-data-table-wrap">
-            <table class="master-data-table stage-overview-table">
+            <table class="master-data-table stage-overview-table" [style.width.px]="stageTableWidth">
               <colgroup>
-                <col class="stage-number-column" />
-                <col class="next-stage-numbers-column" />
-                <col class="stage-name-column" />
-                <col />
+                <col [style.width.px]="stageColumnWidths[0]" />
+                <col [style.width.px]="stageColumnWidths[1]" />
+                <col [style.width.px]="stageColumnWidths[2]" />
+                <col [style.width.px]="stageColumnWidths[3]" />
               </colgroup>
               <thead>
                 <tr>
-                  <th>{{ 'technologyStageGrid.stageNumber' | transloco }}</th>
-                  <th>{{ 'technologyStageGrid.nextStageNumbers' | transloco }}</th>
-                  <th>{{ 'admin.name' | transloco }}</th>
-                  <th>{{ 'masterData.description' | transloco }}</th>
+                  <th>{{ 'technologyStageGrid.stageNumber' | transloco }}<span class="column-resizer" role="separator"
+                    tabindex="0" aria-orientation="vertical" [attr.aria-label]="'technologies.resizeColumn' | transloco"
+                    (pointerdown)="startStageColumnResize($event, 0)" (pointermove)="continueResize($event)"
+                    (pointerup)="finishResize($event)" (pointercancel)="finishResize($event)"
+                    (keydown)="resizeStageColumnByKeyboard($event, 0)"></span></th>
+                  <th>{{ 'technologyStageGrid.nextStageNumbers' | transloco }}<span class="column-resizer" role="separator"
+                    tabindex="0" aria-orientation="vertical" [attr.aria-label]="'technologies.resizeColumn' | transloco"
+                    (pointerdown)="startStageColumnResize($event, 1)" (pointermove)="continueResize($event)"
+                    (pointerup)="finishResize($event)" (pointercancel)="finishResize($event)"
+                    (keydown)="resizeStageColumnByKeyboard($event, 1)"></span></th>
+                  <th>{{ 'admin.name' | transloco }}<span class="column-resizer" role="separator" tabindex="0"
+                    aria-orientation="vertical" [attr.aria-label]="'technologies.resizeColumn' | transloco"
+                    (pointerdown)="startStageColumnResize($event, 2)" (pointermove)="continueResize($event)"
+                    (pointerup)="finishResize($event)" (pointercancel)="finishResize($event)"
+                    (keydown)="resizeStageColumnByKeyboard($event, 2)"></span></th>
+                  <th>{{ 'masterData.description' | transloco }}<span class="column-resizer" role="separator"
+                    tabindex="0" aria-orientation="vertical" [attr.aria-label]="'technologies.resizeColumn' | transloco"
+                    (pointerdown)="startStageColumnResize($event, 3)" (pointermove)="continueResize($event)"
+                    (pointerup)="finishResize($event)" (pointercancel)="finishResize($event)"
+                    (keydown)="resizeStageColumnByKeyboard($event, 3)"></span></th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +207,7 @@
                 <tr class="empty-stage-row"><td colspan="4"></td></tr>
                 } @else {
                 @for (stage of draft.stages; track stage.id) {
-                <tr tabindex="0" [class.selected-row]="selectedStageId === stage.id"
+                <tr appKeyboardRow tabindex="0" [class.selected-row]="selectedStageId === stage.id"
                   (click)="selectStage(stage)" (keydown.enter)="selectStage(stage)" (keydown.space)="selectStage(stage)">
                   <td>{{ stage.stageNumber }}</td>
                   <td>{{ nextStageNumbers(stage) }}</td>
@@ -203,12 +221,19 @@
           </div>
         </section>
 
+        <div class="stage-layout-resizer" role="separator" tabindex="0" aria-orientation="vertical"
+          [attr.aria-label]="'technologies.resizePanels' | transloco"
+          (pointerdown)="startPanelResize($event, stageLayout)" (pointermove)="continueResize($event)"
+          (pointerup)="finishResize($event)" (pointercancel)="finishResize($event)"
+          (keydown)="resizePanelsByKeyboard($event)"></div>
+
         @if (selectedStage; as stage) {
         <section class="stage-editor">
           <div class="panel-title stage-editor-title">
             <strong>{{ 'technologies.stage' | transloco }} {{ stage.stageNumber }}</strong>
             @if (canManage) {
             <span class="panel-actions">
+              <button type="button" [disabled]="!canSaveStages() || isSaving" (click)="saveStages()">{{ 'technologies.saveStages' | transloco }}</button>
               <button type="button" [disabled]="isFirstStage(stage)" (click)="moveStage(stage, -1)"
                 [title]="'technologies.moveStageUp' | transloco"
                 [attr.aria-label]="'technologies.moveStageUp' | transloco">↑</button>
@@ -224,13 +249,40 @@
             <label>{{ 'technologies.stage' | transloco }}
               <input [value]="stage.technologyStageName" readonly />
             </label>
-            <label>{{ 'technologies.stage' | transloco }} №<input type="number" min="1" step="10"
-                [(ngModel)]="stage.stageNumber" [disabled]="!canManage" /></label>
-            <label>{{ 'technologies.duration' | transloco }}<input type="number" min="0" step="0.001"
-                [(ngModel)]="stage.plannedDurationMinutes" [disabled]="!canManage" /></label>
             <label>{{ 'masterData.department' | transloco }}
               <input [value]="stage.technologyStageDepartmentName ?? ''" readonly />
             </label>
+            <label>{{ 'technologies.stage' | transloco }} №<input type="number" min="1" step="10"
+                [(ngModel)]="stage.stageNumber" [disabled]="!canManage" /></label>
+            <div class="stage-field next-stage-field">
+              <span class="stage-field-label">{{ 'technologyStageGrid.nextStageNumbers' | transloco }}</span>
+              <div class="next-stage-control">
+                <select [(ngModel)]="nextStageCandidateId"
+                  [disabled]="!canManage || availableNextStages(stage).length === 0">
+                  <option value="">-</option>
+                  @for (nextStage of availableNextStages(stage); track nextStage.id) {
+                  <option [value]="nextStage.id">{{ nextStage.stageNumber }}. {{ nextStage.technologyStageName }}</option>
+                  }
+                </select>
+                <button type="button" [disabled]="!canManage || !nextStageCandidateId" (click)="addNextStage(stage)">
+                  {{ 'technologyStageDialog.addExisting' | transloco }}
+                </button>
+              </div>
+              @if (nextStages(stage).length) {
+              <div class="next-stage-tags">
+                @for (nextStage of nextStages(stage); track nextStage.id) {
+                <span>{{ nextStage.stageNumber }}. {{ nextStage.technologyStageName }}
+                  @if (canManage) {
+                  <button type="button" (click)="removeNextStage(stage, nextStage)"
+                    [attr.aria-label]="('common.delete' | transloco) + ' ' + nextStage.technologyStageName">×</button>
+                  }
+                </span>
+                }
+              </div>
+              }
+            </div>
+            <label>{{ 'technologies.duration' | transloco }}<input type="number" min="0" step="0.001"
+                [(ngModel)]="stage.plannedDurationMinutes" [disabled]="!canManage" /></label>
             <label>{{ 'equipment.title' | transloco }}
               <select [(ngModel)]="stage.equipmentId" [disabled]="!canManage">
                 <option [ngValue]="null">-</option>
@@ -239,14 +291,18 @@
             </label>
           </div>
 
-          <div class="subsection materials-content">
+          <div class="subsection materials-content material-lines">
             <div class="panel-title">
-              <strong>{{ 'technologies.materials' | transloco }}</strong>
-              @if (canManage) { <button type="button" (click)="addMaterial(stage)">{{ 'technologies.addMaterial' |
-                transloco }}</button> }
+              <strong>{{ 'technologies.materials' | transloco }} <span class="count-badge">{{ stage.materials.length }}</span></strong>
+              @if (canManage) {
+              <span class="panel-actions">
+                <button type="button" [disabled]="isSaving || !draft.id" class="primary-action" (click)="saveMaterials()">{{ 'technologies.saveMaterials' | transloco }}</button>
+                <button type="button" (click)="addMaterial(stage)">{{ 'technologies.addMaterial' | transloco }}</button>
+              </span>
+              }
             </div>
             <div class="dense-table">
-              <table>
+              <table class="materials-table">
                 <thead>
                   <tr>
                     <th>{{ 'catalogItems.section' | transloco }}</th>
@@ -259,24 +315,26 @@
                 </thead>
                 <tbody>
                   @for (material of stage.materials; track material.id) {
-                  <tr [class.selected-row]="selectedMaterialId === material.id"
+                  <tr appKeyboardRow [class.selected-row]="selectedMaterialId === material.id"
                     (click)="selectedMaterialId = material.id">
-                    <td><select [(ngModel)]="material.catalogItemId" [disabled]="!canManage">@for (item of catalogItems;
+                    <td><select [(ngModel)]="material.catalogItemId" [attr.aria-label]="'catalogItems.section' | transloco" [disabled]="!canManage">@for (item of catalogItems;
                         track item.id) { <option [value]="item.id">{{ item.workingName }}</option> }</select></td>
-                    <td><input type="number" min="0.001" step="0.001" [(ngModel)]="material.quantity"
+                    <td><input type="number" min="0.001" step="0.001" [(ngModel)]="material.quantity" [attr.aria-label]="'technologies.quantity' | transloco"
                         [disabled]="!canManage" /></td>
-                    <td><select [(ngModel)]="material.unitOfMeasureId" [disabled]="!canManage">@for (unit of units;
+                    <td><select [(ngModel)]="material.unitOfMeasureId" [attr.aria-label]="'units.title' | transloco" [disabled]="!canManage">@for (unit of units;
                         track unit.id) { <option [value]="unit.id">{{ unit.displayName }}</option> }</select></td>
-                    <td><select [(ngModel)]="material.consumptionTrackingMode" [disabled]="!canManage">@for (mode of
+                    <td><select [(ngModel)]="material.consumptionTrackingMode" [attr.aria-label]="'technologies.tracking' | transloco" [disabled]="!canManage">@for (mode of
                         trackingModes; track mode) { <option [value]="mode">{{ ('technologyTrackingModes.' + mode) |
                           transloco }}</option> }</select></td>
-                    <td><select [(ngModel)]="material.defaultSourceStorageLocationId" [disabled]="!canManage">
+                    <td><select [(ngModel)]="material.defaultSourceStorageLocationId" [attr.aria-label]="'technologies.source' | transloco" [disabled]="!canManage">
                         <option [ngValue]="null">-</option>@for (storage of storages; track storage.id) { <option
                           [value]="storage.id">{{ storage.code }} - {{ storage.name }}</option> }
                       </select></td>
-                    <td>@if (canManage) { <button type="button" (click)="removeMaterial(stage, material)">{{
+                    <td>@if (canManage) { <button type="button" class="remove-line" (click)="$event.stopPropagation(); removeMaterial(stage, material)">{{
                         'common.delete' | transloco }}</button> }</td>
                   </tr>
+                  } @empty {
+                  <tr><td colspan="6" class="empty-hint">{{ 'common.noResults' | transloco }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -286,12 +344,12 @@
           @if (selectedMaterial; as material) {
           <div class="subsection materials-content">
             <div class="panel-title">
-              <strong>{{ 'technologies.routes' | transloco }}</strong>
+              <strong>{{ 'technologies.routes' | transloco }} <span class="route-context">{{ materialItemName(material.catalogItemId) }}</span></strong>
               @if (canManage) { <button type="button" (click)="addRouteStep(material)">{{ 'technologies.addRouteStep' |
                 transloco }}</button> }
             </div>
             <div class="dense-table">
-              <table>
+              <table class="routes-table">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -306,26 +364,26 @@
                   @for (route of material.routeSteps; track route.id) {
                   <tr>
                     <td>{{ route.lineNo }}</td>
-                    <td><select [(ngModel)]="route.fromStorageLocationId" [disabled]="!canManage">@for (storage of
+                    <td><select [(ngModel)]="route.fromStorageLocationId" [attr.aria-label]="'technologies.from' | transloco" [disabled]="!canManage">@for (storage of
                         storages; track storage.id) { <option [value]="storage.id">{{ storage.code }} - {{ storage.name
                           }}</option> }</select></td>
                     <td>
-                      <select [(ngModel)]="route.isConsumptionPoint" [disabled]="!canManage">
+                      <select [(ngModel)]="route.isConsumptionPoint" [attr.aria-label]="'technologies.to' | transloco" [disabled]="!canManage">
                         <option [ngValue]="true">{{ 'technologies.consumptionPoint' | transloco }}</option>
                         <option [ngValue]="false">{{ 'technologies.storagePoint' | transloco }}</option>
                       </select>
                       @if (!route.isConsumptionPoint) {
-                      <select [(ngModel)]="route.toStorageLocationId" [disabled]="!canManage">@for (storage of storages;
+                      <select [(ngModel)]="route.toStorageLocationId" [attr.aria-label]="'technologies.to' | transloco" [disabled]="!canManage">@for (storage of storages;
                         track storage.id) { <option [value]="storage.id">{{ storage.code }} - {{ storage.name }}
                         </option> }</select>
                       }
                     </td>
-                    <td><select [(ngModel)]="route.movementKind" [disabled]="!canManage">@for (kind of movementKinds;
+                    <td><select [(ngModel)]="route.movementKind" [attr.aria-label]="'technologies.movement' | transloco" [disabled]="!canManage">@for (kind of movementKinds;
                         track kind) { <option [value]="kind">{{ ('technologyMovementKinds.' + kind) | transloco }}
                         </option> }</select></td>
-                    <td><input type="number" min="0" step="0.001" [(ngModel)]="route.leadTimeMinutes"
+                    <td><input type="number" min="0" step="0.001" [(ngModel)]="route.leadTimeMinutes" [attr.aria-label]="'technologies.leadTime' | transloco"
                         [disabled]="!canManage" /></td>
-                    <td>@if (canManage) { <button type="button" (click)="removeRouteStep(material, route.id)">{{
+                    <td>@if (canManage) { <button type="button" class="remove-line" (click)="removeRouteStep(material, route.id)">{{
                         'common.delete' | transloco }}</button> }</td>
                   </tr>
                   }
@@ -335,53 +393,130 @@
           </div>
           }
 
-          <div class="subsection split stage-configuration">
+          <div class="subsection stage-sections stage-configuration">
             <section>
               <div class="panel-title">
                 <strong>{{ 'technologies.outputs' | transloco }}</strong>
-                @if (canManage) { <button type="button" (click)="addOutput(stage)">{{ 'technologies.addOutput' |
-                  transloco }}</button> }
+                @if (canManage) {
+                <span class="panel-actions">
+                  <button type="button" [disabled]="isSaving || !draft.id" (click)="saveOutputs()">{{ 'technologies.saveOutputs' | transloco }}</button>
+                  <button type="button" [disabled]="!productItems.length || !units.length || !storages.length"
+                    (click)="addOutput(stage)">{{ 'technologies.addOutput' | transloco }}</button>
+                </span>
+                }
               </div>
-              @for (output of stage.outputs; track output.id) {
-              <div class="line-editor">
-                <select [(ngModel)]="output.catalogItemId" [disabled]="!canManage">@for (item of productItems; track
-                  item.id) { <option [value]="item.id">{{ item.workingName }}</option> }</select>
-                <input type="number" min="0.001" step="0.001" [(ngModel)]="output.quantity" [disabled]="!canManage" />
-                <select [(ngModel)]="output.unitOfMeasureId" [disabled]="!canManage">@for (unit of units; track unit.id)
-                  { <option [value]="unit.id">{{ unit.displayName }}</option> }</select>
-                <select [(ngModel)]="output.receiptStorageLocationId" [disabled]="!canManage">@for (storage of storages;
-                  track storage.id) { <option [value]="storage.id">{{ storage.code }} - {{ storage.name }}</option>
-                  }</select>
-                <label class="check-label"><input type="checkbox" [(ngModel)]="output.isPrimary"
-                    [disabled]="!canManage" />{{ 'technologies.primaryOutput' | transloco }}</label>
-                @if (canManage) { <button type="button" (click)="removeOutput(stage, output.id)">{{ 'common.delete' |
-                  transloco }}</button> }
+              <div class="dense-table output-table-wrap">
+                <table class="output-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'technologies.outputItem' | transloco }}</th>
+                      <th>{{ 'technologies.quantity' | transloco }}</th>
+                      <th>{{ 'technologies.unitOfMeasure' | transloco }}</th>
+                      <th>{{ 'technologies.receiptStorage' | transloco }}</th>
+                      <th class="output-primary-column">{{ 'technologies.primaryOutput' | transloco }}</th>
+                      @if (canManage) { <th class="output-actions-column">{{ 'common.actions' | transloco }}</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (output of stage.outputs; track output.id) {
+                    <tr>
+                      <td>
+                        <div class="output-product-control">
+                          <input type="text" list="technology-output-products" [ngModel]="outputItemText(output)"
+                            (ngModelChange)="onOutputItemInput(output, $event)" [readonly]="!canManage"
+                            [attr.aria-label]="'technologies.outputItem' | transloco" autocomplete="off" />
+                          <button type="button" class="view-item-button" [disabled]="!output.catalogItemId"
+                            (click)="openCatalogItemViewer(output.catalogItemId)"
+                            [title]="'technologies.viewItem' | transloco"
+                            [attr.aria-label]="'technologies.viewItem' | transloco">↗</button>
+                        </div>
+                      </td>
+                      <td><input type="number" min="0.001" step="0.001" [(ngModel)]="output.quantity"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.quantity' | transloco" /></td>
+                      <td><select [(ngModel)]="output.unitOfMeasureId" [disabled]="!canManage"
+                          [attr.aria-label]="'technologies.unitOfMeasure' | transloco">
+                          @for (unit of units; track unit.id) {
+                          <option [value]="unit.id">{{ unit.displayName }}</option>
+                          }
+                        </select></td>
+                      <td><select [(ngModel)]="output.receiptStorageLocationId" [disabled]="!canManage"
+                          [attr.aria-label]="'technologies.receiptStorage' | transloco">
+                          @for (storage of storages; track storage.id) {
+                          <option [value]="storage.id">{{ storage.code }} - {{ storage.name }}</option>
+                          }
+                        </select></td>
+                      <td class="output-primary-column"><input type="checkbox" [(ngModel)]="output.isPrimary"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.primaryOutput' | transloco" /></td>
+                      @if (canManage) {
+                      <td class="output-actions-column"><button type="button"
+                          (click)="removeOutput(stage, output.id)">{{ 'common.delete' | transloco }}</button></td>
+                      }
+                    </tr>
+                    } @empty {
+                    <tr class="output-empty-row">
+                      <td [attr.colspan]="canManage ? 6 : 5">&nbsp;</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+                <datalist id="technology-output-products">
+                  @for (item of productItems; track item.id) {
+                  <option [value]="outputItemOptionLabel(item)"></option>
+                  }
+                </datalist>
               </div>
-              }
             </section>
             <section>
               <div class="panel-title">
                 <strong>{{ 'technologies.operations' | transloco }}</strong>
-                @if (canManage) { <button type="button" (click)="addOperation(stage)">{{ 'technologies.addOperation' |
-                  transloco }}</button> }
+                @if (canManage) {
+                <span class="panel-actions">
+                  <button type="button" [disabled]="isSaving || !draft.id" (click)="saveOperations()">{{ 'technologies.saveOperations' | transloco }}</button>
+                  <button type="button" [disabled]="isSaving" (click)="addOperation(stage)">{{ 'technologies.addOperation' | transloco }}</button>
+                </span>
+                }
               </div>
-              @for (operation of stage.operations; track operation.id) {
-              <div class="line-editor operations-line">
-                <input [(ngModel)]="operation.code" [placeholder]="'masterData.code' | transloco"
-                  [disabled]="!canManage" />
-                <input [(ngModel)]="operation.name" [placeholder]="'admin.name' | transloco" [disabled]="!canManage" />
-                <input type="number" min="0" step="0.001" [(ngModel)]="operation.setupMinutes"
-                  [title]="'technologies.setupMinutes' | transloco" [disabled]="!canManage" />
-                <input type="number" min="0" step="0.001" [(ngModel)]="operation.runMinutes"
-                  [title]="'technologies.runMinutes' | transloco" [disabled]="!canManage" />
-                <input type="number" min="0" step="0.001" [(ngModel)]="operation.laborMinutes"
-                  [title]="'technologies.laborMinutes' | transloco" [disabled]="!canManage" />
-                <input type="number" min="0.001" step="0.001" [(ngModel)]="operation.workers"
-                  [title]="'technologies.workers' | transloco" [disabled]="!canManage" />
-                @if (canManage) { <button type="button" (click)="removeOperation(stage, operation.id)">{{
-                  'common.delete' | transloco }}</button> }
+              <div class="dense-table operation-table-wrap">
+                <table class="operation-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'masterData.code' | transloco }}</th>
+                      <th>{{ 'admin.name' | transloco }}</th>
+                      <th>{{ 'technologies.setupMinutes' | transloco }}</th>
+                      <th>{{ 'technologies.runMinutes' | transloco }}</th>
+                      <th>{{ 'technologies.laborMinutes' | transloco }}</th>
+                      <th>{{ 'technologies.workers' | transloco }}</th>
+                      @if (canManage) { <th class="operation-actions-column">{{ 'common.actions' | transloco }}</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (operation of stage.operations; track operation.id) {
+                    <tr>
+                      <td><input [(ngModel)]="operation.code" [disabled]="!canManage"
+                          [attr.aria-label]="'masterData.code' | transloco" /></td>
+                      <td><input [(ngModel)]="operation.name" [disabled]="!canManage"
+                          [attr.aria-label]="'admin.name' | transloco" /></td>
+                      <td><input type="number" min="0" step="0.001" [(ngModel)]="operation.setupMinutes"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.setupMinutes' | transloco" /></td>
+                      <td><input type="number" min="0" step="0.001" [(ngModel)]="operation.runMinutes"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.runMinutes' | transloco" /></td>
+                      <td><input type="number" min="0" step="0.001" [(ngModel)]="operation.laborMinutes"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.laborMinutes' | transloco" /></td>
+                      <td><input type="number" min="0.001" step="0.001" [(ngModel)]="operation.workers"
+                          [disabled]="!canManage" [attr.aria-label]="'technologies.workers' | transloco" /></td>
+                      @if (canManage) {
+                      <td class="operation-actions-column"><button type="button"
+                          (click)="removeOperation(stage, operation.id)">{{ 'common.delete' | transloco }}</button></td>
+                      }
+                    </tr>
+                    } @empty {
+                    <tr class="operation-empty-row">
+                      <td [attr.colspan]="canManage ? 7 : 6">&nbsp;</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
-              }
             </section>
           </div>
         </section>
@@ -398,13 +533,21 @@
 
   @if (canManage && stageEditorDraft; as stage) {
   <div class="modal-layer" (click)="closeStageEditor()">
-    <dialog open class="stage-dialog" (click)="$event.stopPropagation()">
+    <dialog appModal (appModalClosed)="closeStageEditor()" class="stage-dialog" (click)="$event.stopPropagation()">
       <section class="editor">
         <h2>{{ 'technologyStageDialog.title' | transloco }}</h2>
         <form class="stage-dialog-form" (ngSubmit)="saveStageEditor()">
           <label class="wide">{{ 'technologies.stage' | transloco }}
             <input type="text" [(ngModel)]="stage.technologyStageName" name="technologyStageName"
               (ngModelChange)="onStageEditorNameInput($event)" autocomplete="off" />
+          </label>
+          <label>{{ 'masterData.department' | transloco }}
+            <select [(ngModel)]="stage.technologyStageDepartmentId" name="technologyStageDepartmentId">
+              <option [ngValue]="null">-</option>
+              @for (item of departments; track item.id) {
+              <option [value]="item.id">{{ item.code }} - {{ item.name }}</option>
+              }
+            </select>
           </label>
           <label>{{ 'technologyStageGrid.stageNumber' | transloco }}
             <input type="number" min="1" step="10" [(ngModel)]="stage.stageNumber" name="stageNumber" />
@@ -415,14 +558,6 @@
           <label>{{ 'technologies.duration' | transloco }}
             <input type="number" min="0" step="0.001" [(ngModel)]="stage.plannedDurationMinutes"
               name="plannedDurationMinutes" />
-          </label>
-          <label>{{ 'masterData.department' | transloco }}
-            <select [(ngModel)]="stage.technologyStageDepartmentId" name="technologyStageDepartmentId">
-              <option [ngValue]="null">-</option>
-              @for (item of departments; track item.id) {
-              <option [value]="item.id">{{ item.code }} - {{ item.name }}</option>
-              }
-            </select>
           </label>
           <label>{{ 'equipment.title' | transloco }}
             <select [(ngModel)]="stage.equipmentId" name="equipmentId">
@@ -436,7 +571,7 @@
             <textarea [(ngModel)]="stage.description" name="description"></textarea>
           </label>
           <div class="stage-dialog-actions">
-            <button type="submit" [disabled]="!canSaveStageEditor">{{ 'common.save' | transloco }}</button>
+            <button type="submit" [disabled]="!canSaveStageEditor || isSaving">{{ 'common.save' | transloco }}</button>
             <button type="button" (click)="closeStageEditor()">{{ 'common.close' | transloco }}</button>
           </div>
         </form>
@@ -447,7 +582,7 @@
 
   @if (stageDuplicateConfirmationOpen) {
   <div class="modal-layer stage-confirmation-layer" (click)="cancelStageEditorDuplicate()">
-    <dialog open class="stage-confirmation-dialog" (click)="$event.stopPropagation()">
+    <dialog appModal (appModalClosed)="cancelStageEditorDuplicate()" class="stage-confirmation-dialog" (click)="$event.stopPropagation()">
       <h2>{{ 'technologyStageDialog.duplicateTitle' | transloco }}</h2>
       <p>{{ 'technologyStageDialog.duplicateMessage' | transloco }}</p>
       <div class="stage-dialog-actions">
@@ -460,7 +595,7 @@
 
   @if (canManage && stageSelectionOpen) {
   <div class="modal-layer" (click)="closeStageSelection()">
-    <dialog open class="stage-dialog stage-selection-dialog" (click)="$event.stopPropagation()">
+    <dialog appModal (appModalClosed)="closeStageSelection()" class="stage-dialog stage-selection-dialog" (click)="$event.stopPropagation()">
       <section class="editor">
         <h2>{{ 'technologyStageDialog.selectTitle' | transloco }}</h2>
         <label>{{ 'technologies.stage' | transloco }}
@@ -478,4 +613,64 @@
     </dialog>
   </div>
   }
+
+  @if (viewedCatalogItem; as item) {
+  <div class="modal-layer" (click)="closeCatalogItemViewer()">
+    <dialog appModal (appModalClosed)="closeCatalogItemViewer()" class="stage-dialog item-view-dialog" (click)="$event.stopPropagation()">
+      <section class="editor">
+        <h2>{{ 'technologies.itemDetails' | transloco }}</h2>
+        <form class="inline-grid item-view-form">
+          <label>{{ 'catalogItems.workingName' | transloco }}
+            <input [value]="item.workingName" readonly />
+          </label>
+          <label>{{ 'catalogItems.article' | transloco }}
+            <input [value]="item.articleNumber ?? ''" readonly />
+          </label>
+          <label class="wide">{{ 'catalogItems.fullName' | transloco }}
+            <input [value]="item.fullName ?? ''" readonly />
+          </label>
+          <label>{{ 'catalogItems.baseUnit' | transloco }}
+            <input [value]="item.baseUnitName + (item.baseUnitSymbol ? ' (' + item.baseUnitSymbol + ')' : '')" readonly />
+          </label>
+          <label>{{ 'catalogItemClasses.class' | transloco }}
+            <input [value]="item.catalogItemClassCode + ' — ' + item.catalogItemClassName" readonly />
+          </label>
+          <label>{{ 'catalogItems.cost' | transloco }}
+            <input [value]="item.cost" readonly />
+          </label>
+          <label>{{ 'admin.status' | transloco }}
+            <input [value]="(item.isActive ? 'admin.active' : 'admin.inactive') | transloco" readonly />
+          </label>
+          <label class="wide">{{ 'masterData.description' | transloco }}
+            <textarea [value]="item.description ?? ''" readonly></textarea>
+          </label>
+          <div class="stage-dialog-actions">
+            <button type="button" (click)="closeCatalogItemViewer()">{{ 'common.close' | transloco }}</button>
+          </div>
+        </form>
+      </section>
+    </dialog>
+  </div>
+  }
 </section>
+
+
+@if (!draft) {<div class="load-more"><span>{{ 'masterDataReview.loaded' | transloco }}: {{ items.length }} / {{ total }}</span>@if (items.length < total) { <button type="button" [disabled]="state === 'loading'" (click)="load(true)">{{ 'masterDataReview.loadMore' | transloco }}</button> }<small>{{ 'masterDataReview.loadedOnly' | transloco }}</small></div>}
+</fieldset>
+@if (requests.saving()) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }
+
+@if (leaveDialogOpen) {
+  <dialog appModal (appModalClosed)="finishLeave(false)" class="leave-dialog" aria-labelledby="leave-title">
+    <h2 id="leave-title">{{ 'technologyLeave.title' | transloco }}</h2>
+    <p>{{ 'technologyLeave.message' | transloco }}</p>
+    @if (message) { <p class="error" role="alert">{{ message }}</p> }
+    @if (isSaving) { <p role="status">{{ 'pageState.saving' | transloco }}</p> }
+    <div class="panel-actions">
+      @if (canManage) {
+        <button type="button" [disabled]="isSaving || requests.saving()" (click)="saveAndLeave()">{{ 'technologyLeave.save' | transloco }}</button>
+      }
+      <button type="button" [disabled]="isSaving || requests.saving()" (click)="finishLeave(true)">{{ 'technologyLeave.discard' | transloco }}</button>
+      <button type="button" [disabled]="isSaving || requests.saving()" (click)="finishLeave(false)">{{ 'technologyLeave.stay' | transloco }}</button>
+    </div>
+  </dialog>
+}
