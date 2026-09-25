@@ -13,7 +13,8 @@
 - Creating users, assigning roles, changing passwords, changing the active database, and importing business data must be explicitly within the user's authorized task. General environment setup does not imply these actions.
 - Before a destructive database operation, identify the exact server/database, inspect affected data, and prepare a backup and recovery plan. Obtain explicit authorization for deletion, replacement, or rollback of existing data.
 - Never print passwords, JWTs, or full secret files. Use User Secrets or local environment variables; never commit credentials.
-- Do not publish, push, merge, or send external messages unless authorized. Local task branches are allowed; do not stage or commit another task's changes.
+- Do not publish, push, merge, or send external messages unless authorized. Do not stage or commit another task's changes.
+- Work directly in the single branch `main` for all tasks. Create or switch to another branch, or create a worktree, only when the user explicitly requests it. Do not create task branches automatically.
 
 ## Implementing a task
 
@@ -38,5 +39,5 @@
 
 ## Completion
 
-- Follow `docs/development-workflow.md`: one task per branch, a reviewable diff, acceptance evidence, and business acceptance where applicable.
+- Work in `main` and keep each task's changes reviewable, with acceptance evidence and business acceptance where applicable. A separate task does not require a separate branch.
 - Summarize the resulting behavior, verification, database/configuration effects, and any remaining limitations. Do not equate a successful build with a tested business workflow.
