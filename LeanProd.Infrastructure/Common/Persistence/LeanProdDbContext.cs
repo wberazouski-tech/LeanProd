@@ -1,13 +1,10 @@
 using LeanProd.Application.Common.Abstractions;
 using LeanProd.Domain.Common;
-using LeanProd.Infrastructure.Features.Identity;
 using LeanProd.Domain.MasterData;
 using LeanProd.Domain.Organizations;
 using LeanProd.Domain.Technologies;
 using LeanProd.Domain.Workforce;
 using LeanProd.Domain.Scheduling;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeanProd.Infrastructure.Common.Persistence;
@@ -16,10 +13,9 @@ public sealed class LeanProdDbContext(
     DbContextOptions<LeanProdDbContext> options,
     ICurrentUser currentUser,
     TimeProvider timeProvider)
-    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IUnitOfWork
+    : DbContext(options), IUnitOfWork
 {
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<SecurityAuditEvent> SecurityAuditEvents => Set<SecurityAuditEvent>();
+    public DbSet<ErpDatabaseInfo> ErpDatabaseInfo => Set<ErpDatabaseInfo>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<StorageLocation> StorageLocations => Set<StorageLocation>();
     public DbSet<StorageLocationKind> StorageLocationKinds => Set<StorageLocationKind>();
@@ -62,7 +58,10 @@ public sealed class LeanProdDbContext(
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.ApplyConfigurationsFromAssembly(typeof(LeanProdDbContext).Assembly);
+        builder.ApplyConfigurationsFromAssembly(typeof(LeanProdDbContext).Assembly,
+            type => type.Namespace is null ||
+                (!type.Namespace.Contains("Features.Identity.Persistence", StringComparison.Ordinal) &&
+                 !type.Namespace.Contains("Features.Internal.Persistence", StringComparison.Ordinal)));
 
         foreach (var entityType in builder.Model.GetEntityTypes()
                      .Where(type => typeof(AuditableEntity).IsAssignableFrom(type.ClrType)))

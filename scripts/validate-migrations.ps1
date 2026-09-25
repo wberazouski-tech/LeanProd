@@ -6,16 +6,15 @@ try {
     & dotnet build LeanProd.sln --no-restore
     if ($LASTEXITCODE -ne 0) { throw "Build exited with code $LASTEXITCODE." }
 
-    & dotnet ef migrations has-pending-model-changes `
-        --project LeanProd.Infrastructure `
-        --startup-project LeanProd.Api `
-        --context LeanProdDbContext `
-        --no-build
-
-    if ($LASTEXITCODE -ne 0) {
-        throw 'The EF Core model differs from the latest migration. Add a migration before committing.'
+    foreach ($context in @('LeanProdDbContext', 'IdentityDbContext')) {
+        & dotnet ef migrations has-pending-model-changes `
+            --project LeanProd.Infrastructure `
+            --startup-project LeanProd.Infrastructure `
+            --context $context `
+            --no-build
+        if ($LASTEXITCODE -ne 0) {
+            throw "$context differs from its latest migration. Add a migration before committing."
+        }
     }
 }
-finally {
-    Pop-Location
-}
+finally { Pop-Location }

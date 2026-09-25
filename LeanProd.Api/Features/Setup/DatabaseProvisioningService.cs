@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeanProd.Application.Common.Abstractions;
+using LeanProd.Domain.Common;
 using LeanProd.Infrastructure.Common.Persistence;
+using LeanProd.Infrastructure.Features.Internal;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +30,8 @@ public interface IDatabaseProvisioningService
 public sealed class DatabaseProvisioningService(
     IDatabaseSettingsStore store,
     IConfiguration configuration,
-    DatabaseStartupState startupState) : IDatabaseProvisioningService
+    DatabaseStartupState startupState,
+    IdentityDbContext identityDbContext) : IDatabaseProvisioningService
 {
     public DatabaseSetupStatus GetStatus()
     {
@@ -87,34 +91,9 @@ public sealed class DatabaseProvisioningService(
         }
 
         var version = await ReadMigrationStateAsync(adminConnectionString, cancellationToken);
-        if (version.Applied.Count == 0)
-        {
-            return new DatabaseSetupResult(
-                DatabaseSetupStatuses.NotLeanProd,
-                "Selected database is not a LeanProd database.",
-                request.Connection.Server,
-                request.Connection.Database,
-                request.Connection.AppLogin,
-                [],
-                []);
-        }
-
         if (version.HasUnknownMigrations)
             throw new InvalidOperationException("Database schema is newer than this application version.");
-
-        if (version.Pending.Count > 0 && !request.ApplyMigrations)
-        {
-            return new DatabaseSetupResult(
-                DatabaseSetupStatuses.RequiresMigration,
-                "Database version is older than application version. Apply migrations?",
-                request.Connection.Server,
-                request.Connection.Database,
-                request.Connection.AppLogin,
-                version.Applied,
-                version.Pending);
-        }
-
-        if (version.Pending.Count > 0)
+        if (version.Pending.Count > 0 && request.ApplyMigrations)
             await RunMigrationsAsync(adminConnectionString, cancellationToken);
 
         var appConnectionString = await ProvisionAppUserAsync(masterConnection, request.Connection, cancellationToken);
@@ -126,7 +105,11 @@ public sealed class DatabaseProvisioningService(
         var updatedVersion = await ReadMigrationStateAsync(adminConnectionString, cancellationToken);
         return new DatabaseSetupResult(
             DatabaseSetupStatuses.Connected,
-            version.Pending.Count > 0 ? "Database migrated and connected." : "Database connected.",
+            version.Pending.Count > 0 && request.ApplyMigrations
+                ? "Database migrated and connected."
+                : version.Pending.Count > 0
+                    ? "Database connected; schema update is available."
+                    : "Database connected.",
             request.Connection.Server,
             request.Connection.Database,
             request.Connection.AppLogin,
@@ -149,6 +132,7 @@ public sealed class DatabaseProvisioningService(
 
         var adminConnectionString = BuildAdminConnectionString(request.Connection, request.Connection.Database);
         await RunMigrationsAsync(adminConnectionString, cancellationToken);
+        await WriteDatabaseInfoAsync(adminConnectionString, cancellationToken);
 
         var appConnectionString = await ProvisionAppUserAsync(masterConnection, request.Connection, cancellationToken);
         await VerifyAppConnectionAsync(appConnectionString, cancellationToken);
@@ -186,8 +170,7 @@ public sealed class DatabaseProvisioningService(
         await using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT CASE WHEN
-                OBJECT_ID(N'__EFMigrationsHistory', N'U') IS NOT NULL
-                AND OBJECT_ID(N'AspNetUsers', N'U') IS NOT NULL
+                OBJECT_ID(N'ErpDatabaseInfo', N'U') IS NOT NULL
             THEN 1 ELSE 0 END;
             """;
         var value = (int)await command.ExecuteScalarAsync(cancellationToken);
@@ -202,7 +185,8 @@ public sealed class DatabaseProvisioningService(
         var known = dbContext.Database.GetMigrations().ToList();
         var applied = (await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
         var pending = known.Except(applied, StringComparer.OrdinalIgnoreCase).ToList();
-        var unknown = applied.Except(known, StringComparer.OrdinalIgnoreCase).Any();
+        var unknown = applied.Except(known, StringComparer.OrdinalIgnoreCase)
+            .Any(id => !DatabaseSchemaVersions.LegacyBusinessMigrationIds.Contains(id));
         return new MigrationState(applied, pending, unknown);
     }
 
@@ -212,6 +196,34 @@ public sealed class DatabaseProvisioningService(
         await dbContext.Database.MigrateAsync(cancellationToken);
     }
 
+
+    private async Task WriteDatabaseInfoAsync(
+        string adminConnectionString,
+        CancellationToken cancellationToken)
+    {
+        await using var dbContext = CreateDbContext(adminConnectionString);
+        if (await dbContext.ErpDatabaseInfo.AnyAsync(cancellationToken)) return;
+
+        var organization = await identityDbContext.InternalOrganizations.AsNoTracking()
+            .SingleAsync(x => x.Id == InternalOrganization.SingletonId, cancellationToken);
+        var version = typeof(DatabaseProvisioningService).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? typeof(DatabaseProvisioningService).Assembly.GetName().Version?.ToString()
+            ?? "unknown";
+        dbContext.ErpDatabaseInfo.Add(new ErpDatabaseInfo
+        {
+            Id = ErpDatabaseInfo.SingletonId,
+            DatabaseId = Guid.NewGuid(),
+            InstallationId = organization.InstallationId,
+            OrganizationLegalName = organization.LegalName,
+            OrganizationTaxNumber = organization.TaxNumber,
+            CountryCode = organization.CountryCode,
+            CreatedByApplicationVersion = version,
+            SchemaVersion = DatabaseSchemaVersions.BusinessBaselineMigrationId,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
     private static LeanProdDbContext CreateDbContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<LeanProdDbContext>()

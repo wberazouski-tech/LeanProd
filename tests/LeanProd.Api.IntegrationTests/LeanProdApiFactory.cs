@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,11 +13,15 @@ namespace LeanProd.Api.IntegrationTests;
 public sealed class LeanProdApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string AdminEmail = "integration.admin@leanprod.test";
-    public const string AdminPassword = "Integration@Test123!";
+    public static string AdminPassword { get; } = NewPassword();
+    private static readonly string DatabasePassword = NewPassword();
 
-    private readonly MsSqlContainer database = new MsSqlBuilder()
-        .WithPassword("Integration@Test123!")
+    private readonly MsSqlContainer businessDatabase = new MsSqlBuilder()
+        .WithPassword(DatabasePassword)
         .Build();
+    private readonly string localSettingsPath = Path.Combine(
+        Path.GetTempPath(), "LeanProd.IntegrationTests", Guid.NewGuid().ToString("N"));
+    private string InternalDatabasePath => Path.Combine(localSettingsPath, "leanprod-internal.db");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -26,7 +31,11 @@ public sealed class LeanProdApiFactory : WebApplicationFactory<Program>, IAsyncL
             {
                 ["Database:Provider"] = "SqlServer",
                 ["Database:ApplyMigrationsOnStartup"] = "true",
-                ["ConnectionStrings:DefaultConnection"] = database.GetConnectionString(),
+                ["Database:LocalSettingsPath"] = localSettingsPath,
+                ["ConnectionStrings:DefaultConnection"] = businessDatabase.GetConnectionString(),
+                ["InternalDatabase:Path"] = InternalDatabasePath,
+                ["InternalOrganization:LegalName"] = "LeanProd Integration Tests",
+                ["InternalOrganization:CountryCode"] = "BY",
                 ["Jwt:Issuer"] = "LeanProd.Api.IntegrationTests",
                 ["Jwt:Audience"] = "LeanProd.Web.IntegrationTests",
                 ["Jwt:SigningKey"] = new string('I', 64),
@@ -39,19 +48,25 @@ public sealed class LeanProdApiFactory : WebApplicationFactory<Program>, IAsyncL
             }));
     }
 
-    public async Task InitializeAsync() => await database.StartAsync();
+    public Task InitializeAsync() => businessDatabase.StartAsync();
 
     async Task IAsyncLifetime.DisposeAsync()
     {
         await base.DisposeAsync();
-        await database.DisposeAsync();
+        await businessDatabase.DisposeAsync();
+        if (Directory.Exists(localSettingsPath)) Directory.Delete(localSettingsPath, recursive: true);
     }
 
     public async Task AssertMigrationsAppliedAsync()
     {
         using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<LeanProdDbContext>();
-        Assert.Empty(await db.Database.GetPendingMigrationsAsync());
-        Assert.NotEmpty(await db.Database.GetAppliedMigrationsAsync());
+        var business = scope.ServiceProvider.GetRequiredService<LeanProdDbContext>();
+        Assert.Empty(await business.Database.GetPendingMigrationsAsync());
+        Assert.NotEmpty(await business.Database.GetAppliedMigrationsAsync());
+        var identity = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        Assert.Empty(await identity.Database.GetPendingMigrationsAsync());
+        Assert.NotEmpty(await identity.Database.GetAppliedMigrationsAsync());
     }
+
+    private static string NewPassword() => $"Aa1!{Convert.ToHexString(RandomNumberGenerator.GetBytes(16))}";
 }

@@ -23,6 +23,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
+      InternalDatabase__Path: /data/leanprod-internal.db
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       Https__UseRedirection: "false"
@@ -36,9 +37,17 @@ services:
       Jwt__RefreshTokenDays: "7"
       BootstrapAdmin__Email: ${BOOTSTRAP_ADMIN_EMAIL:-}
       BootstrapAdmin__Password: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      InternalOrganization__LegalName: ${ORGANIZATION_LEGAL_NAME:-LeanProd installation}
+      InternalOrganization__CountryCode: ${ORGANIZATION_COUNTRY_CODE:-BY}
+      InternalOrganization__DefaultCurrencyCode: ${ORGANIZATION_CURRENCY_CODE:-BYN}
+      InternalOrganization__TimeZoneId: ${ORGANIZATION_TIME_ZONE:-Europe/Minsk}
+      InternalOrganization__DefaultLanguageCode: ${ORGANIZATION_LANGUAGE:-be}
       Cors__AllowedOrigins__0: http://localhost:4200
     ports:
       - "5000:8080"
+    volumes:
+  leanprod-internal-data:
+      - leanprod-internal-data:/data
     depends_on:
       sqlserver:
         condition: service_healthy

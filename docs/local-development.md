@@ -4,9 +4,10 @@ Run commands from `D:\MyERP\LeanProd`. Reopen your terminal after installing too
 
 ## Installed tools
 
-- .NET SDK 8.0.425 and local `dotnet-ef` 8.0.11.
+- .NET SDK 8.0.425 and local `dotnet-ef` 8.0.13.
 - Node.js 20.20.2, npm 10.8.2, Angular CLI 17.3.11.
 - Git for Windows.
+- Embedded SQLite internal database, created automatically in %LOCALAPPDATA%\LeanProd\leanprod-internal.db.
 - SQL Server Express, instance `.\SQLEXPRESS`, database `LeanProd`.
 
 Angular 17.3 requires Node 18 or 20: https://angular.dev/reference/versions. These frontend versions are retained for compatibility with this project; upgrading Angular is a separate task.
@@ -47,7 +48,7 @@ The `.config/` directory is local and ignored by Git. After a fresh clone, creat
 
 ```powershell
 dotnet new tool-manifest
-dotnet tool install dotnet-ef --version 8.0.11
+dotnet tool install dotnet-ef --version 8.0.13
 ```
 
 For an existing local manifest, use `dotnet tool restore`.
@@ -57,7 +58,9 @@ dotnet tool restore
 dotnet restore LeanProd.sln
 npm.cmd --prefix lean-prod-web ci
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
-dotnet ef database update --project LeanProd.Infrastructure --startup-project LeanProd.Api --context LeanProdDbContext
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<SQL Server connection string>" --project LeanProd.Api
+.\scripts\update-database.ps1 -Store Internal
+.\scripts\update-database.ps1 -Store Business
 ```
 
 ## Checks

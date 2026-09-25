@@ -26,6 +26,10 @@ public static class InfrastructureServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var internalConnection = InternalDatabaseConnection.Create(configuration);
+        services.AddDbContext<IdentityDbContext>(options => options.UseSqlite(
+            internalConnection,
+            sqlite => sqlite.MigrationsAssembly(typeof(IdentityDbContext).Assembly.FullName)));
         services.AddDbContext<LeanProdDbContext>((serviceProvider, options) =>
         {
             var database = serviceProvider.GetRequiredService<IRuntimeDatabaseConnection>();
@@ -79,7 +83,7 @@ public static class InfrastructureServiceExtensions
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<LeanProdDbContext>()
+            .AddEntityFrameworkStores<IdentityDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
         return services;

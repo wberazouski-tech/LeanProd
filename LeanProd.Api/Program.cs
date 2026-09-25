@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using LeanProd.Infrastructure.Features.Identity;
+using LeanProd.Infrastructure.Features.Internal;
 using LeanProd.Infrastructure.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics;
@@ -130,10 +131,11 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 app.MapHealthChecks("/health/ready", readinessOptions).AllowAnonymous();
 app.MapHealthChecks("/health", readinessOptions).AllowAnonymous();
 
+await app.Services.InitializeInternalDatabaseAsync(app.Configuration);
+await app.Services.SeedIdentityAsync(app.Configuration);
+
 var runtimeDatabase = app.Services.GetRequiredService<IRuntimeDatabaseConnection>();
 var hasDatabaseConnection = runtimeDatabase.IsConfigured;
-await app.StartAsync();
-
 var databaseStartupState = app.Services.GetRequiredService<DatabaseStartupState>();
 databaseStartupState.DatabaseInitializationFailed = hasDatabaseConnection;
 try
@@ -145,10 +147,7 @@ try
         await dbContext.Database.MigrateAsync();
     }
     if (hasDatabaseConnection)
-    {
-        await app.Services.SeedIdentityAsync(app.Configuration);
         databaseStartupState.DatabaseInitializationFailed = false;
-    }
     else
     {
         app.Services.GetRequiredService<ILoggerFactory>()
@@ -165,6 +164,7 @@ catch (Exception exception)
             "LeanProd database startup task failed. The API remains available so an administrator can fix database settings.");
 }
 
+await app.StartAsync();
 await app.WaitForShutdownAsync();
 
 public partial class Program;

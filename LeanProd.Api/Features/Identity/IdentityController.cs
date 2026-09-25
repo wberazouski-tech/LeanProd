@@ -20,7 +20,7 @@ namespace LeanProd.Api.Features.Identity;
 public sealed class IdentityController(
     SignInManager<AppUser> signInManager,
     UserManager<AppUser> userManager,
-    LeanProdDbContext dbContext,
+    IdentityDbContext dbContext,
     TokenService tokenService,
     IConfiguration configuration) : BaseApiController
 {
@@ -94,7 +94,11 @@ public sealed class IdentityController(
         var hash = TokenService.Hash(rawToken);
         var stored = await dbContext.RefreshTokens.Include(x => x.User)
             .SingleOrDefaultAsync(x => x.TokenHash == hash);
-        if (stored is null) return Unauthorized();
+        if (stored is null)
+        {
+            DeleteRefreshCookie();
+            return Unauthorized();
+        }
 
         if (!stored.IsActive)
         {
@@ -111,7 +115,11 @@ public sealed class IdentityController(
             return Unauthorized();
         }
 
-        if (!stored.User.IsActive) return Unauthorized();
+        if (!stored.User.IsActive)
+        {
+            DeleteRefreshCookie();
+            return Unauthorized();
+        }
         stored.RevokedAtUtc = DateTime.UtcNow;
         var pair = await tokenService.CreateAsync(stored.User, stored.FamilyId);
         stored.ReplacedByTokenHash = TokenService.Hash(pair.RefreshToken);

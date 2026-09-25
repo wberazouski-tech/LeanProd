@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using LeanProd.Application.Common.Abstractions;
 
-namespace LeanProd.Api.Common.Persistence;
+namespace LeanProd.Infrastructure.Common.Persistence;
 
 /// <summary>Creates the DbContext for dotnet-ef without starting the web host.</summary>
 public sealed class LeanProdDbContextFactory : IDesignTimeDbContextFactory<LeanProdDbContext>
@@ -18,15 +18,12 @@ public sealed class LeanProdDbContextFactory : IDesignTimeDbContextFactory<LeanP
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
-            .AddUserSecrets<LeanProdDbContextFactory>(optional: true)
             .AddEnvironmentVariables()
             .Build();
 
         var provider = configuration["Database:Provider"] ?? "SqlServer";
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "Set ConnectionStrings:DefaultConnection in User Secrets or " +
-                "ConnectionStrings__DefaultConnection in the environment.");
+            ?? "Server=localhost;Database=LeanProdDesignTime;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
 
         var options = new DbContextOptionsBuilder<LeanProdDbContext>();
         if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))

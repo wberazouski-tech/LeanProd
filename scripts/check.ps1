@@ -34,9 +34,11 @@ try {
             $env:Database__LocalSettingsPath = $validationPath
             $env:Database__ApplyMigrationsOnStartup = 'false'
             $env:ConnectionStrings__DefaultConnection = 'Server=localhost;Database=LeanProd_ModelValidation;Integrated Security=True;Connect Timeout=1'
-            Invoke-Check dotnet @('ef', 'migrations', 'has-pending-model-changes', '--project',
-                'LeanProd.Infrastructure', '--startup-project', 'LeanProd.Api', '--context',
-                'LeanProdDbContext', '--no-build', '--configuration', 'Release')
+            foreach ($context in @('LeanProdDbContext', 'IdentityDbContext')) {
+                Invoke-Check dotnet @('ef', 'migrations', 'has-pending-model-changes', '--project',
+                    'LeanProd.Infrastructure', '--startup-project', 'LeanProd.Infrastructure', '--context',
+                    $context, '--no-build', '--configuration', 'Release')
+            }
         }
         finally {
             foreach ($name in $names) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }

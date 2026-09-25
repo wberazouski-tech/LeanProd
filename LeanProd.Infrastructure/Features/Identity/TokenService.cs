@@ -10,7 +10,7 @@ using LeanProd.Infrastructure.Common.Persistence;
 namespace LeanProd.Infrastructure.Features.Identity;
 
 public sealed class TokenService(IOptions<JwtOptions> options, UserManager<AppUser> userManager,
-    LeanProdDbContext dbContext)
+    IdentityDbContext dbContext)
 {
     private readonly JwtOptions _options = options.Value;
 

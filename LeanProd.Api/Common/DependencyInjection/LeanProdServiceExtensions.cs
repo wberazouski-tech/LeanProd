@@ -116,7 +116,8 @@ public static class LeanProdServiceExtensions
         services.AddCors(options => options.AddPolicy("Frontend", policy =>
             policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
         services.AddHealthChecks()
-            .AddDbContextCheck<LeanProdDbContext>("database", tags: ["ready"]);
+            .AddDbContextCheck<IdentityDbContext>("internal-database", tags: ["ready"])
+            .AddDbContextCheck<LeanProdDbContext>("business-database", tags: ["ready"]);
         return services;
     }
 }
