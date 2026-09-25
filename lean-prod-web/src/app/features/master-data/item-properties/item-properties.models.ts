@@ -1,7 +1,7 @@
 export type ItemPropertyType = 'Number' | 'Text' | 'Choice' | 'Boolean' | 'Range';
 export interface PropertyOption { id: string | null; label: string; }
 export interface PropertyDefinition {
-  id: string; catalogItemClassId: string; code: string; name: string; type: ItemPropertyType;
+  id: string; catalogItemClassId: string; name: string; type: ItemPropertyType;
   decimalPlaces: number | null; maxLength: number | null; minimum: string | null; maximum: string | null;
   isBatchProperty: boolean; isActive: boolean; options: PropertyOption[]; rowVersion: string; isInUse?: boolean;
 }

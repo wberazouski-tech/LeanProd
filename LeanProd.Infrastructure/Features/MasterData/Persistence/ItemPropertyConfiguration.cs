@@ -10,12 +10,11 @@ internal sealed class ItemPropertyDefinitionConfiguration : IEntityTypeConfigura
     {
         b.ToTable("ItemPropertyDefinitions", t => t.HasCheckConstraint("CK_ItemPropertyDefinitions_Settings", "([Type] = 'Number' AND [DecimalPlaces] BETWEEN 0 AND 6 AND [DecimalPlaces] IS NOT NULL AND [MaxLength] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL) OR ([Type] = 'Range' AND [DecimalPlaces] BETWEEN 0 AND 6 AND [DecimalPlaces] IS NOT NULL AND [MaxLength] IS NULL AND [Minimum] IS NOT NULL AND [Maximum] IS NOT NULL AND [Minimum] <= [Maximum]) OR ([Type] = 'Text' AND [MaxLength] BETWEEN 1 AND 4000 AND [MaxLength] IS NOT NULL AND [DecimalPlaces] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL) OR ([Type] IN ('Choice', 'Boolean') AND [MaxLength] IS NULL AND [DecimalPlaces] IS NULL AND [Minimum] IS NULL AND [Maximum] IS NULL)"));
         b.HasKey(x => x.Id);
-        b.Property(x => x.Code).HasMaxLength(50).IsRequired();
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
         b.Property(x => x.Minimum).HasPrecision(24, 6);
         b.Property(x => x.Maximum).HasPrecision(24, 6);
-        b.HasIndex(x => new { x.CatalogItemClassId, x.Code }).IsUnique();
+        b.HasIndex(x => x.CatalogItemClassId);
         b.HasOne<CatalogItemClass>().WithMany().HasForeignKey(x => x.CatalogItemClassId).OnDelete(DeleteBehavior.Restrict);
         b.HasMany(x => x.Options).WithOne().HasForeignKey(x => x.PropertyId).OnDelete(DeleteBehavior.Restrict);
     }

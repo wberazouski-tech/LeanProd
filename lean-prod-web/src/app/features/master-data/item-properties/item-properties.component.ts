@@ -43,7 +43,6 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
   values?: PropertyValues;
   valuesForm = new FormRecord<FormControl<string>>({});
   readonly definitionForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)]],
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
     type: this.fb.nonNullable.control<ItemPropertyType>('Number'),
     decimalPlaces: [2, [Validators.required, Validators.min(0), Validators.max(6), Validators.pattern(/^\d+$/)]],
@@ -106,7 +105,7 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
   editDefinition(p?: PropertyDefinition): void {
     if (!this.canEditDefinitions || !this.requestLeave()) return;
     this.editing = p; this.definitionOpen = true; this.message = '';
-    this.definitionForm.reset({ code: p?.code ?? '', name: p?.name ?? '', type: p?.type ?? 'Number',
+    this.definitionForm.reset({ name: p?.name ?? '', type: p?.type ?? 'Number',
       decimalPlaces: p?.decimalPlaces ?? 2, maxLength: p?.maxLength ?? 100,
       minimum: p?.minimum ?? '0', maximum: p?.maximum ?? '15000',
       isBatchProperty: p?.isBatchProperty ?? false, isActive: p?.isActive ?? true,
@@ -139,13 +138,13 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
     this.busy = true; this.message = '';
     try {
       const saved = await firstValueFrom(this.api.saveDefinition(this.classId, this.editing?.id, {
-        code: f.code, name: f.name, type: f.type, decimalPlaces: numeric ? f.decimalPlaces : null,
+        name: f.name, type: f.type, decimalPlaces: numeric ? f.decimalPlaces : null,
         maxLength: f.type === 'Text' ? f.maxLength : null,
         minimum: f.type === 'Range' ? normalizeDecimal(f.minimum) : null,
         maximum: f.type === 'Range' ? normalizeDecimal(f.maximum) : null,
         isBatchProperty: f.isBatchProperty, isActive: f.isActive, options, rowVersion: this.editing?.rowVersion
       }));
-      this.definitions = [...this.definitions.filter(x => x.id !== saved.id), saved].sort((a, b) => a.code.localeCompare(b.code));
+      this.definitions = [...this.definitions.filter(x => x.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
       this.definitionForm.markAsPristine(); this.definitionOpen = false; this.message = this.t.translate('itemProperties.saved');
     } catch (error) { this.fail(error); } finally { this.busy = false; }
   }

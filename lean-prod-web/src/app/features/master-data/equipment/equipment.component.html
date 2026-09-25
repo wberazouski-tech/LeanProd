@@ -91,13 +91,12 @@
       <thead>
         <tr>
           <th>{{ 'admin.name' | transloco }}</th>
-          <th>{{ 'admin.status' | transloco }}</th>
           <th class="actions-column"></th>
         </tr>
       </thead>
       <tbody>
         <tr appKeyboardRow class="type-filter-row" [class.selected-type]="filters.controls.equipmentTypeId.value === ''" (click)="filterByType()">
-          <td><strong>{{ 'equipment.allTypes' | transloco }}</strong></td><td>—</td><td></td>
+          <td><strong>{{ 'equipment.allTypes' | transloco }}</strong></td><td></td>
         </tr>
         @for (type of types; track type.id) { <tr appKeyboardRow class="type-filter-row" [class.selected-type]="filters.controls.equipmentTypeId.value === type.id" (click)="filterByType(type.id)">
           <td>
@@ -105,7 +104,6 @@
             @if (type.description) { 
               <small>{{ type.description }}</small> }
           </td>
-          <td>{{ (type.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
           <td class="type-actions">
             @if (canManage) { 
               <button 

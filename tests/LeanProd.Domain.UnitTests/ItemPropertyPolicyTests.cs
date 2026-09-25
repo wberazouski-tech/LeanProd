@@ -74,5 +74,5 @@ public sealed class ItemPropertyPolicyTests
         Assert.NotNull(ItemPropertyPolicy.ValidateDefinition(p));
     }
 
-    private static ItemPropertyDefinition Definition(ItemPropertyType type) => new() { Code = "TEST", Name = "Test", Type = type };
+    private static ItemPropertyDefinition Definition(ItemPropertyType type) => new() { Name = "Test", Type = type };
 }

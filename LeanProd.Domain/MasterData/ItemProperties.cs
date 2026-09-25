@@ -8,7 +8,6 @@ public sealed class ItemPropertyDefinition : AuditableEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid CatalogItemClassId { get; set; }
-    public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public ItemPropertyType Type { get; set; }
     public int? DecimalPlaces { get; set; }

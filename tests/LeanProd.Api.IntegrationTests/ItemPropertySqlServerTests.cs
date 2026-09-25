@@ -24,7 +24,7 @@ public sealed class ItemPropertySqlServerTests(LeanProdApiFactory factory) : ICl
     {
         var (classId, itemId) = await Seed();
         var definition = (await Run(s => s.SaveDefinition(classId, null,
-            new("DENSITY", "Density", ItemPropertyType.Number, 2, null, null, null, true, true, [], null), Ct))).Value!;
+            new("Density", ItemPropertyType.Number, 2, null, null, null, true, true, [], null), Ct))).Value!;
         var initial = (await Run(s => s.Values(itemId, null, Ct))).Value!;
         var saved = await Run(s => s.SaveValues(itemId, null, new(initial.RowVersion, [new(definition.Id, 100m)]), Ct));
         Assert.True(saved.Succeeded, saved.Message);
@@ -45,7 +45,7 @@ public sealed class ItemPropertySqlServerTests(LeanProdApiFactory factory) : ICl
         var duplicate = await Run(s => s.SaveBatch(itemId, null, new("lot-1", new DateOnly(2026, 9, 21), "Other", null), Ct));
         Assert.Equal(MasterDataError.Conflict, duplicate.Error);
         var changed = await Run(s => s.SaveDefinition(classId, definition.Id,
-            new("DENSITY", "Density", ItemPropertyType.Number, 1, null, null, null, true, true, [], definition.RowVersion), Ct));
+            new("Density", ItemPropertyType.Number, 1, null, null, null, true, true, [], definition.RowVersion), Ct));
         Assert.Equal(MasterDataError.Conflict, changed.Error);
     }
 
@@ -54,7 +54,7 @@ public sealed class ItemPropertySqlServerTests(LeanProdApiFactory factory) : ICl
     {
         var (classId, itemId) = await Seed();
         var property = (await Run(s => s.SaveDefinition(classId, null,
-            new("FLAG", "Flag", ItemPropertyType.Boolean, null, null, null, null, false, true, [], null), Ct))).Value!;
+            new("Flag", ItemPropertyType.Boolean, null, null, null, null, false, true, [], null), Ct))).Value!;
         var initial = (await Run(s => s.Values(itemId, null, Ct))).Value!;
         var rejected = await Run(s => s.SaveValues(itemId, null,
             new(initial.RowVersion, [new(property.Id, Boolean: false), new(Guid.NewGuid(), Number: 1)]), Ct));
@@ -75,7 +75,7 @@ public sealed class ItemPropertySqlServerTests(LeanProdApiFactory factory) : ICl
         var (classId, itemId) = await Seed();
         var (otherClassId, _) = await Seed();
         var property = (await Run(s => s.SaveDefinition(classId, null,
-            new("FLAG", "Flag", ItemPropertyType.Boolean, null, null, null, null, false, true, [], null), Ct))).Value!;
+            new("Flag", ItemPropertyType.Boolean, null, null, null, null, false, true, [], null), Ct))).Value!;
         var initial = (await Run(s => s.Values(itemId, null, Ct))).Value!;
         Assert.True((await Run(s => s.SaveValues(itemId, null, new(initial.RowVersion, [new(property.Id, Boolean: false)]), Ct))).Succeeded);
         using var scope = factory.Services.CreateScope();
@@ -95,7 +95,7 @@ public sealed class ItemPropertySqlServerTests(LeanProdApiFactory factory) : ICl
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", identity.GetProperty("accessToken").GetString());
         var definition = await client.PostAsJsonAsync($"/api/catalog-item-classes/{classId}/properties", new
         {
-            code = "HTTP", name = "HTTP flag", type = "Boolean", isBatchProperty = true, isActive = true, options = Array.Empty<object>()
+            name = "HTTP flag", type = "Boolean", isBatchProperty = true, isActive = true, options = Array.Empty<object>()
         });
         definition.EnsureSuccessStatusCode();
         var propertyId = (await definition.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();

@@ -56,3 +56,10 @@
 .leave-dialog::backdrop{background:rgba(15,23,42,.45)}
 .leave-dialog .panel-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
 @media(max-width:640px){.item-editor form{grid-template-columns:1fr}}
+
+.class-node.all-items-node { background: transparent; border: 0; border-bottom: 1px solid #e5e7eb; border-radius: 0; font: inherit; text-align: left; width: 100%; }
+.class-node.all-items-node:hover { background: #eef6ff; }
+.class-node.all-items-node.selected-row { background: #dceeff; }
+.class-node.group-node .node-name { font-weight: 700; }
+
+.catalog-dialog[open] { inset: 0; margin: auto; max-height: calc(100dvh - 2rem); overflow: auto; position: fixed; }

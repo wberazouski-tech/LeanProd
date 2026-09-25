@@ -6,7 +6,6 @@ public static class ItemPropertyPolicy
 
     public static string? ValidateDefinition(ItemPropertyDefinition p)
     {
-        if (string.IsNullOrWhiteSpace(p.Code) || p.Code.Length > 50) return "Property code is required (up to 50 characters).";
         if (string.IsNullOrWhiteSpace(p.Name) || p.Name.Length > 200) return "Property name is required (up to 200 characters).";
         if (!Enum.IsDefined(p.Type)) return "Unknown property type.";
         var numeric = p.Type is ItemPropertyType.Number or ItemPropertyType.Range;

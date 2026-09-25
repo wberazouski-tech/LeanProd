@@ -13,9 +13,9 @@ describe('Item properties workflow', () => {
   let component: ItemPropertiesComponent;
   let api: jasmine.SpyObj<ItemPropertiesService>;
   const data: PropertyValues = { rowVersion: 'version', definitions: [
-    { id: 'number', catalogItemClassId: 'class', code: 'N', name: 'Number', type: 'Number', decimalPlaces: 6, maxLength: null,
+    { id: 'number', catalogItemClassId: 'class', name: 'Number', type: 'Number', decimalPlaces: 6, maxLength: null,
       minimum: null, maximum: null, isBatchProperty: true, isActive: true, options: [], rowVersion: 'v' },
-    { id: 'bool', catalogItemClassId: 'class', code: 'B', name: 'Boolean', type: 'Boolean', decimalPlaces: null, maxLength: null,
+    { id: 'bool', catalogItemClassId: 'class', name: 'Boolean', type: 'Boolean', decimalPlaces: null, maxLength: null,
       minimum: null, maximum: null, isBatchProperty: false, isActive: true, options: [], rowVersion: 'v' }
   ], values: [] };
   beforeEach(() => {
@@ -30,9 +30,21 @@ describe('Item properties workflow', () => {
     component = TestBed.runInInjectionContext(() => new ItemPropertiesComponent());
     component.itemId = 'item';
   });
+  it('creates a definition using its name without a code', async () => {
+    component.classId = 'class';
+    component.editDefinition();
+    component.definitionForm.controls.name.setValue('Density');
+    api.saveDefinition.and.returnValue(of({ ...data.definitions[0], name: 'Density' }));
+    await component.saveDefinition();
+    expect(api.saveDefinition).toHaveBeenCalled();
+    const body = api.saveDefinition.calls.mostRecent().args[2] as Record<string, unknown>;
+    expect(body['name']).toBe('Density');
+    expect('code' in body).toBeFalse();
+    expect(component.definitionOpen).toBeFalse();
+  });
   it('rejects invalid range settings before sending a request', async () => {
     component.editDefinition();
-    component.definitionForm.patchValue({ code: 'R', name: 'Range', type: 'Range', decimalPlaces: 2, minimum: '0', maximum: '1,001' });
+    component.definitionForm.patchValue({ name: 'Range', type: 'Range', decimalPlaces: 2, minimum: '0', maximum: '1,001' });
     expect(component.definitionForm.hasError('definitionRange')).toBeTrue();
     await component.saveDefinition();
     expect(api.saveDefinition).not.toHaveBeenCalled();

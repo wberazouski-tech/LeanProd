@@ -24,6 +24,20 @@ public sealed class ItemPropertyContractTests
     }
 
     [Fact]
+    public void Definition_contract_accepts_name_without_code_and_does_not_expose_code()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        const string json = """{"name":"Density","type":0,"decimalPlaces":2,"isBatchProperty":true,"isActive":true,"options":[]}""";
+        var command = JsonSerializer.Deserialize<SavePropertyCommand>(json, options)!;
+        Assert.Equal("Density", command.Name);
+        var dto = new PropertyDefinitionDto(Guid.NewGuid(), Guid.NewGuid(), command.Name, command.Type,
+            command.DecimalPlaces, null, null, null, true, true, [], "version");
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(dto, options));
+        Assert.False(document.RootElement.TryGetProperty("code", out _));
+        Assert.Equal("Density", document.RootElement.GetProperty("name").GetString());
+    }
+
+    [Fact]
     public void Decimal_values_round_trip_as_strings_without_javascript_precision_loss()
     {
         var dto = new PropertyValueDto(Guid.NewGuid(), 999999999999999999.999999m, 999999999999999999.999999m);
@@ -46,6 +60,9 @@ public sealed class ItemPropertyContractTests
         Assert.All(entities.SelectMany(x => x.GetForeignKeys()), fk => Assert.Equal(DeleteBehavior.Restrict, fk.DeleteBehavior));
         Assert.All(entities.SelectMany(x => x.GetProperties()).Where(x => x.ClrType == typeof(decimal?)), p =>
         { Assert.Equal(24, p.GetPrecision()); Assert.Equal(6, p.GetScale()); });
+        var definition = model.GetEntityTypes().Single(x => x.GetTableName() == "ItemPropertyDefinitions");
+        Assert.Null(definition.FindProperty("Code"));
+        Assert.Contains(definition.GetIndexes(), x => !x.IsUnique && x.Properties.Select(p => p.Name).SequenceEqual(["CatalogItemClassId"]));
         var sql = db.Database.GenerateCreateScript();
         Assert.Contains("CK_BatchPropertyValues_Shape", sql);
         Assert.Contains("CK_ItemPropertyDefinitions_Settings", sql);

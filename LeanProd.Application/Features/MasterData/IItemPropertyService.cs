@@ -4,12 +4,12 @@ using LeanProd.Domain.MasterData;
 namespace LeanProd.Application.Features.MasterData;
 
 public sealed record PropertyOptionDto(Guid? Id, string Label);
-public sealed record SavePropertyCommand(string Code, string Name, ItemPropertyType Type,
+public sealed record SavePropertyCommand(string Name, ItemPropertyType Type,
     int? DecimalPlaces, int? MaxLength,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)] decimal? Minimum,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)] decimal? Maximum,
     bool IsBatchProperty, bool IsActive, IReadOnlyList<PropertyOptionDto> Options, string? RowVersion);
-public sealed record PropertyDefinitionDto(Guid Id, Guid CatalogItemClassId, string Code, string Name,
+public sealed record PropertyDefinitionDto(Guid Id, Guid CatalogItemClassId, string Name,
     ItemPropertyType Type, int? DecimalPlaces, int? MaxLength,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)] decimal? Minimum,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)] decimal? Maximum,

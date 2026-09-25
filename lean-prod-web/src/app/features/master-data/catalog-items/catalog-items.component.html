@@ -139,11 +139,18 @@
       <button type="button" (click)="createClass(false)">{{ 'catalogItemClasses.addClass' | transloco }}</button>
       }
     </div>
-    <app-page-state [state]="classState" (retry)="loadClasses()" /><div class="load-more"><span>{{ 'masterDataReview.loaded' | transloco }}: {{ classes.length }} / {{ classTotal }}</span>@if (classes.length < classTotal) { <button type="button" [disabled]="classState === 'loading'" (click)="loadClasses(true)">{{ 'masterDataReview.loadMore' | transloco }}</button> }</div>
+    <app-page-state [state]="classState" (retry)="loadClasses()" />
+    @if (classes.length < classTotal) {
+      <div class="load-more"><button type="button" [disabled]="classState === 'loading'" (click)="loadClasses(true)">{{ 'masterDataReview.loadMore' | transloco }}</button></div>
+    }
     <div class="class-tree">
+      <button type="button" class="class-node all-items-node" (click)="clearClassSelection()"
+        [class.selected-row]="!selectedClass" [attr.aria-pressed]="!selectedClass" [disabled]="requests.saving()">
+        <span aria-hidden="true"></span><span class="node-name">{{ 'catalogItemClasses.allItems' | transloco }}</span>
+      </button>
       @for (item of sortedClasses; track item.id) {
       <div appKeyboardRow class="class-node" (click)="selectClass(item)" [class.selected-row]="selectedClass?.id === item.id"
-        [class.inactive-node]="!item.isActive" [class.drop-target]="dropTargetClassId === item.id"
+        [class.group-node]="item.isGroup" [class.inactive-node]="!item.isActive" [class.drop-target]="dropTargetClassId === item.id"
         [class.drop-blocked]="draggedItem && !canDropOnClass(item)" [attr.aria-selected]="selectedClass?.id === item.id"
         (dragover)="dragOverClass(item, $event)" (dragleave)="leaveClassDropTarget(item)"
         (drop)="dropItemOnClass(item, $event)">
@@ -216,7 +223,6 @@
 }
 
 @if (canManage && classEditorOpen) {
-<div class="modal-layer" (click)="closeClassEditor()">
   <dialog appModal (appModalClosed)="closeClassEditor()" class="catalog-dialog" (click)="$event.stopPropagation()">
     <section class="editor">
       <h2>{{ (selectedClass ? 'catalogItemClasses.edit' : (classForm.controls.isGroup.value ?
@@ -242,7 +248,6 @@
       <p>{{ classMessage }}</p>
     </section>
   </dialog>
-</div>
 }
 
 

@@ -12,17 +12,16 @@
   <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button>
   @if (canEditDefinitions) { <button type="button" (click)="editDefinition()">{{ 'itemProperties.add' | transloco }}</button> }
   <table class="master-data-table">
-    <thead><tr><th>{{ 'masterData.code' | transloco }}</th><th>{{ 'admin.name' | transloco }}</th><th>{{ 'itemProperties.type' | transloco }}</th><th>{{ 'itemProperties.batchProperty' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th><th></th></tr></thead>
+    <thead><tr><th>{{ 'admin.name' | transloco }}</th><th>{{ 'itemProperties.type' | transloco }}</th><th>{{ 'itemProperties.batchProperty' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th><th></th></tr></thead>
     <tbody>@for (p of definitions; track p.id) {
-      <tr><td>{{ p.code }}</td><td>{{ p.name }}</td><td>{{ ('itemProperties.types.' + p.type) | transloco }}</td><td>{{ (p.isBatchProperty ? 'itemProperties.yes' : 'itemProperties.no') | transloco }}</td><td>{{ (p.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
+      <tr><td>{{ p.name }}</td><td>{{ ('itemProperties.types.' + p.type) | transloco }}</td><td>{{ (p.isBatchProperty ? 'itemProperties.yes' : 'itemProperties.no') | transloco }}</td><td>{{ (p.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
       <td>@if (canEditDefinitions) { <button type="button" (click)="editDefinition(p)">{{ 'admin.edit' | transloco }}</button> }</td></tr>
-    } @empty { <tr><td colspan="6">{{ 'itemProperties.empty' | transloco }}</td></tr> }</tbody>
+    } @empty { <tr><td colspan="5">{{ 'itemProperties.empty' | transloco }}</td></tr> }</tbody>
   </table>
   @if (definitionOpen && canEditDefinitions) {
     <section class="editor"><h2>{{ (editing ? 'admin.edit' : 'itemProperties.add') | transloco }}</h2>
       @if (editing?.isInUse) { <p>{{ 'itemProperties.inUse' | transloco }}</p> }
       <form [formGroup]="definitionForm" (ngSubmit)="saveDefinition()">
-        <label>{{ 'masterData.code' | transloco }}<input formControlName="code" maxlength="50" required /></label>
         <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" required /></label>
         <label>{{ 'itemProperties.type' | transloco }}<select formControlName="type">@for (type of types; track type) { <option [value]="type">{{ ('itemProperties.types.' + type) | transloco }}</option> }</select></label>
         @if (definitionForm.controls.type.value === 'Number' || definitionForm.controls.type.value === 'Range') {

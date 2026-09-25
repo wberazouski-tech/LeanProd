@@ -180,6 +180,7 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
     const ids = new Set(this.classes.map(item => item.id));
     const children = new Map<string | null, (CatalogItemClassSummary & { depth: number })[]>();
     for (const item of this.classes) {
+      if (!item.isGroup && !item.parentId && item.code.toUpperCase() === 'GENERAL') continue;
       const parentId = item.parentId && ids.has(item.parentId) ? item.parentId : null;
       children.set(parentId, [...(children.get(parentId) ?? []), item]);
     }

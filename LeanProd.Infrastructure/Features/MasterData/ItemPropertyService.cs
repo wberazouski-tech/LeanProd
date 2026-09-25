@@ -30,7 +30,7 @@ public sealed class ItemPropertyService(LeanProdDbContext db) : IItemPropertySer
         if (c.Options is null || c.Options.Any(x => x is null)) return Invalid<PropertyDefinitionDto>("Choices are required (use an empty list for other types).");
         var candidate = new ItemPropertyDefinition
         {
-            Code = c.Code?.Trim().ToUpperInvariant() ?? "", Name = c.Name?.Trim() ?? "", Type = c.Type,
+            Name = c.Name?.Trim() ?? "", Type = c.Type,
             DecimalPlaces = c.DecimalPlaces, MaxLength = c.MaxLength, Minimum = c.Minimum, Maximum = c.Maximum,
             IsBatchProperty = c.IsBatchProperty,
             Options = c.Options.Select(x => new ItemPropertyOption { Id = x.Id ?? Guid.NewGuid(), Label = x.Label?.Trim() ?? "" }).ToArray()
@@ -53,7 +53,7 @@ public sealed class ItemPropertyService(LeanProdDbContext db) : IItemPropertySer
                 return Conflict<PropertyDefinitionDto>("This property is in use. Its type, settings and existing choices cannot change; create a new property instead.");
         }
         else db.ItemPropertyDefinitions.Add(p);
-        p.Code = candidate.Code; p.Name = candidate.Name; p.Type = c.Type;
+        p.Name = candidate.Name; p.Type = c.Type;
         p.DecimalPlaces = c.DecimalPlaces; p.MaxLength = c.MaxLength; p.Minimum = c.Minimum; p.Maximum = c.Maximum;
         p.IsBatchProperty = c.IsBatchProperty; p.IsActive = c.IsActive;
         foreach (var old in p.Options.ToArray())
@@ -195,7 +195,7 @@ public sealed class ItemPropertyService(LeanProdDbContext db) : IItemPropertySer
     }
 
     private Task<List<ItemPropertyDefinition>> LoadDefinitions(Guid classId, CancellationToken ct) =>
-        db.ItemPropertyDefinitions.AsNoTracking().Include(x => x.Options).Where(x => x.CatalogItemClassId == classId).OrderBy(x => x.Code).ToListAsync(ct);
+        db.ItemPropertyDefinitions.AsNoTracking().Include(x => x.Options).Where(x => x.CatalogItemClassId == classId).OrderBy(x => x.Name).ThenBy(x => x.Id).ToListAsync(ct);
     private bool Version(AuditableEntity entity, string? version)
     {
         try
@@ -220,10 +220,10 @@ public sealed class ItemPropertyService(LeanProdDbContext db) : IItemPropertySer
         }
         catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number is 1205 or 1222) { return Conflict<T>("Concurrent change detected. Reload and try again."); }
         catch (DbUpdateConcurrencyException) { return Conflict<T>("The record changed. Reload and try again."); }
-        catch (DbUpdateException) { return Conflict<T>("The change conflicts with existing data. Check duplicate codes or batch numbers and reload."); }
+        catch (DbUpdateException) { return Conflict<T>("The change conflicts with existing data. Check duplicate choices or batch numbers and reload."); }
     }
     private static bool Empty(PropertyValueDto v) => v.Number is null && v.Upper is null && v.Text is null && v.Boolean is null && v.OptionId is null;
-    private static PropertyDefinitionDto Definition(ItemPropertyDefinition p, bool used = false) => new(p.Id, p.CatalogItemClassId, p.Code, p.Name, p.Type,
+    private static PropertyDefinitionDto Definition(ItemPropertyDefinition p, bool used = false) => new(p.Id, p.CatalogItemClassId, p.Name, p.Type,
         p.DecimalPlaces, p.MaxLength, p.Minimum, p.Maximum, p.IsBatchProperty, p.IsActive,
         p.Options.OrderBy(x => x.Label).Select(x => new PropertyOptionDto(x.Id, x.Label)).ToArray(), Convert.ToBase64String(p.RowVersion), used);
     private static BatchDto Batch(CatalogItemBatch b) => new(b.Id, b.CatalogItemId, b.Number, b.ReceiptDate, b.ReceiptReference, Convert.ToBase64String(b.RowVersion));

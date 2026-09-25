@@ -16,7 +16,7 @@
 - Дэактывацыя захоўвае ранейшыя значэнні для прагляду.
 - Змена класа item з захаванымі значэннямі або партыямі забаронена, каб не страціць гісторыю.
 - Захаванне набору значэнняў атамарнае; RowVersion уладальніка выяўляе канкурэнтнае рэдагаванне. Канфлікт патрабуе перазагрузкі.
-- Паўторнае PUT не стварае дубляў значэнняў; паўторнае стварэнне партыі з тым жа нумарам або ўласцівасці з тым жа кодам дае 409.
+- Паўторнае PUT не стварае дубляў значэнняў; паўторнае стварэнне партыі з тым жа нумарам дае 409. Уласцівасць ідэнтыфікуецца праз Id; Code адсутнічае, назва не з'яўляецца ўнікальным ключом.
 - Audit-палі захоўваюць аўтара і час стварэння/апошняй змены. Выдаленне партый і фізічнае выдаленне налад праз API не прадугледжваюцца.
 
 ## План рэалізацыі і праверкі
@@ -49,7 +49,7 @@
 
 | Табліца | Прызначэнне і ключы |
 | --- | --- |
-| ItemPropertyDefinitions | Наладкі; FK CatalogItemClassId; унікальныя ClassId + Code; RowVersion |
+| ItemPropertyDefinitions | Наладкі; FK і індэкс CatalogItemClassId; PK Id; RowVersion; без Code |
 | ItemPropertyOptions | Варыянты спіса; FK PropertyId; унікальныя PropertyId + Label |
 | CatalogItemPropertyValues | Значэнні item; PK CatalogItemId + PropertyId; Number, Upper, Text, Boolean або OptionId |
 | CatalogItemBatches | Партыі; FK CatalogItemId; унікальныя CatalogItemId + Number; ReceiptDate, ReceiptReference, RowVersion |
@@ -130,3 +130,8 @@ Audit адлюстроўвае стварэнне і апошняе рэдага
 - Праверкі: 61 Angular-тэст, lint, 575 ключоў i18n, Angular build; 51 domain-тэст, 9 кантрактных тэстаў і .NET build з --warnaserror — PASS. Існуючае папярэджанне CSS budget тэхналогій застаецца.
 - API перасабраны і перазапушчаны. Аўтарызаваныя GET налад і значэнняў — 200; POST з дакладнасцю 7 — 400, колькасць уласцівасцяў не змянілася. Новая міграцыя не патрэбная.
 - SQL Server Testcontainers і поўная бізнес-прыёмка не выкананыя: Docker адсутнічае. Агульны check.cmd застаецца заблакаваны ранейшай памылкай метаданых навыку; складнікі праверкі запушчаныя асобна.
+
+
+## Property Code removed, 2026-09-25
+
+Code was removed from the property entity, API contracts and UI. Migration 20260925111423_RemoveItemPropertyCode was applied to the working SQL Server database after a verified backup and restore rehearsal. The user also authorized removal of the 23 legacy migration-history entries; BusinessInitialCreate and RemoveItemPropertyCode remain. See [decision and verification](decisions/2026-09-25-remove-item-property-code.md).
