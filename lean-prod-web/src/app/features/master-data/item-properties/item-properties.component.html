@@ -1,27 +1,51 @@
+@if (!embeddedItemId) {
 <div class="property-heading">
-  <a [routerLink]="backUrl" [queryParams]="itemId ? {} : { type: administrationType }">{{ (itemId ? 'itemProperties.back' : 'itemProperties.backSettings') | transloco }}</a>
-  <h1>{{ 'itemProperties.title' | transloco }} — {{ title }}</h1>
+  @if (!itemId) { <a class="property-back" [routerLink]="backUrl" [queryParams]="{ type: administrationType }">← {{ 'itemProperties.backSettings' | transloco }}</a> }
+  @if (itemId) {
+    <nav class="catalog-tabs" [attr.aria-label]="'catalogItems.section' | transloco">
+      <a class="active" [routerLink]="currentCatalogPath">{{ ('catalogItemTypes.' + administrationType) | transloco }}</a>
+    </nav>
+    <nav class="item-detail-tabs" [attr.aria-label]="'catalogItems.itemNavigation' | transloco">
+      <a [routerLink]="backUrl">{{ 'itemProperties.main' | transloco }}</a>
+      <a class="active" [routerLink]="['/catalog/items', itemId, 'properties']" aria-current="page">{{ 'itemProperties.properties' | transloco }}</a>
+    </nav>
+  }
+  <div class="property-title-row">
+    <div>
+      <span class="property-eyebrow">{{ 'itemProperties.title' | transloco }}</span>
+      <h1>{{ title }}</h1>
+    </div>
+    @if (!itemId && !classActive) { <span class="property-status property-status-muted">{{ 'admin.inactive' | transloco }}</span> }
+    @if (itemId && !itemActive) { <span class="property-status property-status-muted">{{ 'admin.inactive' | transloco }}</span> }
+  </div>
 </div>
+}
 @if (message) { <p role="status" class="property-message">{{ message }}</p> }
 @if (loading) { <p role="status">{{ 'pageState.loading' | transloco }}</p> }
 @if (failed) { <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button> }
 <fieldset [disabled]="busy || loading" class="property-content">
 @if (!itemId && !failed) {
-  <p>{{ 'itemProperties.definitionHelp' | transloco }}</p>
+  <section class="property-panel property-definition-panel">
+    <div class="property-panel-heading">
+      <div><span class="property-kicker">{{ 'itemProperties.settings' | transloco }}</span><h2>{{ 'itemProperties.title' | transloco }}</h2></div>
+      <div class="property-actions">
+        <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button>
+        @if (canEditDefinitions) { <button type="button" class="primary-action" (click)="editDefinition()">＋ {{ 'itemProperties.add' | transloco }}</button> }
+      </div>
+    </div>
+    <p class="property-intro">{{ 'itemProperties.definitionHelp' | transloco }}</p>
   @if (!classActive) { <p role="status">{{ 'itemProperties.inactiveClass' | transloco }}</p> }
-  <button type="button" (click)="reload()">{{ 'itemProperties.reload' | transloco }}</button>
-  @if (canEditDefinitions) { <button type="button" (click)="editDefinition()">{{ 'itemProperties.add' | transloco }}</button> }
-  <table class="master-data-table">
+  <div class="property-table-wrap"><table class="master-data-table">
     <thead><tr><th>{{ 'admin.name' | transloco }}</th><th>{{ 'itemProperties.type' | transloco }}</th><th>{{ 'itemProperties.batchProperty' | transloco }}</th><th>{{ 'admin.status' | transloco }}</th><th></th></tr></thead>
     <tbody>@for (p of definitions; track p.id) {
       <tr><td>{{ p.name }}</td><td>{{ ('itemProperties.types.' + p.type) | transloco }}</td><td>{{ (p.isBatchProperty ? 'itemProperties.yes' : 'itemProperties.no') | transloco }}</td><td>{{ (p.isActive ? 'admin.active' : 'admin.inactive') | transloco }}</td>
       <td>@if (canEditDefinitions) { <button type="button" (click)="editDefinition(p)">{{ 'admin.edit' | transloco }}</button> }</td></tr>
     } @empty { <tr><td colspan="5">{{ 'itemProperties.empty' | transloco }}</td></tr> }</tbody>
-  </table>
+  </table></div>
   @if (definitionOpen && canEditDefinitions) {
-    <section class="editor"><h2>{{ (editing ? 'admin.edit' : 'itemProperties.add') | transloco }}</h2>
+    <section class="editor property-editor"><h2>{{ (editing ? 'admin.edit' : 'itemProperties.add') | transloco }}</h2>
       @if (editing?.isInUse) { <p>{{ 'itemProperties.inUse' | transloco }}</p> }
-      <form [formGroup]="definitionForm" (ngSubmit)="saveDefinition()">
+      <form class="property-form" [formGroup]="definitionForm" (ngSubmit)="saveDefinition()">
         <label>{{ 'admin.name' | transloco }}<input formControlName="name" maxlength="200" required /></label>
         <label>{{ 'itemProperties.type' | transloco }}<select formControlName="type">@for (type of types; track type) { <option [value]="type">{{ ('itemProperties.types.' + type) | transloco }}</option> }</select></label>
         @if (definitionForm.controls.type.value === 'Number' || definitionForm.controls.type.value === 'Range') {
@@ -52,17 +76,24 @@
       </form>
     </section>
   }
+  </section>
 }
 @if (itemId && !failed) {
-  <div class="property-toolbar">
-    <button type="button" (click)="selectBatch()">{{ 'itemProperties.itemValues' | transloco }}</button>
-    @if (canEditValues) { <button type="button" (click)="editBatch()">{{ 'itemProperties.addBatch' | transloco }}</button> }
-  </div>
-  <p>{{ 'itemProperties.batchHelp' | transloco }}</p>
+  <section class="property-panel property-values-panel">
+  @if (!embeddedItemId) {
+    <div class="property-panel-heading">
+      <div><span class="property-kicker">{{ 'itemProperties.valuesAndBatches' | transloco }}</span><h2>{{ 'itemProperties.itemValues' | transloco }}</h2></div>
+      <div class="property-actions">
+        <button type="button" (click)="selectBatch()">{{ 'itemProperties.itemValues' | transloco }}</button>
+        @if (canEditValues) { <button type="button" class="primary-action" (click)="editBatch()">＋ {{ 'itemProperties.addBatch' | transloco }}</button> }
+      </div>
+    </div>
+    <p class="property-intro">{{ 'itemProperties.batchHelp' | transloco }}</p>
+  }
   @if (!itemActive) { <p role="status">{{ 'itemProperties.inactiveItem' | transloco }}</p> }
   @if (batchOpen && canEditValues) {
-    <section class="editor"><h2>{{ (batch ? 'admin.edit' : 'itemProperties.addBatch') | transloco }}</h2>
-      <form [formGroup]="batchForm" (ngSubmit)="saveBatch()">
+    <section class="editor property-editor"><h2>{{ (batch ? 'admin.edit' : 'itemProperties.addBatch') | transloco }}</h2>
+      <form class="property-form" [formGroup]="batchForm" (ngSubmit)="saveBatch()">
         <label>{{ 'itemProperties.batchNumber' | transloco }}<input formControlName="number" maxlength="100" required /></label>
         <label>{{ 'itemProperties.receiptDate' | transloco }}<input type="date" formControlName="receiptDate" required /></label>
         <label class="wide">{{ 'itemProperties.receiptReference' | transloco }}<input formControlName="receiptReference" maxlength="300" required /></label>
@@ -71,14 +102,14 @@
       </form>
     </section>
   }
-  @if (values && !batchOpen) {
-    <section class="editor">
+  @if (values && !batchOpen && embeddedSection !== 'batches') {
+    <section class="editor property-editor values-editor" [class.embedded-values-editor]="!!embeddedItemId">
       <h2>{{ (batch ? 'itemProperties.batchValues' : 'itemProperties.itemValues') | transloco }}{{ batch ? ': ' + batch.number : '' }}</h2>
       @if (batch) {
         <p>{{ batch.receiptDate }} · {{ batch.receiptReference }}</p>
         @if (canEditValues) { <button type="button" (click)="editBatch(true)">{{ 'admin.edit' | transloco }}</button> }
       }
-      <form [formGroup]="valuesForm" (ngSubmit)="saveValues()">
+      <form class="property-form values-form" [formGroup]="valuesForm" (ngSubmit)="saveValues()">
       @for (p of values.definitions; track p.id) {
         <div class="property-field">
           <label [for]="'value-' + p.id">{{ p.name }} @if (p.isBatchProperty) { <small>({{ 'itemProperties.batchProperty' | transloco }})</small> } @if (!p.isActive) { <small>({{ 'admin.inactive' | transloco }})</small> }</label>
@@ -99,17 +130,30 @@
             <small role="alert">{{ 'itemProperties.invalidValue' | transloco }}</small>
           }
         </div>
-      } @empty { <p>{{ 'itemProperties.empty' | transloco }}</p> }
+      } @empty {
+        <p class="property-empty-state">
+          {{ 'itemProperties.empty' | transloco }}
+          @if (canManage) { <a routerLink="/administration/item-properties">{{ 'itemProperties.add' | transloco }}</a> }
+        </p>
+      }
       @if (valuesForm.hasError('range')) { <p role="alert">{{ 'itemProperties.invalidRange' | transloco }}</p> }
-      @if (canEditValues && values.definitions.length) { <button type="submit" [disabled]="valuesForm.invalid || busy || !valuesForm.dirty">{{ 'common.save' | transloco }}</button> }
-      <button type="button" (click)="selectBatch(batch)">{{ 'itemProperties.reload' | transloco }}</button>
+      @if (!embeddedItemId) {
+        @if (canEditValues && values.definitions.length) { <button type="submit" [disabled]="valuesForm.invalid || busy || !valuesForm.dirty">{{ 'common.save' | transloco }}</button> }
+        <button type="button" (click)="selectBatch(batch)">{{ 'itemProperties.reload' | transloco }}</button>
+      }
       </form>
     </section>
   }
-  <h2>{{ 'itemProperties.batches' | transloco }}</h2>
-  <table class="master-data-table"><thead><tr><th>{{ 'itemProperties.batchNumber' | transloco }}</th><th>{{ 'itemProperties.receiptDate' | transloco }}</th><th>{{ 'itemProperties.receiptReference' | transloco }}</th></tr></thead>
-    <tbody>@for (b of batches; track b.id) { <tr><td><button type="button" (click)="selectBatch(b)">{{ b.number }}</button></td><td>{{ b.receiptDate }}</td><td>{{ b.receiptReference }}</td></tr> } @empty { <tr><td colspan="3">{{ 'itemProperties.noBatches' | transloco }}</td></tr> }</tbody>
-  </table>
-  @if (batches.length < batchTotal) { <button type="button" (click)="moreBatches()">{{ 'masterDataReview.loadMore' | transloco }}</button> }
+  @if (embeddedSection === 'batches') {
+    <div class="property-section-heading">
+      <div><h2>{{ 'itemProperties.batches' | transloco }}</h2><span>{{ batches.length }} / {{ batchTotal }}</span></div>
+      @if (canEditValues) { <button type="button" class="primary-action" (click)="editBatch()">＋ {{ 'itemProperties.addBatch' | transloco }}</button> }
+    </div>
+    <div class="property-table-wrap"><table class="master-data-table"><thead><tr><th>{{ 'itemProperties.batchNumber' | transloco }}</th><th>{{ 'itemProperties.receiptDate' | transloco }}</th><th>{{ 'itemProperties.receiptReference' | transloco }}</th></tr></thead>
+      <tbody>@for (b of batches; track b.id) { <tr><td><button type="button" (click)="selectBatch(b)">{{ b.number }}</button></td><td>{{ b.receiptDate }}</td><td>{{ b.receiptReference }}</td></tr> } @empty { <tr><td colspan="3">{{ 'itemProperties.noBatches' | transloco }}</td></tr> }</tbody>
+    </table></div>
+    @if (batches.length < batchTotal) { <button type="button" (click)="moreBatches()">{{ 'masterDataReview.loadMore' | transloco }}</button> }
+  }
+  </section>
 }
 </fieldset>

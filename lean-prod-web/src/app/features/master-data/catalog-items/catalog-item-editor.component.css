@@ -1,0 +1,20 @@
+:host { display: block; }
+.item-card-heading { align-items: center; background: #263b4d; border-bottom: 1px solid #162938; color: #fff; display: flex; margin: 0 0 .9rem; min-height: 42px; padding: .45rem .7rem; }
+.item-card-heading h1 { color: #fff; font-size: 1.05rem; margin: 0; }
+.item-detail-tabs { border-bottom: 1px solid var(--border); display: flex; gap: .15rem; margin: 0 0 .5rem; overflow-x: auto; }
+.item-detail-tabs a { border: 1px solid transparent; border-bottom: 0; border-radius: 4px 4px 0 0; color: #526579; flex: 0 0 auto; font-size: .8rem; padding: .42rem .7rem; text-decoration: none; }
+.item-detail-tabs a:hover { background: #eef6ff; color: #176fa9; }
+.item-detail-tabs a.active { background: #fff; border-color: var(--border); color: #176fa9; font-weight: 700; margin-bottom: -1px; }
+.item-card-panel { background: #fff; border: 1px solid var(--border); border-radius: 4px; }
+.item-card-toolbar { align-items: center; background: #f7f9fb; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .5rem; padding: .65rem; }
+.item-card-toolbar .primary-action { background: #247eb8; border-color: #176b9f; color: #fff; }
+.item-main-form { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 1rem; }
+.item-main-form label { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.item-main-form .wide { grid-column: 1 / -1; }
+.item-main-form input, .item-main-form select, .item-main-form textarea { min-width: 0; width: 100%; }
+.item-main-form textarea { min-height: 100px; }
+.item-card-message, .item-card-error { margin: 0 1rem 1rem; }
+.item-leave-layer { align-items: center; background: rgba(15,23,42,.45); display: flex; inset: 0; justify-content: center; padding: 1rem; position: fixed; z-index: 60; }
+.item-leave-dialog { background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: var(--shadow); max-width: min(560px, calc(100vw - 2rem)); padding: 1.25rem; width: 100%; }
+.item-leave-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+@media (max-width: 640px) { .item-main-form { grid-template-columns: 1fr; } .item-main-form .wide { grid-column: auto; } .item-card-toolbar button { flex: 1 1 auto; } }

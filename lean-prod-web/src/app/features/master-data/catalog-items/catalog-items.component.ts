@@ -225,8 +225,8 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
   }
   setClassActive(active: boolean): void { if (!this.canManage || this.requests.saving()) return; if (!this.selectedClass) return; this.api.setCatalogItemClassActive(this.selectedClass.id, active).subscribe(() => { this.selectedClass = { ...this.selectedClass!, isActive: active }; this.classEditorOpen = false; this.loadClasses(); this.loadClassSelectionOptions(); }); }
   select(item: CatalogItemSummary): void { if (this.requests.saving()) return; this.loadItem(item.id, false); }
-  edit(item: CatalogItemSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); this.loadItem(item.id, true); }
-  editSelected(): void { if (this.requests.saving()) return; if (this.selected) this.loadItem(this.selected.id, true); }
+  edit(item: CatalogItemSummary, event: Event): void { if (this.requests.saving()) return; event.stopPropagation(); void this.openItemEditor(item.id); }
+  editSelected(): void { if (this.requests.saving()) return; if (this.selected) void this.openItemEditor(this.selected.id); }
   copySelected(): void { if (this.requests.saving()) return; ++this.itemRequest; if (!this.selected) return; const x = this.selected; this.selected = undefined; this.message = ''; this.form.reset({ workingName: x.workingName, fullName: x.fullName ?? '', articleNumber: '', baseUnitOfMeasureId: x.baseUnitOfMeasureId, catalogItemClassId: x.catalogItemClassId, cost: x.cost, description: x.description ?? '' }); this.formBaseline = ''; this.editorOpen = true; }
   startItemDrag(item: CatalogItemSummary, event: DragEvent): void { if (!this.canManage) return; this.draggedItem = item; event.dataTransfer?.setData('text/plain', item.id); if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'; }
   endItemDrag(): void { this.draggedItem = undefined; this.dropTargetClassId = undefined; }
@@ -314,5 +314,8 @@ export class CatalogItemsComponent implements OnInit, OnDestroy {
       },
       error: () => this.message = this.t.translate('pageState.error')
     });
+  }
+  private async openItemEditor(id: string): Promise<void> {
+    await this.router.navigate(['/catalog/items', id, 'edit'], { queryParams: { back: this.propertiesBackUrl } });
   }
 }

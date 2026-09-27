@@ -1,0 +1,47 @@
+@if (!loading && item) {
+  <div class="item-card-heading">
+    <h1>{{ item.workingName }}{{ dirty ? ' *' : '' }}</h1>
+  </div>
+  <nav class="item-detail-tabs" [attr.aria-label]="'catalogItems.itemNavigation' | transloco">
+    <a [class.active]="tab === 'main'" [attr.aria-current]="tab === 'main' ? 'page' : null" (click)="selectTab('main', $event)" href="">{{ 'itemProperties.main' | transloco }}</a>
+    <a [class.active]="tab === 'properties'" [attr.aria-current]="tab === 'properties' ? 'page' : null" (click)="selectTab('properties', $event)" href="">{{ 'itemProperties.properties' | transloco }}</a>
+    <a [class.active]="tab === 'batches'" [attr.aria-current]="tab === 'batches' ? 'page' : null" (click)="selectTab('batches', $event)" href="">{{ 'itemProperties.batches' | transloco }}</a>
+  </nav>
+  <div class="item-card-toolbar">
+    <button type="button" class="primary-action" (click)="saveCurrentTab()" [disabled]="saving || propertiesBusy || (tab === 'main' ? form.invalid : propertiesInvalid)">{{ 'common.save' | transloco }}</button>
+    <button type="button" (click)="close()" [disabled]="saving">{{ 'common.close' | transloco }}</button>
+    @if (item.isActive) { <button type="button" (click)="setActive(false)" [disabled]="saving || hasUnsavedChanges">{{ 'admin.deactivate' | transloco }}</button> }
+    @else { <button type="button" (click)="setActive(true)" [disabled]="saving || hasUnsavedChanges">{{ 'admin.activate' | transloco }}</button> }
+  </div>
+  <section class="item-card-panel" [hidden]="tab !== 'main'">
+      <form class="item-main-form" [formGroup]="form" (ngSubmit)="save()">
+        <label>{{ 'catalogItems.workingName' | transloco }}<input formControlName="workingName" /></label>
+        <label>{{ 'catalogItems.article' | transloco }}<input formControlName="articleNumber" /></label>
+        <label class="wide">{{ 'catalogItems.fullName' | transloco }}<input formControlName="fullName" /></label>
+        <label>{{ 'catalogItems.baseUnit' | transloco }}<select formControlName="baseUnitOfMeasureId"><option value="">—</option>@for (unit of units; track unit.id) { <option [value]="unit.id">{{ unit.displayName }}{{ unit.symbol ? ' (' + unit.symbol + ')' : '' }}</option> }</select></label>
+        <label>{{ 'catalogItemClasses.class' | transloco }}<select formControlName="catalogItemClassId"><option value="">—</option>@for (classOption of classOptions; track classOption.id) { <option [value]="classOption.id">{{ displayClass(classOption) }}</option> }</select></label>
+        <label>{{ 'catalogItems.cost' | transloco }}<input formControlName="cost" inputmode="decimal" (input)="limitCostScale($event)" /></label>
+        <label class="wide">{{ 'masterData.description' | transloco }}<textarea formControlName="description"></textarea></label>
+      </form>
+      @if (message) { <p role="status" class="item-card-message">{{ message }}</p> }
+  </section>
+  <div [hidden]="tab === 'main'">
+    <app-item-properties [embeddedItemId]="itemId" [embeddedTitle]="item.workingName" [embeddedSection]="tab === 'batches' ? 'batches' : 'properties'" />
+  </div>
+}
+@if (loading) { <p role="status">{{ 'pageState.loading' | transloco }}</p> }
+@if (!loading && !item) { <p role="alert" class="item-card-error">{{ message }}</p> }
+@if (leaveDialogOpen) {
+  <div class="item-leave-layer">
+    <div class="item-leave-dialog" role="dialog" aria-labelledby="item-leave-title" aria-modal="true">
+      <h2 id="item-leave-title">{{ 'itemLeave.title' | transloco }}</h2>
+      <p>{{ 'itemLeave.message' | transloco }}</p>
+      @if (message) { <p class="item-card-error" role="alert">{{ message }}</p> }
+      <div class="item-leave-actions">
+        <button type="button" class="primary-action" [disabled]="saving || propertiesBusy" (click)="finishLeave('save')">{{ 'itemLeave.save' | transloco }}</button>
+        <button type="button" [disabled]="saving || propertiesBusy" (click)="finishLeave('discard')">{{ 'itemLeave.discard' | transloco }}</button>
+        <button type="button" [disabled]="saving || propertiesBusy" (click)="finishLeave('stay')">{{ 'itemLeave.stay' | transloco }}</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,6 +1,6 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subject, firstValueFrom, takeUntil } from 'rxjs';
@@ -8,15 +8,19 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions';
 import { MasterDataService } from '../master-data.service';
 import { ItemPropertiesService } from './item-properties.service';
+import { CatalogItemType } from '../master-data.models';
 import { ItemBatch, ItemPropertyType, PropertyDefinition, PropertyValue, PropertyValues } from './item-properties.models';
 
 @Component({
   selector: 'app-item-properties', standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe],
+  imports: [ReactiveFormsModule, RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './item-properties.component.html',
   styleUrls: ['../master-data.css', './item-properties.component.css']
 })
 export class ItemPropertiesComponent implements OnInit, OnDestroy {
+  @Input() embeddedItemId = '';
+  @Input() embeddedTitle = '';
+  @Input() embeddedSection: 'properties' | 'batches' = 'properties';
   private readonly api = inject(ItemPropertiesService);
   private readonly master = inject(MasterDataService);
   private readonly route = inject(ActivatedRoute);
@@ -26,7 +30,15 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
   readonly canManage = inject(AuthService).hasPermission(Permissions.masterDataManage);
   readonly types: ItemPropertyType[] = ['Number', 'Text', 'Choice', 'Boolean', 'Range'];
   classId = ''; itemId = ''; title = ''; backUrl = '/catalog/products';
-  administrationType = 'Product';
+  administrationType: CatalogItemType = 'Product';
+  readonly catalogTypes: { type: CatalogItemType; path: string }[] = [
+    { type: 'Product', path: '/catalog/products' }, { type: 'Work', path: '/catalog/works' },
+    { type: 'PrimaryMaterial', path: '/catalog/primary-materials' }, { type: 'AuxiliaryMaterial', path: '/catalog/auxiliary-materials' },
+    { type: 'SemiFinishedProduct', path: '/catalog/semi-finished-products' }, { type: 'Packaging', path: '/catalog/packaging' },
+    { type: 'ToolingAndTools', path: '/catalog/tooling-and-tools' }, { type: 'SparePart', path: '/catalog/spare-parts' },
+    { type: 'PurchasedService', path: '/catalog/purchased-services' }, { type: 'Waste', path: '/catalog/waste' }
+  ];
+  get currentCatalogPath(): string { return this.catalogTypes.find(x => x.type === this.administrationType)?.path ?? '/catalog/products'; }
   classActive = true;
   itemActive = true;
   get canEditDefinitions(): boolean { return this.canManage && this.classActive; }
@@ -55,6 +67,13 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
   });
 
   get dirty(): boolean { return this.definitionOpen && this.definitionForm.dirty || this.batchOpen && this.batchForm.dirty || this.valuesForm.dirty; }
+  discardChanges(): void {
+    if (!this.itemId) return;
+    this.definitionOpen = false; this.batchOpen = false;
+    this.definitionForm.markAsPristine(); this.batchForm.markAsPristine();
+    this.valuesForm = new FormRecord<FormControl<string>>({});
+    void this.load();
+  }
   requestLeave(): boolean { return !this.busy && (!this.dirty || window.confirm(this.t.translate('itemProperties.discard'))); }
   @HostListener('window:beforeunload', ['$event']) beforeUnload(event: BeforeUnloadEvent): void {
     if (this.dirty || this.busy) { event.preventDefault(); event.returnValue = ''; }
@@ -62,6 +81,13 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.definitionForm.controls.type.valueChanges.pipe(takeUntil(this.destroyed)).subscribe(() => this.configureDefinitionFields());
     this.configureDefinitionFields();
+    if (this.embeddedItemId) {
+      this.itemId = this.embeddedItemId;
+      this.backUrl = '/catalog/products';
+      this.valuesForm = new FormRecord<FormControl<string>>({});
+      void this.load();
+      return;
+    }
     this.route.paramMap.pipe(takeUntil(this.destroyed)).subscribe(params => {
       this.classId = params.get('classId') ?? ''; this.itemId = params.get('itemId') ?? '';
       this.backUrl = this.itemId ? '/catalog/products' : '/administration/item-properties';
@@ -89,7 +115,7 @@ export class ItemPropertiesComponent implements OnInit, OnDestroy {
           firstValueFrom(this.master.catalogItem(this.itemId)), firstValueFrom(this.api.values(this.itemId)), firstValueFrom(this.api.batches(this.itemId))
         ]);
         if (request !== this.requestId) return;
-        this.title = item.workingName; this.classId = item.catalogItemClassId; this.itemActive = item.isActive;
+        this.title = item.workingName; this.classId = item.catalogItemClassId; this.itemActive = item.isActive; this.administrationType = item.type;
         this.batch = undefined; this.batchOpen = false;
         this.setValues(values); this.batches = batches.items; this.batchPage = 1; this.batchTotal = batches.totalCount;
       } else {

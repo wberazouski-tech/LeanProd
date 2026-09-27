@@ -1,6 +1,7 @@
 import type { ItemPropertiesComponent } from './features/master-data/item-properties/item-properties.component';
 import type { EquipmentComponent } from './features/master-data/equipment/equipment.component';
 import type { CatalogItemsComponent } from './features/master-data/catalog-items/catalog-items.component';
+import type { CatalogItemEditorComponent } from './features/master-data/catalog-items/catalog-item-editor.component';
 import type { TechnologiesComponent } from './features/master-data/technologies/technologies.component';
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
@@ -27,7 +28,8 @@ export const routes: Routes = [
     { path: 'catalog/classes/:classId/properties', redirectTo: 'administration/item-properties/:classId', pathMatch: 'full' },
     { path: 'administration/item-properties', loadComponent: () => import('./features/master-data/item-properties/item-property-administration.component').then(m => m.ItemPropertyAdministrationComponent), canActivate: [permissionGuard(Permissions.masterDataView)] },
     { path: 'administration/item-properties/:classId', loadComponent: () => import('./features/master-data/item-properties/item-properties.component').then(m => m.ItemPropertiesComponent), canDeactivate: [(component: ItemPropertiesComponent) => component.requestLeave()], canActivate: [permissionGuard(Permissions.masterDataView)] },
-    { path: 'catalog/items/:itemId/properties', loadComponent: () => import('./features/master-data/item-properties/item-properties.component').then(m => m.ItemPropertiesComponent), canDeactivate: [(component: ItemPropertiesComponent) => component.requestLeave()], canActivate: [permissionGuard(Permissions.masterDataView)] },
+    { path: 'catalog/items/:itemId/edit', loadComponent: () => import('./features/master-data/catalog-items/catalog-item-editor.component').then(m => m.CatalogItemEditorComponent), canDeactivate: [(component: CatalogItemEditorComponent) => component.requestLeave()], canActivate: [permissionGuard(Permissions.masterDataView)] },
+    { path: 'catalog/items/:itemId/properties', loadComponent: () => import('./features/master-data/catalog-items/catalog-item-editor.component').then(m => m.CatalogItemEditorComponent), canDeactivate: [(component: CatalogItemEditorComponent) => component.requestLeave()], canActivate: [permissionGuard(Permissions.masterDataView)] },
     { path: 'catalog/products', loadComponent: catalogItems, canDeactivate: [(component: CatalogItemsComponent) => component.requestLeave()], data: { type: 'Product' }, canActivate: [permissionGuard(Permissions.masterDataView)] },
     { path: 'catalog/works', loadComponent: catalogItems, canDeactivate: [(component: CatalogItemsComponent) => component.requestLeave()], data: { type: 'Work' }, canActivate: [permissionGuard(Permissions.masterDataView)] },
     { path: 'catalog/primary-materials', loadComponent: catalogItems, canDeactivate: [(component: CatalogItemsComponent) => component.requestLeave()], data: { type: 'PrimaryMaterial' }, canActivate: [permissionGuard(Permissions.masterDataView)] },

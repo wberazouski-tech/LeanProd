@@ -18,6 +18,11 @@
 .catalog-dialog .wide { grid-column: 1 / -1; }
 .catalog-dialog textarea { min-height: 80px; width: 100%; }
 .catalog-details { padding: .75rem 1rem; }
+.catalog-properties-link { display: inline-block; font-weight: 600; }
+.item-detail-tabs { border-bottom: 1px solid var(--border); display: flex; gap: .15rem; margin: 0 0 .5rem; overflow-x: auto; }
+.item-detail-tabs a { border: 1px solid transparent; border-bottom: 0; border-radius: 4px 4px 0 0; color: #526579; flex: 0 0 auto; font-size: .8rem; padding: .42rem .7rem; text-decoration: none; }
+.item-detail-tabs a:hover { background: #eef6ff; color: #176fa9; }
+.item-detail-tabs a.active { background: #fff; border-color: var(--border); color: #176fa9; font-weight: 700; margin-bottom: -1px; }
 .catalog-details dl, .catalog-details dd { margin: 0; }
 .catalog-details dt { color: #667085; font-size: .8rem; }
 .catalog-details dd { margin-top: .25rem; }

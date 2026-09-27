@@ -178,7 +178,7 @@
 
 @if (selected && !editorOpen) {
 <section class="selected-details catalog-details">
-  <a [routerLink]="['/catalog/items', selected.id, 'properties']" [queryParams]="{ back: propertiesBackUrl }">{{ 'itemProperties.valuesAndBatches' | transloco }}</a>
+  <a class="catalog-properties-link" [routerLink]="['/catalog/items', selected.id, 'edit']" [queryParams]="{ back: propertiesBackUrl, tab: 'properties' }">{{ 'itemProperties.properties' | transloco }}</a>
   <dl>
     <div>
       <dt>{{ 'masterData.description' | transloco }}</dt>
@@ -192,8 +192,14 @@
 @if (canManage && editorOpen) {
 <section class="item-editor">
       <h1>{{ selected ? form.controls.workingName.value : ('catalogItems.add' | transloco) }}{{ hasUnsavedChanges ? ' *' : '' }}</h1>
+      @if (selected) {
+        <nav class="item-detail-tabs" [attr.aria-label]="'catalogItems.itemNavigation' | transloco">
+          <a routerLink="." routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ 'itemProperties.main' | transloco }}</a>
+          <a [routerLink]="['/catalog/items', selected.id, 'edit']" [queryParams]="{ back: propertiesBackUrl, tab: 'properties' }" routerLinkActive="active">{{ 'itemProperties.properties' | transloco }}</a>
+        </nav>
+      }
       <div class="item-editor-toolbar">
-        @if (selected) { <a [routerLink]="['/catalog/items', selected.id, 'properties']" [queryParams]="{ back: propertiesBackUrl }">{{ 'itemProperties.valuesAndBatches' | transloco }}</a> }        <button type="submit" form="item-editor-form" [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
+        <button type="submit" form="item-editor-form" [disabled]="form.invalid">{{ 'common.save' | transloco }}</button>
         <button type="button" (click)="closeEditor()">{{ 'common.close' | transloco }}</button>
         @if (selected?.isActive) { <button type="button" [disabled]="hasUnsavedChanges" (click)="setActive(false)">{{ 'admin.deactivate' | transloco
           }}</button> }
